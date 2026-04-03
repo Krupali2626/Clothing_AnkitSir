@@ -16,6 +16,10 @@ const insideSubCategorySchema = mongoose.Schema({
   insideSubCategoryName: {
     type: String,
   },
+  insideSubCategoryImage: {
+    type: String,
+    default: ""
+  }
 }, { timestamps: true })
 
 export default mongoose.model("insideSubCategory", insideSubCategorySchema)

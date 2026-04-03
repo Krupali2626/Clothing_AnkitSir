@@ -5,6 +5,7 @@ import MainCategoryModel from "../model/mainCategory.model.js";
 import CategoryModel from "../model/category.model.js";
 import { ThrowError } from "../utils/Error.utils.js"
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../utils/Response.utils.js"
+import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createInsideSubCategory = async (req, res) => {
   try {
@@ -46,11 +47,18 @@ export const createInsideSubCategory = async (req, res) => {
       return sendBadRequestResponse(res, "This InsideSubCategory already added...")
     }
 
+    let imageUrl = "";
+    if (req.file) {
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const newInsideSubCategory = await InsideSubCategoryModel.create({
       mainCategoryId,
       categoryId,
       subCategoryId,
       insideSubCategoryName,
+      insideSubCategoryImage: imageUrl
     })
 
     return sendSuccessResponse(res, "InsideSubCategory added successfully...", newInsideSubCategory)
@@ -138,9 +146,23 @@ export const updateInsideSubCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "SubCategory not exists!!!")
     }
 
+    const existingInsideSubCategory = await InsideSubCategoryModel.findById(id);
+    if (!existingInsideSubCategory) {
+      return sendNotFoundResponse(res, "InsideSubCategory Not found...");
+    }
+
+    let imageUrl = existingInsideSubCategory.insideSubCategoryImage;
+    if (req.file) {
+      if (existingInsideSubCategory.insideSubCategoryImage) {
+        await deleteFileFromS3(existingInsideSubCategory.insideSubCategoryImage);
+      }
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const updatedInsideSubCategory = await InsideSubCategoryModel.findByIdAndUpdate(
       id,
-      { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId },
+      { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId, insideSubCategoryImage: imageUrl },
       { new: true, runValidators: true }
     );
 
@@ -161,6 +183,15 @@ export const deleteInsideSubCategoryById = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid InsideSubCategoryId!!!");
+    }
+
+    const insideSubCategoryToDelete = await InsideSubCategoryModel.findById(id);
+    if (!insideSubCategoryToDelete) {
+      return sendNotFoundResponse(res, "InsideSubCategory Not found...");
+    }
+
+    if (insideSubCategoryToDelete.insideSubCategoryImage) {
+      await deleteFileFromS3(insideSubCategoryToDelete.insideSubCategoryImage);
     }
 
     const deletedInsideSubCategory = await InsideSubCategoryModel.findByIdAndDelete(id);

@@ -4,6 +4,7 @@ import SubCategoryModel from "../model/subCategory.model.js";
 import { ThrowError } from "../utils/Error.utils.js"
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../utils/Response.utils.js"
 import MainCategoryModel from "../model/mainCategory.model.js";
+import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createSubCategory = async (req, res) => {
   try {
@@ -36,10 +37,17 @@ export const createSubCategory = async (req, res) => {
       return sendBadRequestResponse(res, "This SubCategory already added...")
     }
 
+    let imageUrl = "";
+    if (req.file) {
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const newSubCategory = await SubCategoryModel.create({
       mainCategoryId,
       categoryId,
       subCategoryName,
+      subCategoryImage: imageUrl
     })
 
     return sendSuccessResponse(res, "SubCategory added successfully...", newSubCategory)
@@ -116,9 +124,23 @@ export const updateSubCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "Category not exists!!!")
     }
 
+    const existingSubCategory = await SubCategoryModel.findById(id);
+    if (!existingSubCategory) {
+      return sendNotFoundResponse(res, "SubCategory Not found...");
+    }
+
+    let imageUrl = existingSubCategory.subCategoryImage;
+    if (req.file) {
+      if (existingSubCategory.subCategoryImage) {
+        await deleteFileFromS3(existingSubCategory.subCategoryImage);
+      }
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const updatedSubCategory = await SubCategoryModel.findByIdAndUpdate(
       id,
-      { subCategoryName, categoryId, mainCategoryId },
+      { subCategoryName, categoryId, mainCategoryId, subCategoryImage: imageUrl },
       { new: true, runValidators: true }
     );
 
@@ -139,6 +161,15 @@ export const deleteSubCategoryById = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid SubCategoryId!!!");
+    }
+
+    const subCategoryToDelete = await SubCategoryModel.findById(id);
+    if (!subCategoryToDelete) {
+      return sendNotFoundResponse(res, "SubCategory Not found...");
+    }
+
+    if (subCategoryToDelete.subCategoryImage) {
+      await deleteFileFromS3(subCategoryToDelete.subCategoryImage);
     }
 
     const deletedSubCategory = await SubCategoryModel.findByIdAndDelete(id);

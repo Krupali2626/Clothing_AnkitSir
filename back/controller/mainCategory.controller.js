@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import MainCategoryModel from "../model/mainCategory.model.js";
 import { ThrowError } from "../utils/Error.utils.js"
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../utils/Response.utils.js"
+import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createMainCategory = async (req, res) => {
   try {
@@ -16,8 +17,15 @@ export const createMainCategory = async (req, res) => {
       return sendBadRequestResponse(res, "This MainCategory already exists...")
     }
 
+    let imageUrl = "";
+    if (req.file) {
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const newMainCategory = await MainCategoryModel.create({
-      mainCategoryName
+      mainCategoryName,
+      mainCategoryImage: imageUrl
     })
 
     return sendSuccessResponse(res, "MainCategory added successfully...", newMainCategory)
@@ -71,14 +79,28 @@ export const updateMainCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "Invalid MainCategoryId!!!");
     }
 
+    const existingMainCategory = await MainCategoryModel.findById(id);
+    if (!existingMainCategory) {
+      return sendNotFoundResponse(res, "MainCategory Not found...");
+    }
+
+    let imageUrl = existingMainCategory.mainCategoryImage;
+    if (req.file) {
+      if (existingMainCategory.mainCategoryImage) {
+        await deleteFileFromS3(existingMainCategory.mainCategoryImage);
+      }
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const updatedMainCategory = await MainCategoryModel.findByIdAndUpdate(
       id,
-      { mainCategoryName },
+      { mainCategoryName, mainCategoryImage: imageUrl },
       { new: true, runValidators: true }
     );
 
     if (!updatedMainCategory) {
-        return sendNotFoundResponse(res, "MainCategory Not found...");
+      return sendNotFoundResponse(res, "MainCategory Not found...");
     }
 
     return sendSuccessResponse(res, "MainCategory updated Successfully...", updatedMainCategory);
@@ -96,10 +118,19 @@ export const deleteMainCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "Invalid MainCategoryId!!!");
     }
 
+    const mainCategoryToDelete = await MainCategoryModel.findById(id);
+    if (!mainCategoryToDelete) {
+      return sendNotFoundResponse(res, "MainCategory Not found...");
+    }
+
+    if (mainCategoryToDelete.mainCategoryImage) {
+      await deleteFileFromS3(mainCategoryToDelete.mainCategoryImage);
+    }
+
     const deletedMainCategory = await MainCategoryModel.findByIdAndDelete(id);
 
     if (!deletedMainCategory) {
-        return sendNotFoundResponse(res, "MainCategory Not found...");
+      return sendNotFoundResponse(res, "MainCategory Not found...");
     }
 
     return sendSuccessResponse(res, "MainCategory deleted Successfully...", deletedMainCategory);

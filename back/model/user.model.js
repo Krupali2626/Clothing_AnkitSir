@@ -89,7 +89,7 @@ const UserSchema = new mongoose.Schema({
   verified: { type: Boolean, default: false },
   role: {
     type: String,
-    enum: ["user", "seller", "admin"],
+    enum: ["user","admin"],
     default: "user",
   },
   refreshToken: {

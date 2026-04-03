@@ -2,8 +2,7 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import dotenv from "dotenv";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 dotenv.config();
 
 // AWS S3 Client
@@ -104,5 +103,52 @@ export const deleteFileFromS3 = async (fileUrl) => {
     );
   } catch (err) {
     console.error("❌ Error deleting from S3:", err.message);
+  }
+};
+
+export const deleteManyFromS3 = async (keys = []) => {
+  try {
+    if (!keys.length) return;
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Delete: {
+        Objects: keys.map(key => ({ Key: key }))
+      }
+    };
+
+    const result = await s3.send(new DeleteObjectsCommand(params));
+    return result;
+  } catch (error) {
+    console.error("❌ S3 deleteMany Error:", error.message);
+    throw error;
+  }
+};
+
+export const listBucketObjects = async () => {
+  try {
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME
+    };
+
+    const data = await s3.send(new ListObjectsV2Command(params));
+
+    const region = process.env.S3_REGION;
+    const bucket = process.env.S3_BUCKET_NAME;
+
+    const files = (data.Contents || []).map(file => {
+      const url = `https://${bucket}.s3.${region}.amazonaws.com/${file.Key}`;
+      return {
+        key: file.Key,
+        url,
+        size: file.Size,
+        lastModified: file.LastModified
+      };
+    });
+
+    return files;
+  } catch (error) {
+    console.error("❌ S3 listBucketObjects Error:", error.message);
+    throw error;
   }
 };

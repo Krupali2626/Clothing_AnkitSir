@@ -3,6 +3,7 @@ import MainCategoryModel from "../model/mainCategory.model.js";
 import CategoryModel from "../model/category.model.js";
 import { ThrowError } from "../utils/Error.utils.js"
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../utils/Response.utils.js"
+import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createCategory = async (req, res) => {
   try {
@@ -26,9 +27,16 @@ export const createCategory = async (req, res) => {
       return sendBadRequestResponse(res, "This Category already added...")
     }
 
+    let imageUrl = "";
+    if (req.file) {
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const newCategory = await CategoryModel.create({
       mainCategoryId,
       categoryName,
+      categoryImage: imageUrl
     })
 
     return sendSuccessResponse(res, "Category added successfully...", newCategory)
@@ -91,9 +99,23 @@ export const updateCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "MainCategory not exists!!!")
     }
 
+    const existingCategory = await CategoryModel.findById(id);
+    if (!existingCategory) {
+      return sendNotFoundResponse(res, "Category Not found...");
+    }
+
+    let imageUrl = existingCategory.categoryImage;
+    if (req.file) {
+      if (existingCategory.categoryImage) {
+        await deleteFileFromS3(existingCategory.categoryImage);
+      }
+      const uploadResult = await uploadFile(req.file);
+      imageUrl = uploadResult.url;
+    }
+
     const updatedCategory = await CategoryModel.findByIdAndUpdate(
       id,
-      { categoryName, mainCategoryId },
+      { categoryName, mainCategoryId, categoryImage: imageUrl },
       { new: true, runValidators: true }
     );
 
@@ -114,6 +136,15 @@ export const deleteCategoryById = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid CategoryId!!!");
+    }
+
+    const categoryToDelete = await CategoryModel.findById(id);
+    if (!categoryToDelete) {
+      return sendNotFoundResponse(res, "Category Not found...");
+    }
+
+    if (categoryToDelete.categoryImage) {
+      await deleteFileFromS3(categoryToDelete.categoryImage);
     }
 
     const deletedCategory = await CategoryModel.findByIdAndDelete(id);

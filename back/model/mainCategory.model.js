@@ -5,6 +5,10 @@ const mainCategorySchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    mainCategoryImage: {
+        type: String,
+        default: ""
+    }
 }, { timestamps: true })
 
 export default mongoose.model("MainCategory", mainCategorySchema)

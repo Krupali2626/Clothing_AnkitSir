@@ -13,6 +13,10 @@ const subCategorySchema = mongoose.Schema({
     type: String,
     default: null
   },
+  subCategoryImage: {
+    type: String,
+    default: ""
+  }
 }, { timestamps: true })
 
 export default mongoose.model("SubCategory", subCategorySchema)

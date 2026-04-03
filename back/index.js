@@ -7,10 +7,14 @@ import mongoose from 'mongoose';
 import IndexRoute from './routes/index.routes.js';
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+import { initCron } from './cron/index.js';
 
 //connect DB
 const DB_URL = process.env.DB_URL || "mongodb+srv://akshayvaghasiya814:aksh2002@cluster0.se95gol.mongodb.net/ecommerce-web"
 connectDB(DB_URL)
+
+// Init Cron Jobs
+initCron();
 
 //express instance
 const app = express();
