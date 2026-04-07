@@ -8,44 +8,18 @@ export const UserAddressSchema = new mongoose.Schema({
     default: null,
     match: [/^[0-9]{10}$/, "Please enter a valid 10-digit phone number"]
   },
-  zipcode: { type: String, default: null },
+  country: { type: String, default: null },
   address: { type: String, default: null },
+  aptSuite: { type: String, default: null },
   city: { type: String, default: null },
   state: { type: String, default: null },
-  saveAs: {
-    type: String,
-    enum: ["Home", "Office", "Other"],
-    default: "Home"
-  },
-  officeOpenOnSaturday: { type: Boolean, default: false },
-  officeOpenOnSunday: { type: Boolean, default: false },
+  zipcode: { type: String, default: null },
   recentlyViewed: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
       viewedAt: { type: Date, default: Date.now },
     },
   ],
-});
-
-export const UserBillingAddressSchema = new mongoose.Schema({
-  firstName: { type: String, trim: true, default: null },
-  lastName: { type: String, trim: true, default: null },
-  phone: {
-    type: String,
-    default: null,
-    match: [/^[0-9]{10}$/, "Please enter a valid 10-digit phone number"]
-  },
-  zipcode: { type: String, default: null },
-  address: { type: String, default: null },
-  city: { type: String, default: null },
-  state: { type: String, default: null },
-  saveAs: {
-    type: String,
-    enum: ["Home", "Office", "Other"],
-    default: "Home"
-  },
-  officeOpenOnSaturday: { type: Boolean, default: false },
-  officeOpenOnSunday: { type: Boolean, default: false },
 });
 
 const UserSchema = new mongoose.Schema({
@@ -70,7 +44,6 @@ const UserSchema = new mongoose.Schema({
   },
   password: { type: String, select: false },
   address: [UserAddressSchema],
-  billingaddress: [UserBillingAddressSchema],
   savedCards: [
     {
       cardNumber: { type: String, required: true },
@@ -82,7 +55,7 @@ const UserSchema = new mongoose.Schema({
     }
   ],
   selectedAddress: { type: mongoose.Schema.Types.ObjectId, default: null },
-  selectedBillingAddress: { type: mongoose.Schema.Types.ObjectId, default: null },
+  selectedCard: { type: mongoose.Schema.Types.ObjectId, default: null },
   otp: { type: Number, default: null },
   avatar: { type: String, default: null },
   resetOtpExpiry: { type: Date, default: null },

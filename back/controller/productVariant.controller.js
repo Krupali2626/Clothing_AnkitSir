@@ -14,7 +14,7 @@ const generateSKU = (productName, color, size) => {
 
 export const createProductVariant = async (req, res) => {
   try {
-    const { productId, color, isDefault, options } = req.body;
+    const { productId, color, isDefault, options, price, stock } = req.body;
 
     if (req.user.role !== "admin") {
       return sendForbiddenResponse(res, "Access denied. Only admin can create variants!");
@@ -33,18 +33,27 @@ export const createProductVariant = async (req, res) => {
 
     let parsedOptions = [];
     if (options) {
-      parsedOptions = typeof options === "string" ? JSON.parse(options) : options;
+      try {
+        parsedOptions = typeof options === "string" ? JSON.parse(options) : options;
+      } catch (err) {
+        parsedOptions = [];
+      }
     }
 
     if (!Array.isArray(parsedOptions) || parsedOptions.length === 0) {
-      return sendBadRequestResponse(res, "At least one option (sku, size, price, stock) is required.");
+      if (price === undefined || price === "" || price === null || stock === undefined || stock === "" || stock === null) {
+        return sendBadRequestResponse(res, "If no sizes are provided, outer price and stock are mandatory.");
+      }
+    } else {
+      // Auto-generate SKUs for each option
+      parsedOptions = parsedOptions.map(option => ({
+        ...option,
+        sku: option.sku || generateSKU(product.name, color, option.size)
+      }));
     }
 
-    // Auto-generate SKUs for each option
-    parsedOptions = parsedOptions.map(option => ({
-      ...option,
-      sku: option.sku || generateSKU(product.name, color, option.size)
-    }));
+    const outerSku = (!Array.isArray(parsedOptions) || parsedOptions.length === 0)
+      ? generateSKU(product.name, color, "NA") : null;
 
     const uploadedImages = [];
     if (req.files && Array.isArray(req.files)) {
@@ -64,6 +73,9 @@ export const createProductVariant = async (req, res) => {
       color,
       images: uploadedImages,
       isDefault: isDefault === true || isDefault === "true",
+      price: (!Array.isArray(parsedOptions) || parsedOptions.length === 0) ? price : null,
+      stock: (!Array.isArray(parsedOptions) || parsedOptions.length === 0) ? stock : null,
+      sku: outerSku,
       options: parsedOptions,
     });
 
@@ -117,7 +129,7 @@ export const getProductVariantById = async (req, res) => {
 export const updateProductVariant = async (req, res) => {
   try {
     const { id } = req.params;
-    const { color, isDefault, options } = req.body;
+    const { color, isDefault, options, price, stock } = req.body;
 
     if (req.user.role !== "admin") {
       return sendForbiddenResponse(res, "Access denied. Only admin can update variants!");
@@ -141,14 +153,55 @@ export const updateProductVariant = async (req, res) => {
       }
       updateData.isDefault = defaultValue;
     }
-    if (options) {
-      const parsedOptions = typeof options === "string" ? JSON.parse(options) : options;
-      const product = await Product.findById(existingVariant.productId);
+    let willBeSizeless = existingVariant.options.length === 0;
 
-      updateData.options = parsedOptions.map(option => ({
-        ...option,
-        sku: option.sku || generateSKU(product.name, color || existingVariant.color, option.size)
-      }));
+    if (options !== undefined) {
+      let parsedOptions = [];
+      if (options) {
+        try {
+          parsedOptions = typeof options === "string" ? JSON.parse(options) : options;
+        } catch (err) {
+          parsedOptions = [];
+        }
+      }
+      willBeSizeless = !Array.isArray(parsedOptions) || parsedOptions.length === 0;
+
+      if (!willBeSizeless) {
+        const product = await Product.findById(existingVariant.productId);
+        updateData.options = parsedOptions.map(option => ({
+          ...option,
+          sku: option.sku || generateSKU(product.name, color || existingVariant.color, option.size)
+        }));
+
+        updateData.price = null;
+        updateData.stock = null;
+        updateData.sku = null;
+      } else {
+        updateData.options = [];
+      }
+    } else {
+      // If options are not sent, but price or stock IS sent, they're explicitly turning it into a sizeless variant
+      if (price !== undefined || stock !== undefined) {
+        willBeSizeless = true;
+        updateData.options = [];
+      }
+    }
+
+    if (willBeSizeless) {
+      if (price !== undefined && price !== "") updateData.price = Number(price);
+      if (stock !== undefined && stock !== "") updateData.stock = Number(stock);
+
+      const finalPrice = updateData.price !== undefined ? updateData.price : existingVariant.price;
+      const finalStock = updateData.stock !== undefined ? updateData.stock : existingVariant.stock;
+
+      if (finalPrice === null || finalPrice === undefined || finalStock === null || finalStock === undefined) {
+        return sendBadRequestResponse(res, "If no sizes are provided, outer price and stock are mandatory.");
+      }
+
+      if (!existingVariant.sku || color) {
+        const product = await Product.findById(existingVariant.productId);
+        updateData.sku = existingVariant.sku && !color ? existingVariant.sku : generateSKU(product.name, color || existingVariant.color, "NA");
+      }
     }
 
     // Handle image updates if needed (simplified for now)

@@ -55,8 +55,8 @@ import {
   getSizeGuideById,
   updateSizeGuide,
   deleteSizeGuide,
-  updateVariantSizeGuide,
-  getVariantSizeGuide
+  updateProductSizeGuide,
+  getProductSizeGuide
 } from "../controller/size.guide.controller.js";
 import {
   createCoupon,
@@ -66,6 +66,40 @@ import {
   deleteCoupon,
   getAllCouponAdmin
 } from "../controller/coupon.controller.js";
+import {
+  addToCart,
+  getMyCart,
+  updateCartItem,
+  removeFromCart,
+  clearCart,
+  applyCoupon,
+  removeCoupon
+} from "../controller/cart.controller.js";
+import {
+  placeOrder,
+  getMyOrders,
+  confirmStripePayment,
+  orderSummaryController
+} from "../controller/order.controller.js";
+import {
+  myPaymentController,
+  downloadInvoiceController,
+  paymentStatusChangeController,
+  getAllPaymentHistory,
+  getPaymentStatusController,
+  confirmStripePaymentController
+} from "../controller/payment.controller.js";
+import {
+  userAddressAddController,
+  userAddressUpdateController,
+  userAddressDeleteController,
+  getUserAddressController,
+  selectAddressController,
+  addSavedCardController,
+  getSavedCardsController,
+  deleteSavedCardController,
+  selectCardController
+} from "../controller/user.controller.js";
 import { sendResponse, sendSuccessResponse } from "../utils/Response.utils.js";
 
 const router = express.Router();
@@ -125,10 +159,11 @@ router.put("/product-variant/update/:id", UserAuth, adminAuth, upload.array("ima
 router.delete("/product-variant/delete/:id", UserAuth, adminAuth, deleteProductVariant);
 
 // --- Size Guide Routes ---
-router.post("/size-guide/create", UserAuth, adminAuth, createSizeGuide);
-router.get("/size-guide/get-all", UserAuth, getAllSizeGuides);
+router.post("/size-guide/create/:productId", UserAuth, adminAuth, createSizeGuide);
+router.get("/size-guide/get-all", getAllSizeGuides);
 router.get("/size-guide/get-by-id/:id", getSizeGuideById);
-router.put("/size-guide/update/:id", UserAuth, adminAuth, updateSizeGuide);
+router.put("/size-guide/update-product/:productId", UserAuth, adminAuth, updateProductSizeGuide);
+router.get("/size-guide/get-product/:productId", getProductSizeGuide);
 router.delete("/size-guide/delete/:id", UserAuth, adminAuth, deleteSizeGuide);
 
 // --- Coupon Routes ---
@@ -138,6 +173,40 @@ router.get("/coupon/admin/get-all", UserAuth, adminAuth, getAllCouponAdmin);
 router.get("/coupon/get-by-id/:id", getCouponById);
 router.put("/coupon/update/:id", UserAuth, adminAuth, upload.single("couponImage"), updateCoupon);
 router.delete("/coupon/delete/:id", UserAuth, adminAuth, deleteCoupon);
+
+// --- Cart Routes ---
+router.post("/cart/add", UserAuth, addToCart);
+router.get("/cart/my", UserAuth, getMyCart);
+router.put("/cart/update", UserAuth, updateCartItem);
+router.post("/cart/remove", UserAuth, removeFromCart);
+router.delete("/cart/clear", UserAuth, clearCart);
+router.post("/cart/coupon/apply", UserAuth, applyCoupon);
+router.delete("/cart/coupon/remove", UserAuth, removeCoupon);
+
+// --- Order & Payment Routes ---
+router.post("/order/place", UserAuth, placeOrder);
+router.get("/order/my", UserAuth, getMyOrders);
+router.get("/order/summary", UserAuth, orderSummaryController);
+
+router.post("/payment/confirm", UserAuth, confirmStripePaymentController);
+router.get("/payment/status/:orderId", UserAuth, getPaymentStatusController);
+router.get("/payment/my", UserAuth, myPaymentController);
+router.get("/payment/invoice/:orderId", UserAuth, downloadInvoiceController);
+router.put("/payment/status/:orderId", UserAuth, adminAuth, paymentStatusChangeController);
+router.get("/payment/admin/all", UserAuth, adminAuth, getAllPaymentHistory);
+
+// --- User Profile & Address Routes ---
+router.post("/user/address/add", UserAuth, userAddressAddController);
+router.put("/user/address/update/:addressId", UserAuth, userAddressUpdateController);
+router.delete("/user/address/delete/:addressId", UserAuth, userAddressDeleteController);
+router.get("/user/address/my", UserAuth, getUserAddressController);
+router.put("/user/address/select/:addressId", UserAuth, selectAddressController);
+
+// --- User Saved Cards ---
+router.post("/user/card/add", UserAuth, addSavedCardController);
+router.get("/user/card/my", UserAuth, getSavedCardsController);
+router.delete("/user/card/delete/:cardId", UserAuth, deleteSavedCardController);
+router.put("/user/card/select/:cardId", UserAuth, selectCardController);
 
 //aws
 router.get("/list", async (req, res) => {

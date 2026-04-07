@@ -14,21 +14,20 @@ const sizeGuideSizeSchema = new mongoose.Schema({
   },
 });
 
+const sizeGuideTableSchema = new mongoose.Schema({
+  title: { type: String, required: true }, // e.g., "MEN'S TOPS SIZE GUIDE"
+  productInfo: { type: String, default: "Product info" }, // Header for the first column (e.g., "Product info", "Size", etc.)
+  columns: [{ type: String, required: true }], // e.g., ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
+  rows: [{
+    label: { type: String, required: true }, // e.g., "EU" or "Shoulders (cm)"
+    values: [{ type: String, default: "" }] // array of values corresponding to columns
+  }]
+});
+
 const sizeGuideSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    category: { type: String, required: true },
-    description: String,
-
-    region: [{ type: String, required: true }],
-
-    measurements: {
-      unit: { type: String, default: null },
-      fields: [{ type: String, required: true }],
-    },
-
-    sizes: [sizeGuideSizeSchema],
-
+    name: { type: String, required: true }, // e.g., "Men's Tops"
+    tables: [sizeGuideTableSchema],
   },
   { timestamps: true }
 );

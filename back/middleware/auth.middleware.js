@@ -25,7 +25,7 @@ export const UserAuth = async (req, res, next) => {
             if (!user) {
                 return sendNotFoundResponse(res, "User not found");
             }
-            
+
             req.user = user;
             next();
         } catch (err) {

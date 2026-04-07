@@ -13,6 +13,9 @@ const productVariantSchema = new mongoose.Schema(
     color: { type: String, required: true },
     images: [String],
     isDefault: { type: Boolean, default: false },
+    price: { type: Number, default: null },
+    stock: { type: Number, default: null },
+    sku: { type: String, default: null },
     options: [optionSchema]
   },
   { timestamps: true }
