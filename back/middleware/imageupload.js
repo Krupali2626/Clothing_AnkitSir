@@ -20,34 +20,44 @@ export const upload = multer({
 });
 
 // Function to upload a single file to S3
-export const uploadFile = async (file) => {
+export const uploadFile = async (file, folder = "uploads") => {
   if (!file) throw new Error("No file provided");
 
-  const ext = path.extname(file.originalname).toLowerCase();
-
-  // If image, optionally convert
   let buffer = file.buffer;
   let contentType = file.mimetype;
+  let fileName = file.originalname.replace(/\s+/g, '_');
 
+  // Convert all images to WebP with compression
   if (file.mimetype.startsWith("image/")) {
-    const shouldConvert = ext === ".jfif" || file.mimetype === "application/octet-stream";
-    if (shouldConvert) {
-      buffer = await sharp(file.buffer).jpeg().toBuffer();
-      contentType = "image/jpeg";
-    }
+    buffer = await sharp(file.buffer)
+      .webp({
+        quality: 90,        // High quality (90%)
+        effort: 6,          // Compression effort (0-6, higher = better compression)
+        lossless: false     // Use lossy compression for smaller size
+      })
+      .toBuffer();
+
+    contentType = "image/webp";
+
+    // Change file extension to .webp
+    const nameWithoutExt = path.parse(fileName).name;
+    fileName = `${nameWithoutExt}.webp`;
   }
 
-  // Generate key - remove spaces from filename
-  const cleanFileName = file.originalname.replace(/\s+/g, '_');
-  const fileName = `${Date.now()}_${cleanFileName}`;
-  const key = `uploads/${fileName}`;
+  // Generate key with timestamp and folder
+  const finalFileName = `${Date.now()}_${fileName}`;
+  const key = `${folder}/${finalFileName}`;
 
-  // Upload with public read access
+  // Upload with public read access and cache control
   await s3.send(new PutObjectCommand({
     Bucket: process.env.S3_BUCKET_NAME,
     Key: key,
     Body: buffer,
-    ContentType: contentType
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable", // Cache for 1 year
+    Metadata: {
+      'uploaded-at': new Date().toISOString()
+    }
   }));
 
   return {
@@ -72,13 +82,17 @@ export const uploadPDF = async (file, folder = "uploads") => {
   const fileName = `${timestamp}-${cleanName}`;
   const key = `${folder}/${fileName}`;
 
-  // Upload PDF to S3
+  // Upload PDF to S3 with cache control
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: key,
       Body: file.buffer,
-      ContentType: "application/pdf"
+      ContentType: "application/pdf",
+      CacheControl: "public, max-age=31536000, immutable", // Cache for 1 year
+      Metadata: {
+        'uploaded-at': new Date().toISOString()
+      }
     })
   );
 

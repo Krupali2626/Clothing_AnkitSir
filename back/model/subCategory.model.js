@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { slugify } from "../utils/slug.config.js";
 
 const subCategorySchema = mongoose.Schema({
   mainCategoryId: {
@@ -13,10 +14,22 @@ const subCategorySchema = mongoose.Schema({
     type: String,
     default: null
   },
+  slug: {
+    type: String,
+    unique: true,
+    index: true
+  },
   subCategoryImage: {
     type: String,
     default: ""
   }
 }, { timestamps: true })
+
+subCategorySchema.pre('save', function (next) {
+  if (this.isModified('subCategoryName') || !this.slug) {
+    this.slug = slugify(this.subCategoryName);
+  }
+  next();
+});
 
 export default mongoose.model("SubCategory", subCategorySchema)

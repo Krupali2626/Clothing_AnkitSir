@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "seed:shop": "node seeds/shopCategories.seed.js"
   },
   "author": "",
   "license": "ISC",

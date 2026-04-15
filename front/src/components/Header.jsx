@@ -1,22 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { CgProfile } from "react-icons/cg";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { LuSearch } from "react-icons/lu";
 import { FaRegHeart } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchMainCategories } from '../redux/slice/category.slice';
+import { fetchMainCategories, fetchCategories, fetchSubCategories } from '../redux/slice/category.slice';
 import { Link } from 'react-router-dom';
+import { ReactComponent as EoLogo } from '../assets/images/eo.svg';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [hoveredCategory, setHoveredCategory] = useState(null);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isScrolled, setIsScrolled] = useState(false);
     const dispatch = useDispatch();
-    const { mainCategories, loading } = useSelector((state) => state.category);
+    const { mainCategories, categories, subCategories } = useSelector((state) => state.category);
     const { user } = useSelector((state) => state.auth);
-    console.log(user);
 
     useEffect(() => {
         dispatch(fetchMainCategories());
+        dispatch(fetchCategories());
+        dispatch(fetchSubCategories());
     }, [dispatch]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 10);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
@@ -29,18 +45,70 @@ export default function Header() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Get categories and subcategories for a specific main category
+    const getCategoriesForMainCategory = (mainCategoryId) => {
+        return categories.filter(cat => {
+            // Handle both populated and non-populated mainCategoryId
+            const catMainId = typeof cat.mainCategoryId === 'object' ? cat.mainCategoryId._id : cat.mainCategoryId;
+            return catMainId === mainCategoryId;
+        });
+    };
+
+    const getSubCategoriesForCategory = (categoryId) => {
+        return subCategories.filter(sub => {
+            // Handle both populated and non-populated categoryId
+            const subCatId = typeof sub.categoryId === 'object' ? sub.categoryId._id : sub.categoryId;
+            return subCatId === categoryId;
+        });
+    };
+
+    // Mock data for mega menu content (replace with actual data from your backend)
+    const getMegaMenuContent = (mainCategory) => {
+        const categoryList = getCategoriesForMainCategory(mainCategory._id);
+
+        // Group categories into columns (you can customize this logic)
+        const columns = [];
+        const itemsPerColumn = Math.ceil(categoryList.length / 3);
+
+        for (let i = 0; i < categoryList.length; i += itemsPerColumn) {
+            columns.push(categoryList.slice(i, i + itemsPerColumn));
+        }
+
+        return {
+            columns,
+            featuredImage: mainCategory.mainCategoryImage || '/men_archive.png',
+            featuredTitle: `${mainCategory.mainCategoryName.toUpperCase()} COLLECTION`,
+            featuredLink: `/collection/${mainCategory.slug}`
+        };
+    };
+
+    const popularSearches = [
+        'Leather clothing',
+        'Sculptural Cross-body Bags',
+        'Oxford Shoes',
+        'Vitamin C Brightening Elixirs'
+    ];
+
+    const suggestions = [
+        'Barbana bag',
+        'Gifts for her',
+        'Gifts for him',
+        "Men's new arrivals",
+        "Women's new arrivals"
+    ];
+
     return (
         <div className="font-sans">
-            {/* Main Header Container */}
-            <div className="absolute top-0 left-0 w-full z-50">
+            {/* Main Header Container - Fixed at top */}
+            <div className={`fixed top-0 left-0 w-full z-50 transition-shadow duration-300 ${isScrolled || hoveredCategory ? 'shadow-md' : ''}`}>
                 {/* Promo Bar */}
-                <div className="bg-primary hidden md:block border-b border-white/5">
+                <div className={`hidden md:block border-b transition-colors duration-300 ${isScrolled || hoveredCategory ? 'bg-primary border-primary/10' : 'bg-primary border-white/5'}`}>
                     <p className='text-white text-center text-[10px] sm:text-xs py-2 font-medium tracking-[0.25em] opacity-80 uppercase'>
                         Orders over $250 ship free | Extended returns available through Jun 15.
                     </p>
                 </div>
                 {/* Header Content */}
-                <header className="bg-transparent text-white">
+                <header className={`transition-colors duration-300 ${isScrolled || hoveredCategory ? 'bg-white text-dark' : 'bg-transparent text-white'}`}>
                     <div className="mx-auto px-4 lg:px-10">
                         <div className="flex items-center h-20 relative">
 
@@ -61,18 +129,28 @@ export default function Header() {
                                 <nav className="hidden lg:flex items-center space-x-10">
                                     {(mainCategories && mainCategories.length > 0) ? (
                                         mainCategories.map((category) => (
-                                            <a
+                                            <div
                                                 key={category._id}
-                                                href={`/collection/${category.slug || category.mainCategoryName?.toLowerCase().replace(' ', '-')}`}
-                                                className="text-base font-medium text-nowrap opacity-60 hover:opacity-100 transition-all duration-300 relative group uppercase"
+                                                className="relative group"
+                                                onMouseEnter={() => setHoveredCategory(category._id)}
+                                                onMouseLeave={() => setHoveredCategory(null)}
                                             >
-                                                {category.mainCategoryName}
-                                                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>
-                                            </a>
+                                                <Link
+                                                    to={`/collection/${category.slug || category.mainCategoryName?.toLowerCase().replace(' ', '-')}`}
+                                                    className={`text-base font-medium text-nowrap transition-all duration-300 relative uppercase ${hoveredCategory === category._id
+                                                        ? 'opacity-100'
+                                                        : 'opacity-60 hover:opacity-100'
+                                                        } ${isScrolled || hoveredCategory ? 'text-dark' : 'text-white'}`}
+                                                >
+                                                    {category.mainCategoryName}
+                                                    <span className={`absolute -bottom-1 left-0 h-[1px] transition-all duration-300 ${hoveredCategory === category._id ? 'w-full' : 'w-0 group-hover:w-full'
+                                                        } ${isScrolled || hoveredCategory ? 'bg-dark' : 'bg-white'}`}></span>
+                                                </Link>
+                                            </div>
                                         ))
                                     ) : (
                                         ['SHOP', 'MEN', 'WOMEN', 'LUX CARE'].map((item) => (
-                                            <a key={item} href="#" className="text-base font-medium opacity-60 hover:opacity-100 uppercase">{item}</a>
+                                            <Link key={item} to="#" className={`text-base font-medium uppercase transition-colors opacity-60 hover:opacity-100 ${isScrolled || hoveredCategory ? 'text-dark' : 'text-white'}`}>{item}</Link>
                                         ))
                                     )}
                                 </nav>
@@ -80,29 +158,36 @@ export default function Header() {
 
                             {/* Center: Logo */}
                             <div className="flex-1 flex justify-center z-[60]">
-                                <a href="/" className="text-3xl md:text-4xl font-black tracking-tighter hover:opacity-80 transition-opacity outline-none">eo</a>
+                                <Link to="/" className="hover:opacity-80 transition-opacity duration-300 outline-none">
+                                    <EoLogo
+                                        className={`h-8 w-auto transition-all duration-300 ${isScrolled || hoveredCategory ? '[&_path]:fill-primary' : '[&_path]:fill-white'}`}
+                                    />
+                                </Link>
                             </div>
 
                             {/* Right: Icons */}
                             <div className="flex items-center justify-end w-1/4 lg:w-auto lg:flex-1 space-x-1 sm:space-x-2 md:space-x-4">
-                                <button className="p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100">
+                                <button
+                                    onClick={() => setIsSearchOpen(true)}
+                                    className={`p-2 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isScrolled || hoveredCategory ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white'}`}
+                                >
                                     <LuSearch className='text-2xl' />
                                 </button>
-                                <button className="hidden xs:block p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100">
+                                <button className={`hidden xs:block p-2 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isScrolled || hoveredCategory ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white'}`}>
                                     <FaRegHeart className='text-2xl' />
                                 </button>
-                                <button className="p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100 relative">
+                                <button className={`p-2 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isScrolled || hoveredCategory ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white'}`}>
                                     <HiOutlineShoppingBag className='text-2xl' />
                                 </button>
                                 {user ? (
-                                    <div className='flex gap-2 items-center'>
-                                        <div className="h-8 w-8 bg-primary uppercase rounded-full flex items-center justify-center font-bold">
+                                    <div className={`flex gap-2 items-center ${isScrolled || hoveredCategory ? 'text-dark' : 'text-white'}`}>
+                                        <div className="h-8 w-8 bg-primary uppercase rounded-full flex items-center justify-center font-bold text-white">
                                             {user?.firstName?.slice(0, 1) || 'U'}
                                         </div>
                                         <span className='capitalize'>{user?.firstName}</span>
                                     </div>
                                 ) : (
-                                    <Link to="/auth" className="hidden sm:block p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100">
+                                    <Link to="/auth" className={`hidden sm:block p-2 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isScrolled || hoveredCategory ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white'}`}>
                                         <CgProfile className='text-2xl' />
                                     </Link>
                                 )}
@@ -120,24 +205,24 @@ export default function Header() {
                     <div className="flex flex-col h-full overflow-y-auto px-10 py-12">
                         <nav className="flex flex-col space-y-5">
                             {mainCategories && mainCategories.map((category, index) => (
-                                <a
+                                <Link
                                     key={category._id}
-                                    href={`/collection/${category.slug || category.mainCategoryName?.toLowerCase().replace(' ', '-')}`}
+                                    to={`/collection/${category.slug || category.mainCategoryName?.toLowerCase().replace(' ', '-')}`}
                                     onClick={() => setIsMenuOpen(false)}
                                     className={`text-lg font-semibold tracking-[0.2em] transform transition-all duration-500 text-white hover:text-gray-400 uppercase ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
                                         }`}
                                     style={{ transitionDelay: `${index * 75}ms` }}
                                 >
                                     {category.mainCategoryName}
-                                </a>
+                                </Link>
                             ))}
                         </nav>
 
                         <div className={`mt-10 pt-10 border-t border-white/10 flex flex-col space-y-5 transition-all duration-700 delay-300 ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                             }`}>
-                            <a href="/account" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Account</a>
-                            <a href="/wishlist" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Wishlist</a>
-                            <a href="/support" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Customer Care</a>
+                            <Link to="/account" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Account</Link>
+                            <Link to="/wishlist" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Wishlist</Link>
+                            <Link to="/support" className="text-xs font-semibold tracking-[0.15em] text-white/50 hover:text-white transition-colors uppercase">Customer Care</Link>
 
                             <div className="pt-6 flex space-x-4">
                                 {['IG', 'FB', 'TW'].map((social) => (
@@ -149,6 +234,208 @@ export default function Header() {
                         </div>
                     </div>
                 </div>
+
+                {/* Mega Menu Dropdown */}
+                {hoveredCategory && (
+                    <>
+                        {/* Invisible bridge to prevent menu from closing */}
+                        <div
+                            className="hidden lg:block absolute top-[64px] left-0 w-full h-[20px] z-40"
+                            onMouseEnter={() => setHoveredCategory(hoveredCategory)}
+                            onMouseLeave={() => setHoveredCategory(null)}
+                        />
+                        <div
+                            className="hidden lg:block absolute top-[90px] left-0 w-full bg-white text-dark z-50"
+                            onMouseEnter={() => setHoveredCategory(hoveredCategory)}
+                            onMouseLeave={() => setHoveredCategory(null)}
+                        >
+                            {mainCategories.map((mainCategory) => {
+                                if (mainCategory._id !== hoveredCategory) return null;
+
+                                const menuContent = getMegaMenuContent(mainCategory);
+                                const categoryList = getCategoriesForMainCategory(mainCategory._id);
+
+                                return (
+                                    <div key={mainCategory._id} className="container mx-auto px-10 py-12">
+                                        {categoryList.length > 0 ? (
+                                            <div className="grid grid-cols-4 gap-4">
+                                                {/* Categories Columns */}
+                                                <div className="col-span-3 grid grid-cols-3 gap-4">
+                                                    {categoryList.map((category) => {
+                                                        const subCats = getSubCategoriesForCategory(category._id);
+                                                        return (
+                                                            <div key={category._id}>
+                                                                <h3 className="text-sm font-bold tracking-wider uppercase mb-1 text-primary">
+                                                                    {category.categoryName}
+                                                                </h3>
+                                                                {subCats.length > 0 ? (
+                                                                    <ul className="">
+                                                                        {subCats.map((subCat) => (
+                                                                            <li key={subCat._id}>
+                                                                                <Link
+                                                                                    to={`/collection/${mainCategory.slug}/${category.slug}/${subCat.slug}`}
+                                                                                    className="text-sm font-medium text-mainText hover:text-gold transition-colors duration-200"
+                                                                                >
+                                                                                    {subCat.subCategoryName}
+                                                                                </Link>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                ) : (
+                                                                    <p className="text-sm text-lightText italic">No subcategories</p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* Featured Section */}
+                                                <div className="col-span-1">
+                                                    <div className="relative group cursor-pointer">
+                                                        <img
+                                                            src={menuContent.featuredImage}
+                                                            alt={menuContent.featuredTitle}
+                                                            className="w-full h-64 object-cover"
+                                                        />
+                                                        <div className="mt-4">
+                                                            <Link
+                                                                to={menuContent.featuredLink}
+                                                                className="text-xs font-bold tracking-wider uppercase text-dark/80 hover:text-primary transition-colors flex items-center gap-2"
+                                                            >
+                                                                {menuContent.featuredTitle}
+                                                                <span className="text-lg">→</span>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="py-8 text-center">
+                                                <p className="text-lightText">No categories available for {mainCategory.mainCategoryName}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
+
+                {/* Search Overlay */}
+                {isSearchOpen && (
+                    <div className="fixed top-[120px] left-0 w-full bg-white z-[100] shadow-2xl max-h-[60vh] overflow-y-auto">
+                        <div className="container mx-auto px-10 py-8">
+                            {/* Search Header */}
+                            <div className="flex items-center justify-between pb-6 border-b border-border">
+                                <div className="flex-1 flex items-center gap-4">
+                                    <LuSearch className="text-2xl text-mainText" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search our global archive for objects of rarity."
+                                        className="flex-1 text-lg text-mainText placeholder:text-lightText outline-none bg-transparent"
+                                        autoFocus
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setIsSearchOpen(false);
+                                        setSearchQuery('');
+                                    }}
+                                    className="p-2 hover:bg-mainBG rounded-full transition-colors"
+                                >
+                                    <IoClose className="text-2xl text-mainText" />
+                                </button>
+                            </div>
+
+                            {/* Search Content */}
+                            <div className="py-8">
+                                <div className="grid grid-cols-4 gap-12">
+                                    {/* Left Column - Searches */}
+                                    <div className="col-span-1 space-y-8">
+                                        {/* Popular Searches */}
+                                        <div>
+                                            <h3 className="text-xs font-bold tracking-wider uppercase mb-4 text-dark/80">
+                                                POPULAR SEARCHES
+                                            </h3>
+                                            <ul className="space-y-2.5">
+                                                {popularSearches.map((search, index) => (
+                                                    <li key={index}>
+                                                        <Link
+                                                            to={`/search?q=${encodeURIComponent(search)}`}
+                                                            className="text-sm text-mainText hover:text-primary transition-colors duration-200"
+                                                        >
+                                                            {search}
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        {/* Suggestions */}
+                                        <div>
+                                            <h3 className="text-xs font-bold tracking-wider uppercase mb-4 text-dark/80">
+                                                SUGGESTIONS
+                                            </h3>
+                                            <ul className="space-y-2.5">
+                                                {suggestions.map((suggestion, index) => (
+                                                    <li key={index}>
+                                                        <Link
+                                                            to={`/search?q=${encodeURIComponent(suggestion)}`}
+                                                            className="text-sm text-mainText hover:text-primary transition-colors duration-200"
+                                                        >
+                                                            {suggestion}
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column - Trending Products */}
+                                    <div className="col-span-3">
+                                        <h3 className="text-xs font-bold tracking-wider uppercase mb-6 text-dark/80">
+                                            TRENDING PRODUCTS
+                                        </h3>
+                                        <div className="grid grid-cols-4 gap-6">
+                                            {/* Mock trending products - replace with actual data */}
+                                            {[1, 2, 3, 4].map((item) => (
+                                                <div key={item} className="group cursor-pointer">
+                                                    <div className="relative mb-3 bg-mainBG aspect-square overflow-hidden">
+                                                        <img
+                                                            src="/images/product.png"
+                                                            alt="Product"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                        <button className="absolute top-3 right-3 p-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <FaRegHeart className="text-sm" />
+                                                        </button>
+                                                    </div>
+                                                    <h4 className="text-sm font-medium text-mainText mb-1">
+                                                        Product Name {item}
+                                                    </h4>
+                                                    <p className="text-sm text-lightText">$XXX</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Backdrop overlay when search is open */}
+                {isSearchOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/20 z-[90]"
+                        onClick={() => {
+                            setIsSearchOpen(false);
+                            setSearchQuery('');
+                        }}
+                    />
+                )}
             </div>
         </div>
     )
