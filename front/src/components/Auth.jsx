@@ -109,7 +109,7 @@ export default function Auth() {
                         {/* Header */}
                         <div className="text-center lg:text-left mb-6">
                             <h1 className='text-2xl font-medium text-dark mb-2'>Welcome to</h1>
-                            <img src={require("../assets/Logo.webp")} alt="LOGO" />
+                            <img src={require("../assets/images/Logo.webp")} alt="LOGO" />
                         </div>
                         <p className='text-dark text-base font-medium leading-5 max-w-sm'>Login / Register with us to get latest updates and manage your orders</p>
 
@@ -214,11 +214,11 @@ export default function Auth() {
 
 
                 <div className="absolute left-5 -bottom-48 opacity-40 pointer-events-none">
-                    <img src={require("../assets/eofooter.webp")} alt="LOGO footer" />
+                    <img src={require("../assets/images/eofooter.webp")} alt="LOGO footer" />
                 </div>
             </div>
             <div className="hidden lg:block relative font-['Urbanist']">
-                <img src={require("../assets/auth.webp")} alt="auth image" className='w-full h-full object-cover' />
+                <img src={require("../assets/images/auth.webp")} alt="auth image" className='w-full h-full object-cover' />
             </div>
         </div>
     )
