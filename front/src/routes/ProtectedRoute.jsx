@@ -7,7 +7,10 @@ import { Navigate, Outlet } from 'react-router-dom';
  * @param {string} redirectTo  - where to redirect if access is denied
  */
 const ProtectedRoute = ({ allowedRole, redirectTo = '/auth' }) => {
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+
+    // Wait for redux-persist rehydration before making any redirect decision
+    if (loading) return null;
 
     if (!isAuthenticated) {
         return <Navigate to={redirectTo} replace />;
