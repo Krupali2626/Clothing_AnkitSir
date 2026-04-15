@@ -5,13 +5,14 @@ import { LuSearch } from "react-icons/lu";
 import { FaRegHeart } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMainCategories } from '../redux/slice/category.slice';
+import { Link } from 'react-router-dom';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const dispatch = useDispatch();
     const { mainCategories, loading } = useSelector((state) => state.category);
-
-
+    const { user } = useSelector((state) => state.auth);
+    console.log(user);
 
     useEffect(() => {
         dispatch(fetchMainCategories());
@@ -93,9 +94,18 @@ export default function Header() {
                                 <button className="p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100 relative">
                                     <HiOutlineShoppingBag className='text-2xl' />
                                 </button>
-                                <button className="hidden sm:block p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100">
-                                    <CgProfile className='text-2xl' />
-                                </button>
+                                {user ? (
+                                    <div className='flex gap-2 items-center'>
+                                        <div className="h-8 w-8 bg-primary uppercase rounded-full flex items-center justify-center font-bold">
+                                            {user?.firstName?.slice(0, 1) || 'U'}
+                                        </div>
+                                        <span className='capitalize'>{user?.firstName}</span>
+                                    </div>
+                                ) : (
+                                    <Link to="/auth" className="hidden sm:block p-2 rounded-full hover:bg-white/5 transition-all duration-300 opacity-70 hover:opacity-100">
+                                        <CgProfile className='text-2xl' />
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>

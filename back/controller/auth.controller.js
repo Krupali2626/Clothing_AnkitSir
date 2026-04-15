@@ -148,12 +148,7 @@ export class AuthController {
       return res.status(200).json({
         success: true,
         message: user.isNew ? "Registered and logged in successfully" : "Logged in successfully",
-        user: {
-          id: user._id,
-          mobileNo: user.mobileNo,
-          role: user.role,
-          verified: user.verified
-        },
+        user,
         accessToken,
         refreshToken
       });
