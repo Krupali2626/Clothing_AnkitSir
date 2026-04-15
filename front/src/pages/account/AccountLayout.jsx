@@ -24,8 +24,7 @@ export default function AccountLayout({ children }) {
     };
 
     return (
-        <div className="min-h-screen bg-mainBG">
-            <Header />
+        <div className="min-h-[calc(100vh-10rem)] bg-mainBG">
 
             {/* Breadcrumb */}
             <div className="py-6 px-8 text-center bg-background border border-border">
@@ -37,7 +36,7 @@ export default function AccountLayout({ children }) {
             </div>
 
             {/* Body */}
-            <div className="flex min-h-[calc(100vh-10rem)] px-0 lg:px-0">
+            <div className="flex min-h-[calc(100vh-11.5rem)] px-0 lg:px-0">
 
                 {/* Left Sidebar */}
                 <aside className="hidden md:flex flex-col w-96 shrink-0 border-r border-border bg-white">

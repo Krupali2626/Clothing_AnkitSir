@@ -131,9 +131,9 @@ export default function Header() {
     ];
 
     return (
-        <div className="font-sans">
+        <>
             {/* Main Header Container - Fixed at top */}
-            <div className={`fixed top-0 left-0 w-full z-50 transition-shadow duration-300 ${isScrolled || hoveredCategory ? 'shadow-md' : ''}`}>
+            <div className={`${isHomePage ?"fixed" : "sticky"} top-0 left-0 w-full z-50 transition-shadow duration-300 ${isScrolled || hoveredCategory ? 'shadow-md' : ''}`}>
                 {/* Promo Bar */}
                 <div className={`hidden md:block border-b transition-colors duration-300 ${isScrolled || hoveredCategory ? 'bg-primary border-primary/10' : 'bg-primary border-white/5'}`}>
                     <p className='text-white text-center text-[10px] sm:text-xs py-2 font-medium tracking-[0.25em] opacity-80 uppercase'>
@@ -551,7 +551,7 @@ export default function Header() {
                     </button>
                 </nav>
             </div>
-        </div>
+        </>
     )
 }
 

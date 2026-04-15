@@ -16,7 +16,7 @@ const UserRoutes = () => {
 
             {/* Protected user-only routes */}
             <Route element={<ProtectedRoute allowedRole="user" />}>
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile" element={<Layout><Profile /></Layout>} />
             </Route>
         </Routes>
     );
