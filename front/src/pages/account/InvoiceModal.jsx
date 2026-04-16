@@ -61,7 +61,7 @@ export default function InvoiceModal({ order, onClose }) {
 
     const statusColor =
         order.orderStatus === 'Delivered' ? 'text-green-600' :
-            order.orderStatus === 'Cancelled' ? 'text-red-600' : 'text-amber-600';
+            order.orderStatus === 'Cancelled' ? 'text-red-600' : 'text-gold';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -137,7 +137,7 @@ export default function InvoiceModal({ order, onClose }) {
                                 <div className="space-y-1.5">
                                     <p className="text-xs text-gray-500">Method: <span className="text-gray-900 font-medium">{order.paymentMethod}</span></p>
                                     {order.appliedCoupon?.code && (
-                                        <p className="text-xs text-gray-500 font-medium">Coupon: <span className="text-[#D4AF37]">{order.appliedCoupon.code}</span></p>
+                                        <p className="text-xs text-gray-500 font-medium">Coupon: <span className="text-gold">{order.appliedCoupon.code}</span></p>
                                     )}
                                 </div>
                             </div>

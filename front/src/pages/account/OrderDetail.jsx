@@ -384,39 +384,48 @@ export default function OrderDetail() {
 
                             {/* Refund details card — shown only when cancelled */}
                             {order.orderStatus === 'Cancelled' && (
-                                <div className="bg-white p-5 flex flex-col gap-2">
-                                    <p className="text-base font-semibold text-primary uppercase tracking-wide">
+                                <div className="bg-white p-6 flex flex-col gap-6">
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">
                                         Refund Details
-                                    </p>
+                                    </h3>
 
-                                    {/* Total refundable */}
-                                    <div className="flex justify-between text-base">
-                                        <span className="text-mainText font-medium">Total Refundable Amount</span>
-                                        <span className="font-semibold text-mainText">${(total - shipping).toFixed(2)}</span>
-                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-end border-b border-gray-100 pb-4">
+                                            <div>
+                                                <p className="text-base font-semibold text-gray-800">Total Refundable Amount</p>
+                                                <p className="text-sm font-medium text-gray-400 mt-1">
+                                                    $ {(total - shipping).toFixed(2)} Added to {order.paymentMethod || 'Payment Method'}
+                                                    {order.cardLast4 ? ` — ${order.cardLast4}` : ''}
+                                                </p>
+                                            </div>
+                                            <span className="text-2xl font-bold text-gray-900">${(total - shipping).toFixed(2)}</span>
+                                        </div>
 
-                                    {/* Refund destination */}
-                                    <div className="flex justify-between text-base">
-                                        <span className="text-lightText font-bold">$ {(total - shipping).toFixed(2)}</span>
-                                        <span className="text-lightText font-medium">
-                                            Added to {order.paymentMethod || 'original payment method'} {order.cardLast4 ? `•••• ${order.cardLast4}` : ''}
-                                        </span>
-                                    </div>
+                                        {/* Dynamic Refund Message Based on Status */}
+                                        {order.paymentStatus === 'Refunded' ? (
+                                            <div className="flex items-start gap-3 text-[#009951] bg-[#EBFFEE] p-4 rounded-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 shrink-0 mt-0.5">
+                                                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" />
+                                                </svg>
+                                                <p className="text-sm font-medium leading-relaxed">
+                                                    The refund has been processed successfully on {new Date(order.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}. If you have questions, <Link to="/support" className="text-blue-600 underline font-semibold transition-all">contact us</Link>.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start gap-3 text-gray-600 bg-gray-50 border border-gray-100 p-4 rounded-sm font-medium">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5 shrink-0 mt-0.5 text-gray-400">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                                                </svg>
+                                                <p className="text-sm leading-relaxed">
+                                                    Refunds are processed within 3-5 business days. We will notify you once your refund has been issued. If you have questions, <Link to="/support" className="text-blue-600 underline font-semibold transition-all">contact us</Link>.
+                                                </p>
+                                            </div>
+                                        )}
 
-                                    {/* Info note */}
-                                    <p className="text-sm text-primary leading-relaxed font-semibold">
-                                        <span className="inline-flex items-center gap-1 align-middle">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 shrink-0">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-                                            </svg>
-                                        </span>{' '}
-                                        Refunds are processed within 3–5 business days. We will notify you once your refund has been issued. If you have questions,{' '}
-                                        <Link to="/contact" className="text-[#006FCF] font-semibold underline">contact us</Link> at.
-                                    </p>
-
-                                    {/* Shipping non-refundable note */}
-                                    <div className="bg-[#FEE9E7] text-[#C00F0C] text-sm font-semibold px-4 py-2">
-                                        Note: Shipping fees are non-refundable as per policy.
+                                        {/* Shipping Policy Note */}
+                                        <div className="bg-[#FFF1F0] text-[#C00F0C] text-[13px] font-semibold px-4 py-3 rounded-sm border border-[#FFD8D6]">
+                                            Note: Shipping fees are non-refundable as per policy.
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -426,21 +435,21 @@ export default function OrderDetail() {
                         <div className="flex flex-col gap-4">
 
                             {/* Payment information card */}
-                            <div className="bg-white p-5 flex flex-col gap-3">
-                                <p className="text-lg font-semibold text-primary uppercase tracking-normal">
+                            <div className="bg-white p-6 flex flex-col gap-5">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">
                                     Payment Information
-                                </p>
+                                </h3>
 
                                 {/* Per-item breakdown */}
-                                <div className="flex flex-col gap-1.5">
+                                <div className="space-y-3">
                                     {order.products?.map((item, idx) => {
                                         const name = item.name || item.productId?.name || 'Product';
                                         return (
-                                            <div key={idx} className="flex justify-between text-sm text-lightText">
-                                                <span className="truncate pr-2 font-medium">
+                                            <div key={idx} className="flex justify-between text-sm">
+                                                <span className="text-gray-400 font-medium">
                                                     {item.quantity}x {name}
                                                 </span>
-                                                <span className="shrink-0 text-dark text-base font-semibold">
+                                                <span className="text-gray-900 font-semibold">
                                                     ${(item.price * item.quantity).toFixed(2)}
                                                 </span>
                                             </div>
@@ -448,72 +457,67 @@ export default function OrderDetail() {
                                     })}
                                 </div>
 
-                                <div className="border-t border-border pt-3 flex flex-col gap-2">
-                                    <div className="flex justify-between text-base font-medium text-lightText">
+                                <div className="border-t border-gray-50 pt-4 space-y-2.5">
+                                    <div className="flex justify-between text-sm text-gray-400 font-medium">
                                         <span>Subtotal ({order.products?.length} items)</span>
-                                        <span className='text-base font-semibold text-mainText'>${subtotal.toFixed(2)}</span>
+                                        <span className='text-gray-900'>${subtotal.toFixed(2)}</span>
                                     </div>
                                     {discount > 0 && (
-                                        <div className="flex justify-between text-base font-medium">
-                                            <span className="text-lightText">
-                                                Discount
-                                                {order.appliedCoupon?.discountType === 'percentage'
-                                                    ? ` (${order.appliedCoupon?.percentageValue ?? ''}%)`
-                                                    : ''}
-                                            </span>
-                                            <span className="text-[#009951] text-base font-semibold">-${discount.toFixed(2)}</span>
+                                        <div className="flex justify-between text-sm font-semibold">
+                                            <span className="text-gray-400">Discount</span>
+                                            <span className="text-[#009951]">-${discount.toFixed(2)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-base font-medium text-lightText">
+                                    <div className="flex justify-between text-sm text-gray-400 font-medium pb-2">
                                         <span>Shipping</span>
-                                        <span className='text-base font-semibold text-mainText'>${shipping.toFixed(2)}</span>
+                                        <span className='text-gray-900'>${shipping.toFixed(2)}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-between text-lg font-semibold text-primary border-t border-border pt-3">
-                                    <span>Total Paid :</span>
-                                    <span>${total.toFixed(2)}</span>
+                                <div className="flex justify-between items-center border-t border-gray-50 pt-4">
+                                    <span className="text-sm font-bold text-gray-900 uppercase">Total Paid :</span>
+                                    <span className="text-lg font-bold text-primary">${total.toFixed(2)}</span>
                                 </div>
 
                                 {/* Payment method */}
                                 {order.paymentMethod && (
-                                    <div className="flex items-center gap-2 bg-mainBG px-3 py-2 text-mainText font-medium text-base">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                                    <div className="flex items-center gap-3 bg-gray-50 p-3 text-gray-700 text-[13px] font-medium border border-gray-100 rounded-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-gray-400">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
                                         </svg>
-                                        <span>Paid via {order.paymentMethod}</span>
+                                        <span>Paid by {order.paymentMethod} {order.cardDetails?.cardType || ''}</span>
                                     </div>
                                 )}
 
                                 {/* Get Invoice */}
                                 <button
                                     onClick={() => setShowInvoice(true)}
-                                    className="w-full border border-border text-base font-semibold text-dark py-2 px-6 hover:bg-mainBG transition-colors mt-1"
+                                    className="w-full border border-gray-200 text-xs font-bold text-gray-800 py-3 tracking-widest hover:bg-gray-50 transition-all uppercase rounded-sm"
                                 >
                                     GET INVOICE
                                 </button>
                             </div>
 
                             {/* Updates sent to card */}
-                            <div className="bg-white p-5">
-                                <div className="flex items-center gap-2 mb-3 text-dark">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                            <div className="bg-white p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-gray-400">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                                     </svg>
-                                    <p className="text-base font-semibold text-primary uppercase tracking-normal">
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[2px]">
                                         Updates Sent To
-                                    </p>
+                                    </h3>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                        <p className="text-base text-lightText mb-0.5 font-medium">Call</p>
-                                        <p className="text-dark font-semibold text-base">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">Call</p>
+                                        <p className="text-sm text-gray-800 font-semibold tracking-tight">
                                             {order.userId?.mobileNo || '—'}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-base text-lightText mb-0.5 font-medium">Email</p>
-                                        <p className="text-dark font-semibold break-all text-base">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wider">Email</p>
+                                        <p className="text-sm text-gray-800 font-semibold break-all leading-tight">
                                             {order.userId?.email || '—'}
                                         </p>
                                     </div>

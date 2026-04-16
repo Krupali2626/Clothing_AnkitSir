@@ -551,6 +551,9 @@ export const cancelOrder = async (req, res) => {
         }
 
         // Update payment status
+        order.paymentStatus = "Refunded";
+        await order.save({ session });
+
         const payment = await Payment.findOne({ orderId: order._id }).session(session);
         if (payment) {
             payment.paymentStatus = "Refunded";
