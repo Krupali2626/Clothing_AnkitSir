@@ -279,7 +279,8 @@ export const getMyOrders = async (req, res) => {
         const userId = req.user.id || req.user._id;
         const orders = await Order.find({ userId })
             .populate("products.productId", "name images slug")
-            .populate("products.variantId", "color")
+            .populate("products.variantId", "color images")
+            .populate("userId", "firstName lastName email mobileNo")
             .sort({ createdAt: -1 });
 
         return sendSuccessResponse(res, "Orders fetched successfully", orders);
@@ -486,6 +487,89 @@ export const updateOrderStatusAdmin = async (req, res) => {
         await session.abortTransaction();
         console.error("Order Status Update Error:", error);
         return sendErrorResponse(res, 500, "Error updating order status", error.message);
+    } finally {
+        session.endSession();
+    }
+};
+
+export const cancelOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const userId = req.user.id || req.user._id;
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        const order = await Order.findById(id).session(session);
+        
+        if (!order) {
+            await session.abortTransaction();
+            return sendNotFoundResponse(res, "Order not found");
+        }
+
+        // Verify order belongs to user
+        if (order.userId.toString() !== userId.toString()) {
+            await session.abortTransaction();
+            return sendBadRequestResponse(res, "Unauthorized to cancel this order");
+        }
+
+        // Check if order can be cancelled
+        if (["Delivered", "Cancelled"].includes(order.orderStatus)) {
+            await session.abortTransaction();
+            return sendBadRequestResponse(res, `Cannot cancel order with status: ${order.orderStatus}`);
+        }
+
+        // Update order status
+        order.orderStatus = "Cancelled";
+        order.cancellationReason = reason || "No reason provided";
+        order.cancelledAt = new Date();
+
+        // Add to timeline
+        order.timeline.push({
+            status: "Cancelled",
+            message: `Order cancelled by user. Reason: ${reason || "No reason provided"}`,
+            updatedBy: "user"
+        });
+
+        await order.save({ session });
+
+        // Restore stock for cancelled items
+        for (const item of order.products) {
+            const variant = await ProductVariant.findById(item.variantId).session(session);
+            if (variant) {
+                if (variant.options && variant.options.length > 0 && item.selectedSize) {
+                    const sizeObj = variant.options.find(o => o.size === item.selectedSize);
+                    if (sizeObj) {
+                        sizeObj.stock += item.quantity;
+                    }
+                } else {
+                    variant.stock += item.quantity;
+                }
+                await variant.save({ session });
+            }
+        }
+
+        // Update payment status
+        const payment = await Payment.findOne({ orderId: order._id }).session(session);
+        if (payment) {
+            payment.paymentStatus = "Refunded";
+            payment.refundDate = new Date();
+            await payment.save({ session });
+        }
+
+        await session.commitTransaction();
+
+        return sendSuccessResponse(res, "Order cancelled successfully. Refund will be processed within 3-5 business days.", {
+            orderId: order.orderId,
+            orderStatus: order.orderStatus,
+            cancelledAt: order.cancelledAt
+        });
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error("Cancel Order Error:", error);
+        return sendErrorResponse(res, 500, "Error cancelling order", error.message);
     } finally {
         session.endSession();
     }

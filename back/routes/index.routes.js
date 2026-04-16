@@ -84,7 +84,8 @@ import {
   confirmStripePayment,
   orderSummaryController,
   getAllOrdersAdmin,
-  updateOrderStatusAdmin
+  updateOrderStatusAdmin,
+  cancelOrder
 } from "../controller/order.controller.js";
 import {
   myPaymentController,
@@ -197,6 +198,7 @@ router.delete("/cart/coupon/remove", UserAuth, removeCoupon);
 // --- Order & Payment Routes ---
 router.post("/order/place", UserAuth, placeOrder);
 router.get("/order/my", UserAuth, getMyOrders);
+router.put("/order/cancel/:id", UserAuth, cancelOrder);
 router.get("/order/admin/all", UserAuth, adminAuth, getAllOrdersAdmin);
 router.put("/order/admin/status/:id", UserAuth, adminAuth, updateOrderStatusAdmin);
 router.get("/order/summary", UserAuth, orderSummaryController);

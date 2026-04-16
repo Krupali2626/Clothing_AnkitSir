@@ -72,7 +72,7 @@ export default function Profile() {
 
     const handleSendOtp = async () => {
         try {
-            await dispatch(sendEmailOtp()).unwrap();  // ← uncomment the real call
+            await dispatch(sendEmailOtp()).unwrap();
             setVerifyModal(true);
             setOtp(['', '', '', '']);
             startResendTimer();
@@ -298,16 +298,19 @@ export default function Profile() {
                                     />
                                 ) : user?.email ? (
                                     <div className="flex items-center justify-between">
-                                        <p className="text-sm sm:text-lg font-medium text-primary">{user.email}</p>
+                                        <p className="text-sm sm:text-lg font-medium text-primary truncate" title={user.email}>
+                                            <span className="hidden sm375:inline">{user.email}</span>
+                                            <span className="sm375:hidden">{user.email.split('@')[0]}@...</span>
+                                        </p>
                                         {user?.emailVerified ? (
                                             <span className="flex items-center gap-1 text-xs sm:text-base font-semibold text-primary tracking-widest uppercase">
                                                 <HiOutlineCheckCircle className="text-base text-[#009951]" />
                                                 Verified
                                             </span>
                                         ) : (
-                                            <button type="button" onClick={handleSendOtp} disabled={emailOtpLoading} className="flex items-center gap-1 text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50">
+                                            <button type="button" onClick={handleSendOtp} disabled={emailOtpLoading} className="flex items-center gap-1 text-xs sm:text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50">
                                                 Verify
-                                                <FaArrowRight className="text-base text-gold" />
+                                                <FaArrowRight className="text-xs sm:text-base text-gold" />
                                             </button>
                                         )}
                                     </div>
@@ -380,7 +383,7 @@ export default function Profile() {
                                         ···· {defaultCard.cardNumber?.slice(-4)}
                                     </span>
                                 </div>
-                                <span className="text-sm text-lightText">
+                                <span className="text-sm text-primary font-semibold">
                                     Expires {defaultCard.expiryDate}
                                 </span>
                             </div>
@@ -396,27 +399,28 @@ export default function Profile() {
                 <>
                     <div className="fixed inset-0 bg-black/40 z-[100]" onClick={closeModal} />
                     <div className="fixed inset-0 z-[110] flex items-center justify-center px-4 pointer-events-none">
-                        <div className="bg-white w-full max-w-md p-8 shadow-xl relative pointer-events-auto">
+                        <div className="bg-white w-full max-w-md p-4 md:p-8 shadow-xl relative pointer-events-auto">
 
-                            {/* Close */}
-                            <button
-                                onClick={closeModal}
-                                className="absolute top-5 right-5 text-lightText hover:text-dark transition-colors"
-                                aria-label="Close"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-
-                            {/* Title */}
-                            <h2 className="text-2xl font-semibold text-dark mb-2">Verify your email</h2>
-                            <p className="text-sm text-lightText mb-8">
+                            <div className="flex items-center justify-between mb-2">
+                                {/* Title */}
+                                <h2 className="text-lg lg:text-2xl font-semibold text-dark ">Verify your email</h2>
+                                {/* Close */}
+                                <button
+                                    onClick={closeModal}
+                                    className="text-lightText hover:text-dark transition-colors"
+                                    aria-label="Close"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p className="text-xs md:text-sm text-lightText mb-4 md:mb-8">
                                 We've sent a 4-digit code to{' '}
                                 <span className="text-dark">
                                     {user?.email
-                                        ? `—${user.email.slice(user.email.lastIndexOf('@') - 2)}`
+                                        ? `•••${user.email.slice(user.email.lastIndexOf('@') - 2)}`
                                         : 'your email'}
                                 </span>
                             </p>
@@ -433,14 +437,14 @@ export default function Profile() {
                                         value={digit}
                                         onChange={(e) => handleOtpChange(i, e.target.value)}
                                         onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                        className="w-full aspect-square text-center text-2xl font-medium text-dark bg-mainBG border border-border outline-none focus:border-primary transition-colors"
+                                        className="w-[40px] h-[40px] md:w-[50px] md:h-[50px] text-center text-base md:text-2xl font-medium text-dark bg-mainBG border border-border outline-none focus:border-primary transition-colors"
                                         autoFocus={i === 0}
                                     />
                                 ))}
                             </div>
 
                             {/* Resend */}
-                            <p className="text-sm text-lightText mb-8">
+                            <p className="text-xs md:text-sm text-lightText mb-4 md:mb-8">
                                 Didn't receive it?{' '}
                                 {resendTimer > 0 ? (
                                     <span className="text-lightText">Resend OTP in <span className="font-semibold text-dark">{resendTimer}s</span></span>
@@ -459,7 +463,7 @@ export default function Profile() {
                             <button
                                 onClick={handleVerifyOtp}
                                 disabled={otp.join('').length !== 4 || emailOtpLoading}
-                                className="w-full py-4 bg-mainBG text-lightText uppercase text-sm font-semibold tracking-widest transition-colors disabled:opacity-60 enabled:bg-primary enabled:text-white enabled:hover:bg-primary/90"
+                                className="w-full py-2 md:py-4 bg-mainBG text-lightText uppercase text-xs md:text-sm font-semibold tracking-widest transition-colors disabled:opacity-60 enabled:bg-primary enabled:text-white enabled:hover:bg-primary/90"
                             >
                                 {emailOtpLoading ? 'Verifying...' : 'Verify'}
                             </button>

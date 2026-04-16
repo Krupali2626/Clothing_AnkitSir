@@ -5,6 +5,8 @@ import Auth from '../components/Auth';
 import ProductDetails from '../pages/ProductDetails';
 import ProtectedRoute from './ProtectedRoute';
 import Profile from '../pages/account/Profile';
+import Orders from '../pages/account/Orders';
+import OrderDetail from '../pages/account/OrderDetail';
 
 const UserRoutes = () => {
     return (
@@ -17,6 +19,8 @@ const UserRoutes = () => {
             {/* Protected user-only routes */}
             <Route element={<ProtectedRoute />}>
                 <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                <Route path="/orders" element={<Layout><Orders /></Layout>} />
+                <Route path="/orders/:id" element={<Layout><OrderDetail /></Layout>} />
             </Route>
         </Routes>
     );

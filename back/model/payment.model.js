@@ -45,6 +45,10 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  refundDate: {
+    type: Date,
+    default: null,
+  },
   cardDetails: {
     cardNumber: String,
     cardHolderName: String,
