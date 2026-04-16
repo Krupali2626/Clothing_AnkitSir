@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { fetchOrderById, clearCurrentOrder, cancelOrder } from '../../redux/slice/order.slice';
 import { HiArrowLeft } from 'react-icons/hi2';
+import InvoiceModal from './InvoiceModal';
 
 const CANCEL_REASONS = [
     'Ordered by mistake',
@@ -181,6 +182,7 @@ export default function OrderDetail() {
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCancelledModal, setShowCancelledModal] = useState(false);
+    const [showInvoice, setShowInvoice] = useState(false);
 
     useEffect(() => {
         dispatch(fetchOrderById(id));
@@ -233,6 +235,9 @@ export default function OrderDetail() {
                 )}
                 {showCancelledModal && (
                     <CancelledModal onClose={() => setShowCancelledModal(false)} />
+                )}
+                {showInvoice && order && (
+                    <InvoiceModal order={order} onClose={() => setShowInvoice(false)} />
                 )}
 
                 {/* Back link */}
@@ -481,7 +486,10 @@ export default function OrderDetail() {
                                 )}
 
                                 {/* Get Invoice */}
-                                <button className="w-full border border-border text-base font-semibold text-dark py-2 px-6 hover:bg-mainBG transition-colors mt-1">
+                                <button
+                                    onClick={() => setShowInvoice(true)}
+                                    className="w-full border border-border text-base font-semibold text-dark py-2 px-6 hover:bg-mainBG transition-colors mt-1"
+                                >
                                     GET INVOICE
                                 </button>
                             </div>
