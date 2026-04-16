@@ -24,7 +24,7 @@ const profileSchema = Yup.object({
 
 export default function Profile() {
     const dispatch = useDispatch();
-    const { user, loading } = useSelector((state) => state.auth);
+    const { user, loading, emailOtpLoading } = useSelector((state) => state.auth);
     const [isEditing, setIsEditing] = useState(false);
 
     // Email verify modal state
@@ -72,7 +72,7 @@ export default function Profile() {
 
     const handleSendOtp = async () => {
         try {
-            await dispatch(sendEmailOtp()).unwrap();
+            await dispatch(sendEmailOtp()).unwrap();  // ← uncomment the real call
             setVerifyModal(true);
             setOtp(['', '', '', '']);
             startResendTimer();
@@ -300,12 +300,12 @@ export default function Profile() {
                                     <div className="flex items-center justify-between">
                                         <p className="text-lg font-medium text-primary">{user.email}</p>
                                         {user?.emailVerified ? (
-                                            <span className="flex items-center gap-1 text-[11px] font-semibold text-primary tracking-widest uppercase">
-                                                <HiOutlineCheckCircle className="text-sm" />
+                                            <span className="flex items-center gap-1 text-base font-semibold text-primary tracking-widest uppercase">
+                                                <HiOutlineCheckCircle className="text-base text-[#009951]" />
                                                 Verified
                                             </span>
                                         ) : (
-                                            <button type="button" onClick={handleSendOtp} disabled={loading} className="flex items-center gap-1 text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50">
+                                            <button type="button" onClick={handleSendOtp} disabled={emailOtpLoading} className="flex items-center gap-1 text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity disabled:opacity-50">
                                                 Verify
                                                 <FaArrowRight className="text-base text-gold" />
                                             </button>
@@ -314,14 +314,14 @@ export default function Profile() {
                                 ) : (
                                     <div className="flex items-start justify-between">
                                         <p className="text-lg text-lightText">Not added yet</p>
-                                        <button type="button" onClick={handleSendOtp} disabled={loading} className="flex items-center gap-1 text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity mt-0.5 disabled:opacity-50">
+                                        <button type="button" onClick={handleSendOtp} disabled={emailOtpLoading} className="flex items-center gap-1 text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity mt-0.5 disabled:opacity-50">
                                             <HiOutlineExclamationTriangle className="text-base text-gold" />
                                             Verify
                                         </button>
                                     </div>
                                 )}
                             </div>
-                            {!isEditing && (
+                            {!isEditing && !user?.email && !user?.emailVerified && (
                                 <p className="text-base text-lightText mt-1">Add your email for order updates.</p>
                             )}
                         </div>
@@ -394,9 +394,9 @@ export default function Profile() {
             {/* ── Email Verify OTP Modal ── */}
             {verifyModal && (
                 <>
-                    {/* <div className="fixed inset-0 bg-black/40 z-[100]" onClick={closeModal} /> */}
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-                        <div className="bg-white w-full max-w-md p-8 shadow-xl relative">
+                    <div className="fixed inset-0 bg-black/40 z-[100]" onClick={closeModal} />
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center px-4 pointer-events-none">
+                        <div className="bg-white w-full max-w-md p-8 shadow-xl relative pointer-events-auto">
 
                             {/* Close */}
                             <button
@@ -447,7 +447,7 @@ export default function Profile() {
                                 ) : (
                                     <button
                                         onClick={handleResendOtp}
-                                        disabled={loading}
+                                        disabled={emailOtpLoading}
                                         className="font-bold text-dark hover:text-primary transition-colors disabled:opacity-50"
                                     >
                                         Resend code
@@ -458,10 +458,10 @@ export default function Profile() {
                             {/* Verify button */}
                             <button
                                 onClick={handleVerifyOtp}
-                                disabled={otp.join('').length !== 4 || loading}
+                                disabled={otp.join('').length !== 4 || emailOtpLoading}
                                 className="w-full py-4 bg-mainBG text-lightText uppercase text-sm font-semibold tracking-widest transition-colors disabled:opacity-60 enabled:bg-primary enabled:text-white enabled:hover:bg-primary/90"
                             >
-                                {loading ? 'Verifying...' : 'Verify'}
+                                {emailOtpLoading ? 'Verifying...' : 'Verify'}
                             </button>
                         </div>
                     </div>

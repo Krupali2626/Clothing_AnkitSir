@@ -9,6 +9,7 @@ const initialState = {
     isAuthenticated: false,
     isNewUser: false,   // true = just registered, false = existing user login
     loading: false,
+    emailOtpLoading: false,
     error: null,
     message: null,
     otp: null, // dev only: store OTP returned from backend
@@ -249,31 +250,31 @@ export const authSlice = createSlice({
 
             // --- Send Email OTP ---
             .addCase(sendEmailOtp.pending, (state) => {
-                state.loading = true;
+                state.emailOtpLoading = true;   // ← not loading
                 state.error = null;
             })
             .addCase(sendEmailOtp.fulfilled, (state, action) => {
-                state.loading = false;
+                state.emailOtpLoading = false;
                 toast.success(action.payload?.message || 'OTP sent to your email!');
             })
             .addCase(sendEmailOtp.rejected, (state, action) => {
-                state.loading = false;
+                state.emailOtpLoading = false;
                 state.error = action.payload?.message || 'Failed to send OTP';
                 toast.error(action.payload?.message || 'Failed to send OTP');
             })
 
             // --- Verify Email OTP ---
             .addCase(verifyEmailOtp.pending, (state) => {
-                state.loading = true;
+                state.emailOtpLoading = true;   // ← not loading
                 state.error = null;
             })
             .addCase(verifyEmailOtp.fulfilled, (state, action) => {
-                state.loading = false;
+                state.emailOtpLoading = false;
                 if (state.user) state.user.emailVerified = true;
                 toast.success(action.payload?.message || 'Email verified successfully!');
             })
             .addCase(verifyEmailOtp.rejected, (state, action) => {
-                state.loading = false;
+                state.emailOtpLoading = false;
                 state.error = action.payload?.message || 'Invalid or expired OTP';
                 toast.error(action.payload?.message || 'Invalid or expired OTP');
             });

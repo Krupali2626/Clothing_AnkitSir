@@ -132,11 +132,11 @@ export default function Auth() {
     return (
         <div className='min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-mainBG relative overflow-hidden'>
 
-            <div className="flex items-center justify-center p-8 lg:p-16">
+            <div className="flex items-center justify-center p-8 lg:p-16 relative">
                 {step === 1 ? (
                     <div className='w-full max-w-md space-y-8 mt-12 lg:mt-0'>
                         {/* Header */}
-                        <div className="text-center lg:text-left mb-6">
+                        <div className="text-left mb-6">
                             <h1 className='text-2xl font-medium text-dark mb-2'>Welcome to</h1>
                             <img src={require('../assets/images/Logo.webp')} alt="LOGO" />
                         </div>
@@ -203,7 +203,7 @@ export default function Auth() {
                                             ref={(ref) => (inputRefs.current[index] = ref)}
                                             maxLength={1}
                                             onChange={(e) => handleotpChange(e, index)}
-                                            onBlur={otpFormik.handleBlur}
+                                            // onBlur={otpFormik.handleBlur}
                                             value={digit}
                                             inputMode="numeric"
                                             autoComplete="one-time-code"
@@ -245,11 +245,10 @@ export default function Auth() {
                             </button>
                         </form>
                     </div>
-
                 ) : (
                     <div className='w-full max-w-md space-y-8 mt-12 lg:mt-0'>
                         {/* Header */}
-                        <div className="text-center lg:text-left mb-6">
+                        <div className="text-left mb-6">
                             <h1 className='text-[32px] font-bold text-primary mb-2'>CONGRATULATIONS</h1>
                         </div>
                         <p className='text-dark text-base font-medium max-w-sm leading-6'>
@@ -265,12 +264,12 @@ export default function Auth() {
                     </div>
                 )}
 
-                <div className="absolute left-5 -bottom-48 opacity-40 pointer-events-none">
-                    <img src={require('../assets/images/eofooter.webp')} alt="LOGO footer" />
+                <div className="hidden md:block absolute left-0 3xl:left-5 -bottom-40 lg:-bottom-24 xl:-bottom-48  pointer-events-none ">
+                    <img src={require('../assets/images/eofooter.webp')} alt="LOGO footer" className='w-full' />
                 </div>
             </div>
 
-            <div className="hidden lg:block relative font-['Urbanist']">
+            <div className="hidden lg:block relative">
                 <img src={require('../assets/images/auth.webp')} alt="auth image" className='w-full h-full object-cover' />
             </div>
         </div>

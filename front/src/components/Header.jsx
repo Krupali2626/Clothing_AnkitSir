@@ -246,7 +246,7 @@ export default function Header() {
                                         <div className="h-8 w-8 bg-primary uppercase rounded-full flex items-center justify-center font-bold text-white">
                                             {user?.firstName?.slice(0, 1) || 'U'}
                                         </div>
-                                        <span className='capitalize'>{user?.firstName}</span>
+                                        <span className='capitalize font-medium tracking-wide'>{user?.firstName}</span>
                                     </button>
                                 ) : (
                                     <Link to="/auth" className={`hidden sm:block p-2 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isHomePage
@@ -513,7 +513,7 @@ export default function Header() {
 
             {/* Account Sidebar */}
             <div
-                className={`fixed top-0 right-0 h-full w-96 bg-white z-[90] shadow-xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isAccountOpen ? 'translate-x-0' : 'translate-x-full'
+                className={`fixed top-0 right-0 h-full w-full md:w-96 bg-white z-[90] shadow-xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isAccountOpen ? 'translate-x-0' : 'translate-x-full'
                     }`}
             >
                 {/* Sidebar Header */}
