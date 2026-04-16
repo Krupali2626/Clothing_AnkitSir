@@ -1,4 +1,5 @@
 import './App.css';
+import { Routes, Route } from 'react-router-dom';
 import UserRoutes from './routes/UserRoutes';
 import AdminRoutes from './routes/AdminRoutes';
 import { Toaster } from 'react-hot-toast';
@@ -23,8 +24,12 @@ function App() {
           },
         }}
       />
-      <UserRoutes />
-      <AdminRoutes />
+      <Routes>
+        {/* Admin sections starts with /admin */}
+        <Route path="/admin/*" element={<AdminRoutes />} />
+        {/* Everything else belongs to UserRoutes */}
+        <Route path="/*" element={<UserRoutes />} />
+      </Routes>
     </>
   );
 }

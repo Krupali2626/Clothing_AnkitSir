@@ -161,13 +161,12 @@ export default function Orders() {
 
                 {/* Orders grid */}
                 {!loading && !error && orders.length > 0 && (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {orders.map((order) => (
                             <OrderCard key={order._id} order={order} />
                         ))}
                     </div>
                 )}
-
             </div>
         </AccountLayout>
     );

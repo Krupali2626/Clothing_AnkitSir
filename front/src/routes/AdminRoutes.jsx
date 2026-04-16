@@ -14,7 +14,7 @@ const AdminRoutes = () => {
         <Routes>
             {/* All admin routes are protected — must be authenticated with role "admin" */}
             <Route element={<ProtectedRoute allowedRole="admin" redirectTo="/auth" />}>
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route path="/" element={<AdminLayout />}>
                     <Route index element={<div className="p-6">Admin Dashboard</div>} />
                     <Route path="main-category" element={<MainCategoryList />} />
                     <Route path="category" element={<CategoryList />} />
