@@ -72,11 +72,11 @@ const ProductForm = () => {
                 price: v.price ?? '',
                 stock: v.stock ?? '',
                 discount: v.discount || 0,
-                options: v.options || [],
+                options: v.options ? JSON.parse(JSON.stringify(v.options)) : [],
                 useOptions: v.options?.length > 0,
                 images: [],           // new uploads only
-                imagePreviews: v.images || [],  // show existing images as previews
-                existingImages: v.images || [],
+                imagePreviews: v.images ? [...v.images] : [],  // show existing images as previews
+                existingImages: v.images ? [...v.images] : [],
             }));
             setVariants(loaded);
         }

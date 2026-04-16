@@ -4,9 +4,11 @@ import CategoryModel from "../model/category.model.js";
 import SubCategoryModel from "../model/subCategory.model.js";
 import InsideSubCategoryModel from "../model/insideSubCategory.model.js";
 import productModel from "../model/product.model.js";
+import ProductVariant from "../model/productVariant.model.js";
 import { ThrowError } from "../utils/Error.utils.js";
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse, sendForbiddenResponse } from "../utils/Response.utils.js";
 import { slugify } from "../utils/slug.config.js";
+import { deleteManyFromS3 } from "../middleware/imageupload.js";
 
 export const createProduct = async (req, res) => {
   try {
@@ -16,11 +18,17 @@ export const createProduct = async (req, res) => {
       category,
       subCategory,
       sizechart,
-      badges,
       tags,
       productDetails,
       sizeGuide,
-      deliveryReturns
+      deliveryReturns,
+      brand,
+      badge,
+      material,
+      careInstructions,
+      countryOfOrigin,
+      isActive,
+      isFeatured,
     } = req.body;
 
     // Normalize optional ObjectId fields — empty string → null
@@ -67,26 +75,28 @@ export const createProduct = async (req, res) => {
 
     // Slug generation
     let slug = slugify(name);
-
-    // Ensure slug is unique
-    let existing = await productModel.findOne({ slug });
-    if (existing) {
-      slug = `${slug}-${Date.now()}`;
-    }
+    const existing = await productModel.findOne({ slug });
+    if (existing) slug = `${slug}-${Date.now()}`;
 
     const productData = {
       name,
+      brand: brand || null,
       mainCategory,
       category,
       subCategory,
       insideSubCategory,
-      sizechart,
-      badges: badges || [],
+      sizechart: sizechart || null,
+      badge: badge || null,
       tags: tags || [],
       slug,
       productDetails,
       sizeGuide: sizeGuide || null,
-      deliveryReturns
+      deliveryReturns,
+      material: material || null,
+      careInstructions: careInstructions || null,
+      countryOfOrigin: countryOfOrigin || null,
+      isActive: isActive ?? true,
+      isFeatured: isFeatured ?? false,
     };
 
     const newProduct = await productModel.create(productData);
@@ -257,7 +267,20 @@ export const deleteProduct = async (req, res) => {
       return sendNotFoundResponse(res, "Product not found!");
     }
 
-    return sendSuccessResponse(res, "Product deleted successfully!", deletedProduct);
+    // Delete all variants and their S3 images
+    const variants = await ProductVariant.find({ productId: id });
+    if (variants.length > 0) {
+      const allImageKeys = variants.flatMap(v =>
+        (v.images || []).map(url => {
+          const split = url.split(".amazonaws.com/");
+          return split.length > 1 ? split[1] : null;
+        }).filter(Boolean)
+      );
+      if (allImageKeys.length > 0) await deleteManyFromS3(allImageKeys);
+      await ProductVariant.deleteMany({ productId: id });
+    }
+
+    return sendSuccessResponse(res, "Product and all its variants deleted successfully!", deletedProduct);
 
   } catch (error) {
     return ThrowError(res, 500, error.message);

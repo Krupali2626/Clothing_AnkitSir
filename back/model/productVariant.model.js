@@ -3,9 +3,7 @@ import mongoose from "mongoose";
 const optionSchema = new mongoose.Schema({
   sku: {
     type: String,
-    unique: true,
-    sparse: true,
-    index: true
+    default: null
   },
   size: {
     type: String,

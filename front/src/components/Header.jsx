@@ -133,7 +133,7 @@ export default function Header() {
     return (
         <>
             {/* Main Header Container - Fixed at top */}
-            <div className={`${isHomePage ?"fixed" : "sticky"} top-0 left-0 w-full z-50 transition-shadow duration-300`}>
+            <div className={`${isHomePage ? "fixed" : "sticky"} top-0 left-0 w-full z-50 transition-shadow duration-300`}>
                 {/* Promo Bar */}
                 <div className={`hidden md:block border-b transition-colors duration-300 ${isScrolled || hoveredCategory ? 'bg-primary border-primary/10' : 'bg-primary border-white/5'}`}>
                     <p className='text-white text-center text-[10px] sm:text-xs py-2 font-medium tracking-[0.25em] opacity-80 uppercase'>
@@ -319,62 +319,135 @@ export default function Header() {
                                 const menuContent = getMegaMenuContent(mainCategory);
                                 const categoryList = getCategoriesForMainCategory(mainCategory._id);
 
-                                return (
-                                    <div key={mainCategory._id} className="container mx-auto px-10 py-12">
-                                        {categoryList.length > 0 ? (
-                                            <div className="grid grid-cols-4 gap-4">
-                                                {/* Categories Columns */}
-                                                <div className="col-span-3 grid grid-cols-3 gap-4">
-                                                    {categoryList.map((category) => {
-                                                        const subCats = getSubCategoriesForCategory(category._id);
-                                                        return (
-                                                            <div key={category._id}>
-                                                                <h3 className="text-sm font-bold tracking-wider uppercase mb-1 text-primary">
-                                                                    {category.categoryName}
-                                                                </h3>
-                                                                {subCats.length > 0 ? (
-                                                                    <ul className="">
-                                                                        {subCats.map((subCat) => (
-                                                                            <li key={subCat._id}>
-                                                                                <Link
-                                                                                    to={`/collection/${mainCategory.slug}/${category.slug}/${subCat.slug}`}
-                                                                                    className="text-sm font-medium text-mainText hover:text-gold transition-colors duration-200"
-                                                                                >
-                                                                                    {subCat.subCategoryName}
-                                                                                </Link>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                ) : (
-                                                                    <p className="text-sm text-lightText italic">No subcategories</p>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                // Split categories into up to 3 columns
+                                const col1 = categoryList.slice(0, Math.ceil(categoryList.length / 3));
+                                const col2 = categoryList.slice(Math.ceil(categoryList.length / 3), Math.ceil(categoryList.length / 3) * 2);
+                                const col3 = categoryList.slice(Math.ceil(categoryList.length / 3) * 2);
+                                const columns = [col1, col2, col3].filter(c => c.length > 0);
 
-                                                {/* Featured Section */}
-                                                <div className="col-span-1">
-                                                    <div className="relative group cursor-pointer">
+                                return (
+                                    <div key={mainCategory._id} className="flex flex-row items-start p-8 w-full">
+                                        {categoryList.length > 0 ? (
+                                            <>
+                                                {/* Category Columns (1–3) */}
+                                                {columns.map((colCategories, colIdx) => (
+                                                    <div
+                                                        key={colIdx}
+                                                        className="flex flex-col items-start gap-6 flex-1 pr-8 self-stretch"
+                                                    >
+                                                        {colCategories.map((category) => {
+                                                            const subCats = getSubCategoriesForCategory(category._id);
+                                                            return (
+                                                                <div key={category._id} className="flex flex-col items-start gap-4 w-full">
+                                                                    {/* Column Title */}
+                                                                    <h3
+                                                                        className="w-full uppercase text-primary"
+                                                                        style={{
+                                                                            fontFamily: 'Urbanist, sans-serif',
+                                                                            fontWeight: 800,
+                                                                            fontSize: '14px',
+                                                                            lineHeight: '16px',
+                                                                        }}
+                                                                    >
+                                                                        {category.categoryName}
+                                                                    </h3>
+                                                                    {/* Options */}
+                                                                    {subCats.length > 0 ? (
+                                                                        <ul className="flex flex-col items-start gap-4 w-full">
+                                                                            {subCats.map((subCat) => (
+                                                                                <li key={subCat._id} className="w-full">
+                                                                                    <Link
+                                                                                        to={`/collection/${mainCategory.slug}/${category.slug}/${subCat.slug}`}
+                                                                                        className="block w-full transition-colors duration-200 hover:text-gold"
+                                                                                        style={{
+                                                                                            fontFamily: 'Urbanist, sans-serif',
+                                                                                            fontWeight: 500,
+                                                                                            fontSize: '16px',
+                                                                                            lineHeight: '22px',
+                                                                                            color: '#343A40',
+                                                                                        }}
+                                                                                    >
+                                                                                        {subCat.subCategoryName}
+                                                                                    </Link>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    ) : (
+                                                                        <p className="text-sm text-lightText italic">No subcategories</p>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ))}
+
+                                                {/* Column 4 — Featured Image + CTAs */}
+                                                <div className="flex flex-col items-start gap-6 flex-1 self-stretch">
+                                                    {/* Section title */}
+                                                    <h3
+                                                        className="w-full uppercase text-primary"
+                                                        style={{
+                                                            fontFamily: 'Urbanist, sans-serif',
+                                                            fontWeight: 800,
+                                                            fontSize: '14px',
+                                                            lineHeight: '16px',
+                                                        }}
+                                                    >
+                                                        {mainCategory.mainCategoryName}
+                                                    </h3>
+                                                    {/* Featured Image */}
+                                                    <div className="w-full" style={{ height: '400px' }}>
                                                         <img
                                                             src={menuContent.featuredImage}
                                                             alt={menuContent.featuredTitle}
-                                                            className="w-full h-64 object-cover"
+                                                            className="w-full h-full object-cover"
                                                         />
-                                                        <div className="mt-4">
-                                                            <Link
-                                                                to={menuContent.featuredLink}
-                                                                className="text-xs font-bold tracking-wider uppercase text-dark/80 hover:text-primary transition-colors flex items-center gap-2"
-                                                            >
-                                                                {menuContent.featuredTitle}
-                                                                <span className="text-lg">→</span>
-                                                            </Link>
-                                                        </div>
                                                     </div>
+                                                    {/* CTA Buttons */}
+                                                    <Link
+                                                        to={menuContent.featuredLink}
+                                                        className="flex flex-row items-center gap-3 hover:opacity-70 transition-opacity"
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                fontFamily: 'Urbanist, sans-serif',
+                                                                fontWeight: 600,
+                                                                fontSize: '18px',
+                                                                lineHeight: '22px',
+                                                                textTransform: 'uppercase',
+                                                                color: '#1B1B1B',
+                                                            }}
+                                                        >
+                                                            Shop {mainCategory.mainCategoryName}
+                                                        </span>
+                                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M4 10H16M16 10L10 4M16 10L10 16" stroke="#1B1B1B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                        </svg>
+                                                    </Link>
+                                                    <Link
+                                                        to={`${menuContent.featuredLink}/new-arrivals`}
+                                                        className="flex flex-row items-center gap-3 hover:opacity-70 transition-opacity"
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                fontFamily: 'Urbanist, sans-serif',
+                                                                fontWeight: 600,
+                                                                fontSize: '18px',
+                                                                lineHeight: '22px',
+                                                                textTransform: 'uppercase',
+                                                                color: '#1B1B1B',
+                                                            }}
+                                                        >
+                                                            New Arrivals
+                                                        </span>
+                                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M4 10H16M16 10L10 4M16 10L10 16" stroke="#1B1B1B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                        </svg>
+                                                    </Link>
                                                 </div>
-                                            </div>
+                                            </>
                                         ) : (
-                                            <div className="py-8 text-center">
+                                            <div className="py-8 text-center w-full">
                                                 <p className="text-lightText">No categories available for {mainCategory.mainCategoryName}</p>
                                             </div>
                                         )}
