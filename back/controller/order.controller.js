@@ -7,6 +7,7 @@ import User from "../model/user.model.js";
 import { sendBadRequestResponse, sendErrorResponse, sendNotFoundResponse, sendSuccessResponse } from "../utils/Response.utils.js";
 // Optional Stripe integration, if installed.
 import Stripe from "stripe";
+import { createNotification } from "../utils/notification.utils.js";
 const STRIPE_SECRET = process.env.STRIPE_SECRET;
 const stripe = new Stripe(STRIPE_SECRET);
 
@@ -249,11 +250,19 @@ export const placeOrder = async (req, res) => {
             }
             await variant.save({ session });
         }
-
         // Empty Cart
         await Cart.deleteOne({ userId }, { session });
 
         await session.commitTransaction();
+
+        // Send notification (non-blocking)
+        createNotification({
+            userId,
+            title: "Order Placed!",
+            message: `Your order #${savedOrder.orderId} has been placed successfully.`,
+            type: "Order",
+            metadata: { orderId: savedOrder._id }
+        });
 
         return sendSuccessResponse(res, "Order placed successfully.", {
             orderId: savedOrder.orderId,
@@ -481,6 +490,15 @@ export const updateOrderStatusAdmin = async (req, res) => {
         await order.save({ session });
         await session.commitTransaction();
 
+        // Send notification
+        createNotification({
+            userId: order.userId,
+            title: `Order ${orderStatus}`,
+            message: `Your order #${order.orderId} is now ${orderStatus.toLowerCase()}.`,
+            type: "Order",
+            metadata: { orderId: order._id }
+        });
+
         return sendSuccessResponse(res, "Order status updated successfully", order);
 
     } catch (error) {
@@ -562,6 +580,15 @@ export const cancelOrder = async (req, res) => {
         }
 
         await session.commitTransaction();
+
+        // Send notification
+        createNotification({
+            userId,
+            title: "Order Cancelled",
+            message: `Your order #${order.orderId} has been cancelled.`,
+            type: "Order",
+            metadata: { orderId: order._id }
+        });
 
         return sendSuccessResponse(res, "Order cancelled successfully. Refund will be processed within 3-5 business days.", {
             orderId: order.orderId,

@@ -63,10 +63,28 @@ const UserSchema = new mongoose.Schema({
     enum: ["user", "admin"],
     default: "user",
   },
+  notificationPreferences: {
+    orderUpdates: { type: Boolean, default: true },
+    deliveryUpdates: { type: Boolean, default: true },
+    paymentAlerts: { type: Boolean, default: true },
+    accountActivity: { type: Boolean, default: true },
+  },
   refreshToken: {
     type: String,
     default: null,
   },
+  sessions: [
+    {
+      deviceId: String,
+      browser: String,
+      os: String,
+      deviceType: { type: String, default: 'Web' },
+      ip: String,
+      lastActive: { type: Date, default: Date.now },
+      tokenHash: String, // Identification for revocation
+      isCurrent: { type: Boolean, default: false }
+    }
+  ],
 }, { timestamps: true });
 
 const UserModel = mongoose.model("user", UserSchema);

@@ -3,7 +3,10 @@ import UserModel from "../model/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import transporter from '../utils/Email.config.js'
+import { UAParser } from 'ua-parser-js';
+import requestIp from 'request-ip';
 import { sendErrorResponse, sendNotFoundResponse, sendSuccessResponse } from '../utils/Response.utils.js';
+import { sendSessionRevoked, sendLogoutAllDevices } from '../utils/socket.js';
 
 export class AuthController {
   static JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
@@ -11,15 +14,16 @@ export class AuthController {
   static otpMap = new Map(); // For temporary registration data
 
   // Helper to generate tokens
-  static generateTokens(user) {
+  static generateTokens(user, tokenHash = null) {
     const payload = {
       id: user._id,
       mobileNo: user.mobileNo,
       role: user.role,
+      tokenHash: tokenHash || (user.refreshToken ? user.refreshToken.slice(-10) : null)
     };
 
     const accessToken = jwt.sign(payload, AuthController.JWT_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign({ id: user._id }, AuthController.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+    const refreshToken = jwt.sign({ id: user._id, tokenHash: payload.tokenHash }, AuthController.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 
     return { accessToken, refreshToken };
   }
@@ -124,11 +128,28 @@ export class AuthController {
         AuthController.otpMap.delete(mobileNo);
       }
 
-      const { accessToken, refreshToken } = AuthController.generateTokens(user);
-
-      // Save refresh token in DB
-      user.refreshToken = refreshToken;
-      await user.save();
+      // Link session to token
+      const sessionHash = Math.random().toString(36).substring(2, 12);
+      const { accessToken, refreshToken } = AuthController.generateTokens(user, sessionHash);
+ 
+       // --- Record Session ---
+       const parser = new UAParser(req.headers['user-agent']);
+       const ua = parser.getResult();
+       const clientIp = requestIp.getClientIp(req);
+ 
+       const newSession = {
+         browser: ua.browser.name || 'Unknown',
+         os: ua.os.name || 'Unknown',
+         deviceType: ua.device.type || 'Web',
+         ip: clientIp || 'Unknown',
+         lastActive: new Date(),
+         tokenHash: sessionHash
+       };
+ 
+       // Keep only last 5 sessions
+       user.sessions = [newSession, ...(user.sessions || [])].slice(0, 5);
+       user.refreshToken = refreshToken;
+       await user.save();
 
       // Set Tokens in Cookies
       res.cookie("accessToken", accessToken, {
@@ -195,10 +216,12 @@ export class AuthController {
         });
       }
 
-      const tokens = AuthController.generateTokens(user);
+      const tokens = AuthController.generateTokens(user, decoded.tokenHash);
 
       // Update refresh token in DB
       user.refreshToken = tokens.refreshToken;
+      // Also update the tokenHash for the current session in sessions array if needed, 
+      // but keeping it the same links it to the same logical session.
       await user.save();
 
       // Set New Tokens in Cookies
@@ -287,6 +310,92 @@ export class AuthController {
         message: "Error updating FCM Token",
         error: error.message
       });
+    }
+  }
+
+  // --- Session Management ---
+  static async getSessions(req, res) {
+    try {
+      console.log('getSessions - req.user._id:', req.user._id);
+      console.log('getSessions - req.user.tokenHash:', req.user.tokenHash);
+      
+      const user = await UserModel.findById(req.user._id).select('sessions refreshToken');
+      if (!user) return sendNotFoundResponse(res, "User not found");
+
+      // Get current token hash from the request
+      const currentTokenHash = req.user.tokenHash;
+      console.log('getSessions - currentTokenHash:', currentTokenHash);
+      console.log('getSessions - user.sessions count:', user.sessions.length);
+
+      const sessions = user.sessions.map(s => ({
+        ...s.toObject(),
+        isCurrent: s.tokenHash === currentTokenHash
+      }));
+
+      return sendSuccessResponse(res, "Sessions fetched successfully", sessions);
+    } catch (error) {
+      console.error('getSessions error:', error);
+      return sendErrorResponse(res, 500, "Error fetching sessions", error.message);
+    }
+  }
+
+  static async revokeSession(req, res) {
+    try {
+      const { sessionId } = req.params;
+      console.log('revokeSession - sessionId:', sessionId);
+      console.log('revokeSession - req.user._id:', req.user._id);
+      console.log('revokeSession - req.user.tokenHash:', req.user.tokenHash);
+      
+      const user = await UserModel.findById(req.user._id);
+      if (!user) return sendNotFoundResponse(res, "User not found");
+
+      console.log('revokeSession - user.sessions before:', user.sessions.map(s => ({ _id: s._id.toString(), tokenHash: s.tokenHash })));
+
+      // Find the session to revoke
+      const sessionToRevoke = user.sessions.find(s => s._id.toString() === sessionId);
+      console.log('revokeSession - sessionToRevoke:', sessionToRevoke ? { _id: sessionToRevoke._id.toString(), tokenHash: sessionToRevoke.tokenHash } : null);
+      
+      if (!sessionToRevoke) {
+        return sendErrorResponse(res, 404, "Session not found");
+      }
+
+      // Prevent revoking current session
+      if (sessionToRevoke.tokenHash === req.user.tokenHash) {
+        return sendErrorResponse(res, 400, "Cannot revoke current session. Use logout instead.");
+      }
+
+      // Remove the session
+      user.sessions = user.sessions.filter(s => s._id.toString() !== sessionId);
+      await user.save();
+
+      console.log('revokeSession - user.sessions after:', user.sessions.map(s => ({ _id: s._id.toString(), tokenHash: s.tokenHash })));
+      console.log('revokeSession - Session revoked successfully');
+      
+      // Emit socket event to notify the revoked device
+      sendSessionRevoked(user._id.toString(), sessionToRevoke.tokenHash);
+      
+      return sendSuccessResponse(res, "Session revoked successfully");
+    } catch (error) {
+      console.error('revokeSession error:', error);
+      return sendErrorResponse(res, 500, "Error revoking session", error.message);
+    }
+  }
+
+  static async logoutAllDevices(req, res) {
+    try {
+      const user = await UserModel.findById(req.user._id);
+      if (!user) return sendNotFoundResponse(res, "User not found");
+
+      user.sessions = [];
+      user.refreshToken = null;
+      await user.save();
+
+      // Emit socket event to logout all devices
+      sendLogoutAllDevices(user._id.toString());
+
+      return sendSuccessResponse(res, "Logged out from all devices");
+    } catch (error) {
+      return sendErrorResponse(res, 500, "Error logging out from all devices", error.message);
     }
   }
 }

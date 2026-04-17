@@ -32,8 +32,11 @@
     "nodemon": "^3.1.10",
     "path": "^0.12.7",
     "pdfkit": "^0.17.2",
+    "request-ip": "^3.3.0",
     "sharp": "^0.34.3",
+    "socket.io": "^4.8.3",
     "stripe": "^19.2.0",
-    "twilio": "^5.8.2"
+    "twilio": "^5.8.2",
+    "ua-parser-js": "^2.0.9"
   }
 }

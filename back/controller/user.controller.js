@@ -377,26 +377,32 @@ export const selectCardController = async (req, res) => {
 export const updateProfileController = async (req, res) => {
     try {
         const id = req.user.id || req.user._id;
-        const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, notificationPreferences } = req.body;
 
-        const user = await UserModel.findById(id);
-        if (!user) return sendNotFoundResponse(res, "User not found!");
+    const user = await UserModel.findById(id);
+    if (!user) return sendNotFoundResponse(res, "User not found!");
 
-        let emailChanged = false;
-        if (email && email !== user.email) {
-            const existing = await UserModel.findOne({ email });
-            if (existing && existing._id.toString() !== id.toString()) {
-                return sendBadRequestResponse(res, "Email already in use by another account!");
-            }
-            user.email = email;
-            user.emailVerified = false;
-            emailChanged = true;
+    let emailChanged = false;
+    if (email && email !== user.email) {
+        const existing = await UserModel.findOne({ email });
+        if (existing && existing._id.toString() !== id.toString()) {
+            return sendBadRequestResponse(res, "Email already in use by another account!");
         }
+        user.email = email;
+        user.emailVerified = false;
+        emailChanged = true;
+    }
 
-        if (firstName !== undefined) user.firstName = firstName;
-        if (lastName !== undefined) user.lastName = lastName;
+    if (firstName !== undefined) user.firstName = firstName;
+    if (lastName !== undefined) user.lastName = lastName;
+    if (notificationPreferences !== undefined) {
+        user.notificationPreferences = {
+            ...user.notificationPreferences,
+            ...notificationPreferences
+        };
+    }
 
-        await user.save();
+    await user.save();
 
         // return the updated sensitive info without OTPs
         const updatedUser = user.toObject();

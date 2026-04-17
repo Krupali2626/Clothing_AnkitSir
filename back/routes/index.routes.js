@@ -110,6 +110,12 @@ import {
   verifyEmailOtpController
 } from "../controller/user.controller.js";
 import {
+  getMyNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification
+} from "../controller/notification.controller.js";
+import {
   logSearch,
   getPopularSearches,
   getRecentSearches,
@@ -124,7 +130,10 @@ router.post("/auth/send-otp", AuthController.sendOtp);
 router.post("/auth/verify-otp", AuthController.verifyOtp);
 router.post("/auth/refresh-token", AuthController.refreshAccessToken);
 router.get("/auth/me", UserAuth, AuthController.getUser);
-router.post("/auth/update-fcm", UserAuth, AuthController.updateFcmToken);
+router.get("/auth/sessions", UserAuth, AuthController.getSessions);
+router.delete("/auth/session/revoke/:sessionId", UserAuth, AuthController.revokeSession);
+router.post("/auth/logout-all", UserAuth, AuthController.logoutAllDevices);
+router.patch("/auth/update-fcm-token", UserAuth, AuthController.updateFcmToken);
 
 // --- Main Category Routes ---
 router.post("/main-category/create", UserAuth, adminAuth, upload.single("mainCategoryImage"), createMainCategory);
@@ -237,6 +246,12 @@ router.post("/user/card/add", UserAuth, addSavedCardController);
 router.get("/user/card/my", UserAuth, getSavedCardsController);
 router.delete("/user/card/delete/:cardId", UserAuth, deleteSavedCardController);
 router.put("/user/card/select/:cardId", UserAuth, selectCardController);
+
+// --- Notification Routes ---
+router.get("/notifications/my", UserAuth, getMyNotifications);
+router.put("/notifications/mark-read/:id", UserAuth, markAsRead);
+router.put("/notifications/mark-all-read", UserAuth, markAllAsRead);
+router.delete("/notifications/delete/:id", UserAuth, deleteNotification);
 
 //aws
 router.get("/list", async (req, res) => {

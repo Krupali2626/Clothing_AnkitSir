@@ -59,10 +59,19 @@ app.get("/health", async (req, res) => {
 });
 
 
-//apis
-app.use("/api", IndexRoute)
-
-//server listing
-app.listen(PORT, () => {
-  console.log(`✅ Server iS Running On PORT : ${PORT}`);
-})
+import { createServer } from 'http';
+import { initSocket } from './utils/socket.js';
+ 
+ //apis
+ app.use("/api", IndexRoute)
+ 
+ // Create HTTP server
+ const server = createServer(app);
+ 
+ // Initialize Socket.io
+ initSocket(server);
+ 
+ //server listing
+ server.listen(PORT, () => {
+   console.log(`✅ Server iS Running On PORT : ${PORT}`);
+ })

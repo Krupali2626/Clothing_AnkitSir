@@ -19,14 +19,23 @@ export const UserAuth = async (req, res, next) => {
 
         try {
             const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
-            const { id } = decodedObj;
+            const { id, tokenHash } = decodedObj;
 
             const user = await UserModel.findById(id);
             if (!user) {
                 return sendNotFoundResponse(res, "User not found");
             }
 
-            req.user = user;
+            // Remote Logout Check: If the token has a hash, ensure it still exists in the active sessions
+            if (tokenHash && user.sessions && user.sessions.length > 0) {
+                const isSessionActive = user.sessions.some(s => s.tokenHash === tokenHash);
+                if (!isSessionActive) {
+                    return sendUnauthorizedResponse(res, "Your session has been terminated from another device. Please login again.");
+                }
+            }
+
+            console.log('UserAuth - Setting req.user with tokenHash:', tokenHash);
+            req.user = { ...user.toObject(), tokenHash };
             next();
         } catch (err) {
             console.error('Token verification error:', err);
@@ -44,10 +53,14 @@ export const OptionalUserAuth = async (req, res, next) => {
         if (token) {
             try {
                 const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
-                const { id } = decodedObj;
+                const { id, tokenHash } = decodedObj;
                 const user = await UserModel.findById(id);
                 if (user) {
-                    req.user = user;
+                    // Check if session is revoked even for optional auth
+                    const isSessionActive = !tokenHash || user.sessions.some(s => s.tokenHash === tokenHash);
+                    if (isSessionActive) {
+                        req.user = user;
+                    }
                 }
             } catch (err) {
                 // Ignore token errors for optional auth

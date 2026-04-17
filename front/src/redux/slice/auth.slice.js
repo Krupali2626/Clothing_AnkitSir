@@ -23,7 +23,10 @@ const initialState = {
     isAuthenticated: false,
     isNewUser: false,   // true = just registered, false = existing user login
     loading: false,
+    profileLoading: false,
     emailOtpLoading: false,
+    sessions: [],
+    sessionsLoading: false,
     error: null,
     message: null,
     otp: null, // dev only: store OTP returned from backend
@@ -98,12 +101,12 @@ export const getMe = createAsyncThunk(
     }
 );
 
-// Update profile (firstName, lastName, email)
+// Update profile (firstName, lastName, email, notificationPreferences)
 export const updateProfile = createAsyncThunk(
     'auth/updateProfile',
-    async ({ firstName, lastName, email }, { rejectWithValue }) => {
+    async ({ firstName, lastName, email, notificationPreferences }, { rejectWithValue }) => {
         try {
-            const payload = { firstName, lastName };
+            const payload = { firstName, lastName, notificationPreferences };
             if (email) payload.email = email;
             const response = await axiosInstance.put('/user/profile/update', payload);
             return response.data;
@@ -133,6 +136,42 @@ export const verifyEmailOtp = createAsyncThunk(
         try {
             const response = await axiosInstance.post('/user/email/verify-otp', { otp });
             return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const fetchSessions = createAsyncThunk(
+    'auth/fetchSessions',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get('/auth/sessions');
+            return response.data.result;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const revokeSession = createAsyncThunk(
+    'auth/revokeSession',
+    async (sessionId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.delete(`/auth/session/revoke/${sessionId}`);
+            return sessionId;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const logoutAllDevices = createAsyncThunk(
+    'auth/logoutAllDevices',
+    async (_, { rejectWithValue }) => {
+        try {
+            await axiosInstance.post('/auth/logout-all');
+            return true;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
         }
@@ -244,19 +283,19 @@ export const authSlice = createSlice({
 
             // --- Update Profile ---
             .addCase(updateProfile.pending, (state) => {
-                state.loading = true;
+                state.profileLoading = true;
                 state.error = null;
                 state.message = null;
             })
             .addCase(updateProfile.fulfilled, (state, action) => {
-                state.loading = false;
+                state.profileLoading = false;
                 state.error = null;
                 state.user = action.payload?.result || state.user;
                 state.message = action.payload?.message || 'Profile updated successfully!';
                 toast.success(action.payload?.message || 'Profile updated successfully!');
             })
             .addCase(updateProfile.rejected, (state, action) => {
-                state.loading = false;
+                state.profileLoading = false;
                 state.error = action.payload?.message || 'Failed to update profile';
                 toast.error(action.payload?.message || 'Failed to update profile');
             })
@@ -290,6 +329,42 @@ export const authSlice = createSlice({
                 state.emailOtpLoading = false;
                 state.error = action.payload?.message || 'Invalid or expired OTP';
                 toast.error(action.payload?.message || 'Invalid or expired OTP');
+            })
+
+            // --- Sessions ---
+            .addCase(fetchSessions.pending, (state) => {
+                state.sessionsLoading = true;
+            })
+            .addCase(fetchSessions.fulfilled, (state, action) => {
+                state.sessionsLoading = false;
+                state.sessions = action.payload || [];
+            })
+            .addCase(fetchSessions.rejected, (state, action) => {
+                state.sessionsLoading = false;
+                console.error('fetchSessions rejected:', action.payload);
+            })
+            .addCase(revokeSession.pending, (state) => {
+                console.log('revokeSession pending');
+            })
+            .addCase(revokeSession.fulfilled, (state, action) => {
+                console.log('revokeSession fulfilled, removing session:', action.payload);
+                state.sessions = state.sessions.filter(s => s._id !== action.payload);
+                toast.success('Session revoked successfully');
+            })
+            .addCase(revokeSession.rejected, (state, action) => {
+                console.error('revokeSession rejected:', action.payload);
+                toast.error(action.payload?.message || 'Failed to revoke session');
+            })
+            .addCase(logoutAllDevices.fulfilled, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+                state.sessions = [];
+                clearPersistedStorage();
+                toast.success('Logged out from all devices');
+            })
+            .addCase(logoutAllDevices.rejected, (state, action) => {
+                console.error('logoutAllDevices rejected:', action.payload);
+                toast.error(action.payload?.message || 'Failed to logout from all devices');
             })
 
             // --- Cross-Slice Synchronization ---
