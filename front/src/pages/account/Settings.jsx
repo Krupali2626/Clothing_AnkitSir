@@ -89,7 +89,7 @@ export default function Settings() {
             </span>
         );
         return (
-            <span className="inline-flex items-center gap-1 bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded">
+            <span className="inline-flex items-center gap-1 bg-border/50 text-dark text-xs font-bold px-3 py-1 rounded">
                 <HiOutlineCreditCard className="text-base" /> Card
             </span>
         );
@@ -99,7 +99,7 @@ export default function Settings() {
     const Toggle = ({ checked, onChange }) => (
         <button
             onClick={onChange}
-            className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${checked ? 'bg-[#1a3c34]' : 'bg-gray-200'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${checked ? 'bg-primary' : 'bg-border'}`}
         >
             <span
                 className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${checked ? 'translate-x-5' : 'translate-x-0'}`}
@@ -111,17 +111,18 @@ export default function Settings() {
         <AccountLayout>
             <div className="max-w-2xl">
                 {/* Page title */}
-                <h1 className="text-3xl font-bold text-dark mb-6">Settings</h1>
+                <div className="flex justify-between items-center md:mb-8 mb-4">
+                    <h1 className="text-2xl md:text-[28px] font-semibold text-primary">Settings</h1>
+                </div>
 
                 <div className="space-y-4">
-
                     {/* NOTIFICATION */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-2 px-6 pt-5 pb-4 border-b border-gray-100">
-                            <HiOutlineBell className="text-dark text-lg" />
-                            <span className="text-xs font-bold tracking-widest text-dark uppercase">Notification</span>
+                    <div className="bg-white shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-2 mx-6 pt-5 pb-4 border-b border-border">
+                            <HiOutlineBell className="text-mainText text-lg" />
+                            <span className="text-base font-semibold tracking-widest text-mainText uppercase">Notification</span>
                         </div>
-                        <div className="px-6 py-2 divide-y divide-gray-50">
+                        <div className="px-6 py-2">
                             {[
                                 { id: 'orderUpdates', label: 'Order Updates', desc: 'Get updates when your order is confirmed and processed' },
                                 { id: 'deliveryUpdates', label: 'Delivery Updates', desc: 'Track shipping status and delivery progress in real time' },
@@ -130,8 +131,8 @@ export default function Settings() {
                             ].map((item) => (
                                 <div key={item.id} className="flex items-center justify-between py-4">
                                     <div>
-                                        <p className="text-sm font-semibold text-dark">{item.label}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+                                        <p className="text-base font-medium text-dark">{item.label}</p>
+                                        <p className="text-sm font-medium text-lightText mt-0.5">{item.desc}</p>
                                     </div>
                                     <Toggle
                                         checked={notifications[item.id]}
@@ -143,15 +144,15 @@ export default function Settings() {
                     </div>
 
                     {/* MANAGE PAYMENT */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+                    <div className="bg-white overflow-hidden">
+                        <div className="flex items-center justify-between mx-6 pt-5 pb-4 border-b border-border">
                             <div className="flex items-center gap-2">
                                 <HiOutlineCreditCard className="text-dark text-lg" />
-                                <span className="text-xs font-bold tracking-widest text-dark uppercase">Manage Payment</span>
+                                <span className="text-base font-semibold tracking-wide text-mainText uppercase">Manage Payment</span>
                             </div>
                             <button
                                 onClick={() => navigate('/payments')}
-                                className="text-dark hover:text-primary transition-colors"
+                                className="text-mainText hover:text-mainText transition-colors"
                             >
                                 <HiArrowUpRight className="text-lg" />
                             </button>
@@ -161,17 +162,17 @@ export default function Settings() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         {getCardBadge(defaultCard.cardType)}
-                                        <span className="text-sm font-semibold text-dark tracking-widest">
+                                        <span className="text-base font-semibold text-dark tracking-widest">
                                             ···· {defaultCard.cardNumber.slice(-4)}
                                         </span>
                                     </div>
-                                    <span className="text-sm font-medium text-dark">
+                                    <span className="text-base font-semibold text-dark">
                                         Expires {defaultCard.expiryDate}
                                     </span>
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-400">No payment method saved</p>
+                                    <p className="text-sm text-lightText">No payment method saved</p>
                                     <button
                                         onClick={() => navigate('/payments')}
                                         className="text-xs font-semibold text-primary hover:underline underline-offset-4"
@@ -184,11 +185,11 @@ export default function Settings() {
                     </div>
 
                     {/* SUPPORT */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+                    <div className="bg-white overflow-hidden">
+                        <div className="flex items-center justify-between mx-6 pt-5 pb-4 border-b border-border">
                             <div className="flex items-center gap-2">
                                 <HiOutlineQuestionMarkCircle className="text-dark text-lg" />
-                                <span className="text-xs font-bold tracking-widest text-dark uppercase">Support</span>
+                                <span className="text-base font-bold tracking-widest text-mainText uppercase">Support</span>
                             </div>
                             <button
                                 onClick={() => navigate('/support')}
@@ -197,29 +198,29 @@ export default function Settings() {
                                 <HiArrowUpRight className="text-lg" />
                             </button>
                         </div>
-                        <div className="divide-y divide-gray-50">
+                        <div>
                             <button
                                 onClick={() => navigate('/support')}
-                                className="flex items-center justify-between w-full px-6 py-4 hover:bg-gray-50 transition-colors"
+                                className="flex items-center justify-between w-full px-6 py-4 hover:bg-mainBG transition-colors"
                             >
-                                <span className="text-sm font-medium text-dark">Contact Us</span>
-                                <HiChevronRight className="text-gray-400 text-base" />
+                                <span className="text-base font-medium text-dark">Contact Us</span>
+                                <HiChevronRight className="text-lightText text-base" />
                             </button>
                             <button
                                 onClick={() => navigate('/support')}
-                                className="flex items-center justify-between w-full px-6 py-4 hover:bg-gray-50 transition-colors"
+                                className="flex items-center justify-between w-full px-6 py-4 hover:bg-mainBG transition-colors"
                             >
-                                <span className="text-sm font-medium text-dark">Help Center</span>
-                                <HiChevronRight className="text-gray-400 text-base" />
+                                <span className="text-base font-medium text-dark">Help Center</span>
+                                <HiChevronRight className="text-lightText text-base" />
                             </button>
                         </div>
                     </div>
 
                     {/* DEVICE & LOGIN INFO */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-2 px-6 pt-5 pb-4 border-b border-gray-100">
+                    <div className="bg-white overflow-hidden">
+                        <div className="flex items-center gap-2 mx-6 pt-5 pb-4 border-b border-border">
                             <HiOutlineShieldCheck className="text-dark text-lg" />
-                            <span className="text-xs font-bold tracking-widest text-dark uppercase">Device &amp; Login Info</span>
+                            <span className="text-base font-bold tracking-widest text-mainText uppercase">Device &amp; Login Info</span>
                         </div>
                         <div className="px-6 py-2">
                             {sessionsLoading ? (
@@ -227,26 +228,29 @@ export default function Settings() {
                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                                 </div>
                             ) : sessions.length === 0 ? (
-                                <p className="text-sm text-gray-400 py-6 text-center">No active sessions found</p>
+                                <p className="text-sm text-lightText py-6 text-center">No active sessions found</p>
                             ) : (
-                                <div className="divide-y divide-gray-50">
+                                <div className="">
                                     {sessions.map((session) => (
                                         <div key={session._id} className="flex items-center justify-between py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${session.isCurrent ? 'text-dark' : 'text-gray-400'}`}>
+                                                <div className={`w-12 h-12 rounded-full relative flex items-center justify-center ${session.isCurrent ? 'text-dark' : 'text-lightText'}`}>
                                                     {session.deviceType === 'Desktop'
                                                         ? <HiOutlineGlobeAlt className="text-xl" />
                                                         : <HiOutlineDevicePhoneMobile className="text-xl" />
                                                     }
+                                                    {session.isCurrent && (
+                                                        <div className="h-2 w-2 rounded-full bg-[#14AE5C] absolute top-[12px] right-[14px]"></div>
+                                                    )}
                                                 </div>
                                                 <div>
-                                                    <p className={`text-sm font-semibold capitalize ${session.isCurrent ? 'text-dark' : 'text-gray-400'}`}>
+                                                    <p className={`text-base font-semibold capitalize ${session.isCurrent ? 'text-dark' : 'text-lightText'}`}>
                                                         {session.os === 'Unknown' ? 'Web Browser' : session.os}
-                                                        {session.isCurrent && (
+                                                        {/* {session.isCurrent && (
                                                             <span className="ml-2 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase">Current</span>
-                                                        )}
+                                                        )} */}
                                                     </p>
-                                                    <p className="text-xs text-gray-400 mt-0.5">
+                                                    <p className="text-sm text-lightText mt-0.5">
                                                         {session.isCurrent
                                                             ? 'Last used: Today'
                                                             : `Last used: ${formatDistanceToNow(new Date(session.lastActive), { addSuffix: true })}`
@@ -254,14 +258,12 @@ export default function Settings() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            {!session.isCurrent && (
-                                                <button
-                                                    onClick={() => handleRevokeSession(session._id)}
-                                                    className="px-5 py-1.5 border border-red-400 text-red-500 text-xs font-semibold rounded hover:bg-red-50 transition-colors"
-                                                >
-                                                    Log Out
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => handleRevokeSession(session._id)}
+                                                className="px-5 py-1.5 border border-[#EC221F] text-[#EC221F] text-sm font-semibold hover:bg-[#EC221F]/10 transition-colors"
+                                            >
+                                                Log Out
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -269,7 +271,7 @@ export default function Settings() {
                         </div>
 
                         {/* Delete Account — centered at bottom */}
-                        <div className="flex justify-center px-6 py-5 border-t border-gray-100">
+                        <div className="flex justify-center px-6 py-5">
                             <button
                                 onClick={handleDeleteAccount}
                                 className="text-sm font-medium text-red-500 hover:underline underline-offset-4"
