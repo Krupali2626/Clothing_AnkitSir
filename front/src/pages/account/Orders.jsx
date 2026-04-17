@@ -117,7 +117,7 @@ export default function Orders() {
 
     return (
         <AccountLayout>
-            <div className="flex flex-col min-h-[calc(100vh-17rem)]">
+            <div className="flex flex-col min-h-[calc(100vh-10rem)] md:min-h-[calc(100vh-17rem)]">
 
                 {/* Page title */}
                 <div className="flex justify-between items-center md:mb-8 mb-4">

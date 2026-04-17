@@ -9,6 +9,8 @@ export const UserAddressSchema = new mongoose.Schema({
   city: { type: String, default: null },
   state: { type: String, default: null },
   zipcode: { type: String, default: null },
+  addressType: { type: String, enum: ['Home', 'Office', 'Other'], default: 'Home' },
+  phone: { type: String, trim: true, default: null },
   recentlyViewed: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },

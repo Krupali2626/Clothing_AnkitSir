@@ -19,7 +19,9 @@ export const userAddressAddController = async (req, res) => {
             aptSuite,
             city,
             state,
-            zipcode
+            zipcode,
+            addressType,
+            phone
         } = req.body;
 
         if (!firstName || !lastName || !zipcode || !address) {
@@ -46,14 +48,16 @@ export const userAddressAddController = async (req, res) => {
 
         // Build address as Mongoose subdocument
         const newAddress = {
-            country: country || "Australia", // assuming Aus by image layout/earlier Stripe AUD code
+            country: country || "Australia",
             firstName,
             lastName,
             address,
             aptSuite,
             city: autoCity,
             state: autoState,
-            zipcode
+            zipcode,
+            addressType: addressType || 'Home',
+            phone: phone || null,
         };
 
         const user = await UserModel.findById(id);
@@ -98,7 +102,9 @@ export const userAddressUpdateController = async (req, res) => {
             aptSuite,
             city,
             state,
-            zipcode
+            zipcode,
+            addressType,
+            phone
         } = req?.body;
 
         const updateFields = {};
@@ -106,10 +112,12 @@ export const userAddressUpdateController = async (req, res) => {
         if (firstName) updateFields["address.$.firstName"] = firstName;
         if (lastName) updateFields["address.$.lastName"] = lastName;
         if (address) updateFields["address.$.address"] = address;
-        if (aptSuite) updateFields["address.$.aptSuite"] = aptSuite;
+        if (aptSuite !== undefined) updateFields["address.$.aptSuite"] = aptSuite;
         if (city) updateFields["address.$.city"] = city;
         if (state) updateFields["address.$.state"] = state;
         if (zipcode) updateFields["address.$.zipcode"] = zipcode;
+        if (addressType) updateFields["address.$.addressType"] = addressType;
+        if (phone !== undefined) updateFields["address.$.phone"] = phone;
 
         // Prepare update query
         let updateQuery = { $set: updateFields };

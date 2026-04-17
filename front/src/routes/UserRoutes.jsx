@@ -7,6 +7,7 @@ import ProtectedRoute from './ProtectedRoute';
 import Profile from '../pages/account/Profile';
 import Orders from '../pages/account/Orders';
 import OrderDetail from '../pages/account/OrderDetail';
+import Address from '../pages/account/Address';
 
 const UserRoutes = () => {
     return (
@@ -21,6 +22,7 @@ const UserRoutes = () => {
                 <Route path="/profile" element={<Layout><Profile /></Layout>} />
                 <Route path="/orders" element={<Layout><Orders /></Layout>} />
                 <Route path="/orders/:id" element={<Layout><OrderDetail /></Layout>} />
+                <Route path="/addresses" element={<Layout><Address /></Layout>} />
             </Route>
         </Routes>
     );
