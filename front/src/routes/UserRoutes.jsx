@@ -11,6 +11,7 @@ import Orders from '../pages/account/Orders';
 import OrderDetail from '../pages/account/OrderDetail';
 import Address from '../pages/account/Address';
 import PaymentsCard from '../pages/account/PaymentsCard';
+import Settings from '../pages/account/Settings';
 
 const UserRoutes = () => {
     return (
@@ -29,6 +30,7 @@ const UserRoutes = () => {
                 <Route path="/orders/:id" element={<Layout><OrderDetail /></Layout>} />
                 <Route path="/addresses" element={<Layout><Address /></Layout>} />
                 <Route path="/payments" element={<Layout><PaymentsCard /></Layout>} />
+                <Route path="/settings" element={<Layout><Settings /></Layout>} />
             </Route>
         </Routes>
     );
