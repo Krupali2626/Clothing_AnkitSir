@@ -17,16 +17,19 @@ export const initSocket = (server) => {
         socket.on('join', (data) => {
             const { userId, tokenHash } = data;
             if (userId) {
+                const userIdStr = userId.toString();
                 // Join user room
-                socket.join(userId.toString());
-                console.log(`User ${userId} joined their notification room`);
+                socket.join(userIdStr);
+                console.log(`📡 Socket ${socket.id} joined userId room: ${userIdStr}`);
                 
                 // Also join a specific session room if tokenHash provided
                 if (tokenHash) {
-                    const sessionRoom = `${userId}-${tokenHash}`;
+                    const sessionRoom = `${userIdStr}-${tokenHash}`;
                     socket.join(sessionRoom);
-                    console.log(`User ${userId} joined session room: ${sessionRoom}`);
+                    console.log(`📡 Socket ${socket.id} joined session room: ${sessionRoom}`);
                 }
+            } else {
+                console.log('⚠️ Socket join attempt without userId');
             }
         });
 
@@ -50,15 +53,20 @@ export const sendRealTimeNotification = (userId, notification) => {
 
 export const sendSessionRevoked = (userId, tokenHash) => {
     if (io && userId && tokenHash) {
-        const sessionRoom = `${userId}-${tokenHash}`;
-        console.log(`Emitting session-revoked to session room: ${sessionRoom}`);
+        const userIdStr = String(userId);
+        const sessionRoom = `${userIdStr}-${tokenHash}`;
+        console.log(`🚀 Emitting session-revoked to session room: ${sessionRoom}`);
+        // Also emit to user room so any tab of this user can handle it if needed
+        io.to(userIdStr).emit('session-revocation-check', { tokenHash });
+        // Emit to specific session room
         io.to(sessionRoom).emit('session-revoked', { tokenHash });
     }
 };
 
 export const sendLogoutAllDevices = (userId) => {
     if (io && userId) {
-        console.log(`Emitting logout-all-devices to user ${userId}`);
-        io.to(userId.toString()).emit('logout-all-devices');
+        const userIdStr = userId.toString();
+        console.log(`🚀 Emitting logout-all-devices to user room: ${userIdStr}`);
+        io.to(userIdStr).emit('logout-all-devices');
     }
 };

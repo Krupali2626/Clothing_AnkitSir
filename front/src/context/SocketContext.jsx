@@ -49,38 +49,95 @@ export const SocketProvider = ({ children }) => {
                 }
             }
             
-            // Create socket connection
-            const newSocket = io(BASE_URL, {
+            // Create socket connection - use root URL, not /api subpath
+            const socketUrl = BASE_URL.replace('/api', '');
+            console.log('Connecting to socket at:', socketUrl);
+            
+            const newSocket = io(socketUrl, {
                 withCredentials: true,
                 transports: ['websocket', 'polling']
             });
 
             newSocket.on('connect', () => {
-                console.log('Socket connected:', newSocket.id);
+                const id = user._id;
+                console.log('✅ Socket connected:', newSocket.id, 'for user:', id);
+                console.log('🔑 Emitting join for room identifier:', { userId: id, tokenHash });
                 // Join user's room with tokenHash
-                newSocket.emit('join', { userId: user._id, tokenHash });
-            });
-
-            newSocket.on('disconnect', () => {
-                console.log('Socket disconnected');
-            });
-
-            // Listen for session revoked event
-            newSocket.on('session-revoked', (data) => {
-                console.log('Session revoked event received:', data);
+                newSocket.emit('join', { userId: id, tokenHash });
                 
-                // This event is sent to specific session room, so if we receive it, it's for us
-                toast.error('Your session has been terminated from another device');
-                dispatch(logout());
-                navigate('/login');
+                // Show connection success for debugging (can be removed later)
+                toast.success('Socket Connected', { id: 'socket-connected' });
+            });
+
+            newSocket.on('connect_error', (error) => {
+                console.error('❌ Socket connection error:', error.message);
+                console.log('Current socketUrl being used:', socketUrl);
+                toast.error('Socket Connection Failed', { id: 'socket-error' });
+            });
+
+            newSocket.on('disconnect', (reason) => {
+                console.log('⚠️ Socket disconnected, reason:', reason);
+                if (reason === 'io server disconnect' || reason === 'transport close') {
+                   // Toast.error('Real-time connection lost');
+                }
+            });
+
+            // Listen for session revoked event (specific room)
+            newSocket.on('session-revoked', (data) => {
+                console.log('🚫 Session revoked event received (specific room):', data);
+                
+                toast.error('Your session has been terminated from another device', {
+                    duration: 5000,
+                    icon: '🚫'
+                });
+                
+                setTimeout(() => {
+                    dispatch(logout());
+                    navigate('/login');
+                }, 1000);
+            });
+
+            // Fallback: Listen for revocation check on general user room
+            newSocket.on('session-revocation-check', (data) => {
+                console.log('🛡️ Revocation check received on user room:', data, 'Current hash:', tokenHash);
+                
+                if (data.tokenHash === tokenHash) {
+                    console.log('🎯 This session matches revoked hash. Logging out...');
+                    toast.error('Your session was revoked from another device', {
+                        duration: 5000,
+                        icon: '🚫'
+                    });
+                    
+                    setTimeout(() => {
+                        dispatch(logout());
+                        navigate('/login');
+                    }, 1000);
+                }
             });
 
             // Listen for logout all devices event
             newSocket.on('logout-all-devices', () => {
-                console.log('Logout all devices event received');
-                toast.error('You have been logged out from all devices');
-                dispatch(logout());
-                navigate('/login');
+                console.log('📢 Logout all devices event received');
+                toast.error('You have been logged out from all devices', {
+                    duration: 5000,
+                    icon: '📢'
+                });
+                
+                setTimeout(() => {
+                    dispatch(logout());
+                    navigate('/login');
+                }, 1000);
+            });
+
+            // Listen for regular notifications
+            newSocket.on('new-notification', (notification) => {
+                console.log('🔔 New notification received:', notification);
+                toast.success(notification.title || 'New Notification', {
+                    description: notification.message,
+                    duration: 6000,
+                });
+                // Potentially refetch notifications or update store here
+                // dispatch(fetchNotifications());
             });
 
             setSocket(newSocket);

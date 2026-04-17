@@ -6,7 +6,8 @@ import transporter from '../utils/Email.config.js'
 import { UAParser } from 'ua-parser-js';
 import requestIp from 'request-ip';
 import { sendErrorResponse, sendNotFoundResponse, sendSuccessResponse } from '../utils/Response.utils.js';
-import { sendSessionRevoked, sendLogoutAllDevices } from '../utils/socket.js';
+import { sendSessionRevoked, sendLogoutAllDevices, sendRealTimeNotification } from '../utils/socket.js';
+import NotificationModel from '../model/notification.model.js';
 
 export class AuthController {
   static JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
@@ -371,8 +372,19 @@ export class AuthController {
       console.log('revokeSession - user.sessions after:', user.sessions.map(s => ({ _id: s._id.toString(), tokenHash: s.tokenHash })));
       console.log('revokeSession - Session revoked successfully');
       
+      // Create a persistent notification for the user
+      const notification = await NotificationModel.create({
+        user: user._id,
+        title: "Account Security Alert",
+        message: `A session on ${sessionToRevoke.os || 'a device'} (${sessionToRevoke.browser || 'Unknown browser'}) has been revoked.`,
+        type: "Account"
+      });
+
       // Emit socket event to notify the revoked device
       sendSessionRevoked(user._id.toString(), sessionToRevoke.tokenHash);
+      
+      // Also send real-time notification to all OTHER active devices of the user
+      sendRealTimeNotification(user._id.toString(), notification);
       
       return sendSuccessResponse(res, "Session revoked successfully");
     } catch (error) {
@@ -393,9 +405,40 @@ export class AuthController {
       // Emit socket event to logout all devices
       sendLogoutAllDevices(user._id.toString());
 
+      // Create a persistent notification
+      await NotificationModel.create({
+        user: user._id,
+        title: "Security Update",
+        message: "You have been logged out from all active devices.",
+        type: "Account"
+      });
+
       return sendSuccessResponse(res, "Logged out from all devices");
     } catch (error) {
       return sendErrorResponse(res, 500, "Error logging out from all devices", error.message);
+    }
+  }
+
+  static async logout(req, res) {
+    try {
+      const user = await UserModel.findById(req.user._id);
+      if (user) {
+        // Remove current session
+        user.sessions = user.sessions.filter(s => s.tokenHash !== req.user.tokenHash);
+        await user.save();
+      }
+
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+
+      // Notify other tabs/windows of the same session to logout
+      if (req.user && req.user._id && req.user.tokenHash) {
+        sendSessionRevoked(req.user._id.toString(), req.user.tokenHash);
+      }
+
+      return sendSuccessResponse(res, "Logged out successfully");
+    } catch (error) {
+      return sendErrorResponse(res, 500, "Error logging out", error.message);
     }
   }
 }

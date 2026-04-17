@@ -178,6 +178,18 @@ export const logoutAllDevices = createAsyncThunk(
     }
 );
 
+export const logoutUser = createAsyncThunk(
+    'auth/logoutUser',
+    async (_, { rejectWithValue }) => {
+        try {
+            await axiosInstance.post('/auth/logout');
+            return true;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
 export const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -365,6 +377,18 @@ export const authSlice = createSlice({
             .addCase(logoutAllDevices.rejected, (state, action) => {
                 console.error('logoutAllDevices rejected:', action.payload);
                 toast.error(action.payload?.message || 'Failed to logout from all devices');
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+                state.sessions = [];
+                clearPersistedStorage();
+            })
+            .addCase(logoutUser.rejected, (state, action) => {
+                // Even if backend fails, we might want to clear local state
+                state.user = null;
+                state.isAuthenticated = false;
+                clearPersistedStorage();
             })
 
             // --- Cross-Slice Synchronization ---

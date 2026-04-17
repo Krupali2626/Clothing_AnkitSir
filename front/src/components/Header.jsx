@@ -6,7 +6,7 @@ import { FaRegHeart } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMainCategories, fetchCategories, fetchSubCategories } from '../redux/slice/category.slice';
-import { logout } from '../redux/slice/auth.slice';
+import { logoutUser } from '../redux/slice/auth.slice';
 import { logSearch, fetchPopularSearches, fetchRecentSearches, fetchTrendingProducts, searchProducts, clearSearchResults } from '../redux/slice/search.slice';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { HiArrowUpRight, HiOutlineBell } from 'react-icons/hi2';
@@ -130,10 +130,15 @@ export default function Header() {
         setIsLogoutModalOpen(true);
     };
 
-    const confirmLogout = () => {
-        dispatch(logout());
-        setIsLogoutModalOpen(false);
-        navigate('/');
+    const confirmLogout = async () => {
+        try {
+            await dispatch(logoutUser()).unwrap();
+            setIsLogoutModalOpen(false);
+            navigate('/');
+        } catch (error) {
+            setIsLogoutModalOpen(false);
+            navigate('/');
+        }
     };
 
     const cancelLogout = () => {

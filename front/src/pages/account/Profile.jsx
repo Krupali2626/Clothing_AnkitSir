@@ -6,8 +6,11 @@ import AccountLayout from './AccountLayout';
 import { HiOutlineCheckCircle } from 'react-icons/hi';
 import { HiOutlineExclamationTriangle } from 'react-icons/hi2';
 import { Link } from 'react-router-dom';
-import { updateProfile, sendEmailOtp, verifyEmailOtp } from '../../redux/slice/auth.slice';
+import { updateProfile, sendEmailOtp, verifyEmailOtp, fetchSessions, revokeSession, logoutUser, logoutAllDevices } from '../../redux/slice/auth.slice';
 import { FaArrowRight } from 'react-icons/fa';
+import { HiOutlineDevicePhoneMobile, HiOutlineGlobeAlt } from 'react-icons/hi2';
+import { formatDistanceToNow } from 'date-fns';
+import toast from 'react-hot-toast';
 
 const ArrowUpRight = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -24,7 +27,7 @@ const profileSchema = Yup.object({
 
 export default function Profile() {
     const dispatch = useDispatch();
-    const { user, loading, emailOtpLoading } = useSelector((state) => state.auth);
+    const { user, loading, emailOtpLoading, sessions = [], sessionsLoading } = useSelector((state) => state.auth);
     const [isEditing, setIsEditing] = useState(false);
 
     // Email verify modal state
@@ -44,6 +47,10 @@ export default function Profile() {
             });
         }, 1000);
     };
+
+    useEffect(() => {
+        dispatch(fetchSessions());
+    }, [dispatch]);
 
     useEffect(() => () => clearInterval(timerRef.current), []);
 
@@ -146,6 +153,34 @@ export default function Profile() {
             } catch (_) { }
         },
     });
+
+    const handleRevokeSession = async (sessionId) => {
+        try {
+            await dispatch(revokeSession(sessionId)).unwrap();
+            toast.success('Device logged out successfully');
+            dispatch(fetchSessions());
+        } catch (error) {
+            toast.error(error?.message || 'Failed to logout device');
+        }
+    };
+
+    const handleLogoutAll = async () => {
+        try {
+            await dispatch(logoutAllDevices()).unwrap();
+            toast.success('Logged out from all devices');
+        } catch (error) {
+            toast.error(error?.message || 'Failed to logout from all devices');
+        }
+    };
+
+    const handleMainLogout = async () => {
+        try {
+            await dispatch(logoutUser()).unwrap();
+            toast.success('Logged out successfully');
+        } catch (error) {
+            toast.error('Logout failed');
+        }
+    };
 
     const handleEdit = () => {
         formik.resetForm({
@@ -393,6 +428,76 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Security & Sessions ── */}
+            <div className="md:mt-12 mt-8">
+                <div className="flex items-center justify-between mb-5">
+                    <p className="text-xs sm:text-sm lg:text-base font-semibold tracking-normal text-mainText uppercase">
+                        Security & Sessions
+                    </p>
+                    <Link to="/settings"
+                        className="flex items-center gap-1 text-xs sm:text-sm lg:text-base font-semibold tracking-widest text-mainText uppercase hover:text-primary transition-colors">
+                        All Settings <ArrowUpRight />
+                    </Link>
+                </div>
+                
+                <div className="bg-white border border-border/50 p-4 md:p-6 mb-6">
+                    {sessionsLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                    ) : sessions.length === 0 ? (
+                        <p className="text-center py-4 text-lightText/60">No active sessions</p>
+                    ) : (
+                        <div className="space-y-5">
+                            {sessions.map((session) => (
+                                <div key={session._id} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${session.isCurrent ? 'bg-primary text-white' : 'bg-mainBG text-lightText'}`}>
+                                            {session.deviceType === 'Desktop' ? <HiOutlineGlobeAlt className="text-xl" /> : <HiOutlineDevicePhoneMobile className="text-xl" />}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm md:text-base font-bold text-dark truncate capitalize">{session.os === 'Unknown' ? 'Web' : session.os}</p>
+                                                {session.isCurrent && <span className="text-[8px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">Current</span>}
+                                            </div>
+                                            <p className="text-[10px] md:text-xs text-lightText/60">
+                                                {session.isCurrent ? 'Online Now' : formatDistanceToNow(new Date(session.lastActive), { addSuffix: true })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {!session.isCurrent && (
+                                        <button 
+                                            onClick={() => handleRevokeSession(session._id)}
+                                            className="text-[10px] font-bold text-red-500 uppercase hover:underline underline-offset-4"
+                                        >
+                                            Log Out
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                    <button 
+                        type="button"
+                        onClick={handleMainLogout}
+                        className="flex-1 bg-dark text-white py-3 md:py-4 text-xs md:text-sm font-bold uppercase tracking-widest hover:bg-primary transition-colors"
+                    >
+                        Log Out From This Device
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={handleLogoutAll}
+                        className="flex-1 border border-border text-dark py-3 md:py-4 text-xs md:text-sm font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-500/20 transition-all"
+                    >
+                        Sign Out All Devices
+                    </button>
+                </div>
+            </div>
+
 
             {/* ── Email Verify OTP Modal ── */}
             {verifyModal && (

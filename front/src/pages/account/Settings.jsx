@@ -7,7 +7,7 @@ import { RiVisaLine, RiMastercardLine } from 'react-icons/ri';
 import { SiAmericanexpress } from 'react-icons/si';
 import { HiOutlineBell, HiOutlineCreditCard, HiOutlineQuestionMarkCircle, HiOutlineDevicePhoneMobile, HiOutlineGlobeAlt, HiOutlineShieldCheck } from 'react-icons/hi2';
 import { fetchSavedCards } from '../../redux/slice/paymentCard.slice';
-import { updateProfile, logout, fetchSessions, revokeSession, logoutAllDevices } from '../../redux/slice/auth.slice';
+import { updateProfile, logoutUser, fetchSessions, revokeSession, logoutAllDevices } from '../../redux/slice/auth.slice';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';

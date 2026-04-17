@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useState } from 'react';
-import { logout } from '../../redux/slice/auth.slice';
+import { logoutUser } from '../../redux/slice/auth.slice';
 import { HiChevronRight } from 'react-icons/hi2';
 import { IoClose } from 'react-icons/io5';
 
@@ -24,10 +24,16 @@ export default function AccountLayout({ children }) {
         setIsLogoutModalOpen(true);
     };
 
-    const confirmLogout = () => {
-        dispatch(logout());
-        navigate('/');
-        setIsLogoutModalOpen(false);
+    const confirmLogout = async () => {
+        try {
+            await dispatch(logoutUser()).unwrap();
+            navigate('/');
+            setIsLogoutModalOpen(false);
+        } catch (error) {
+            // Even if it fails, navigate to home (local state is cleared in slice)
+            navigate('/');
+            setIsLogoutModalOpen(false);
+        }
     };
 
     const cancelLogout = () => {
