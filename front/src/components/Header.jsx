@@ -119,10 +119,21 @@ export default function Header() {
         return () => { document.body.style.overflow = ''; };
     }, [isAccountOpen, isMenuOpen]);
 
-    const handleLogout = () => {
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+    const handleLogoutClick = () => {
+        setIsAccountOpen(false); // Close sidebar before showing modal
+        setIsLogoutModalOpen(true);
+    };
+
+    const confirmLogout = () => {
         dispatch(logout());
-        setIsAccountOpen(false);
+        setIsLogoutModalOpen(false);
         navigate('/');
+    };
+
+    const cancelLogout = () => {
+        setIsLogoutModalOpen(false);
     };
 
     useEffect(() => {
@@ -366,13 +377,14 @@ export default function Header() {
                                 {user ? (
                                     <button
                                         onClick={() => setIsAccountOpen(true)}
-                                        className={`flex items-center ${isHomePage
+                                        className={`flex gap-2 items-center ${isHomePage
                                             ? (isScrolled || hoveredCategory || isMenuOpen ? 'text-dark' : 'text-white')
                                             : 'text-dark'
                                             }`}>
                                         <div className="h-7 w-7 xs:h-8 xs:w-8 bg-primary uppercase rounded-full flex items-center justify-center font-bold text-white text-[10px] transition-all flex-shrink-0">
                                             {user?.firstName?.slice(0, 1) || 'U'}
                                         </div>
+                                        <span className='capitalize font-semibold tracking-wide hidden md:block'>{user?.firstName}</span>
                                     </button>
                                 ) : (
                                     <Link to="/auth" className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isHomePage
@@ -882,13 +894,56 @@ export default function Header() {
                         </Link>
                     ))}
                     <button
-                        onClick={handleLogout}
+                        onClick={handleLogoutClick}
                         className="p-6 text-lg text-mainText font-medium hover:bg-mainBG transition-colors tracking-wide hover:ring-1 hover:ring-border text-left"
                     >
                         Logout
                     </button>
                 </nav>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {isLogoutModalOpen && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={cancelLogout}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white w-full max-w-[440px] p-10 shadow-2xl animate-in fade-in zoom-in duration-300">
+                        {/* Close button */}
+                        <button
+                            onClick={cancelLogout}
+                            className="absolute top-6 right-6 text-lightText hover:text-dark transition-colors"
+                        >
+                            <IoClose size={28} />
+                        </button>
+
+                        <h3 className="text-[32px] font-bold text-dark mb-6">Log out?</h3>
+
+                        <p className="text-xl font-medium text-lightText mb-12 leading-relaxed">
+                            Are you sure you want to log out of your account?
+                        </p>
+
+                        <div className="flex gap-5">
+                            <button
+                                onClick={cancelLogout}
+                                className="flex-1 bg-white border border-border text-dark text-base font-bold py-5 uppercase tracking-widest hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmLogout}
+                                className="flex-1 bg-primary text-white text-base font-bold py-5 uppercase tracking-widest hover:bg-primary/90 transition-colors"
+                            >
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

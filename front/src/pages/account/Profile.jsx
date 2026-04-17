@@ -164,7 +164,7 @@ export default function Profile() {
     };
 
     const inputClass = (field) =>
-        `w-full text-sm sm:text-lg font-medium bg-transparent outline-none border-none placeholder:text-lightText ${formik.touched[field] && formik.errors[field] ? 'text-red-500' : 'text-primary'
+        `w-full text-sm md:text-lg font-medium bg-transparent outline-none border-none placeholder:text-lightText ${formik.touched[field] && formik.errors[field] ? 'text-red-500' : 'text-primary'
         }`;
 
     return (
@@ -226,7 +226,7 @@ export default function Profile() {
                                     placeholder="Enter first name"
                                 />
                             ) : (
-                                <p className={`text-sm sm:text-lg font-medium ${user?.firstName ? 'text-primary' : 'text-lightText'}`}>
+                                <p className={`text-sm md:text-lg font-medium ${user?.firstName ? 'text-primary' : 'text-lightText'}`}>
                                     {user?.firstName || '—'}
                                 </p>
                             )}
@@ -249,7 +249,7 @@ export default function Profile() {
                                     placeholder="Enter last name"
                                 />
                             ) : (
-                                <p className={`text-sm sm:text-lg font-medium ${user?.lastName ? 'text-primary' : 'text-lightText'}`}>
+                                <p className={`text-sm md:text-lg font-medium ${user?.lastName ? 'text-primary' : 'text-lightText'}`}>
                                     {user?.lastName || '—'}
                                 </p>
                             )}
@@ -265,7 +265,7 @@ export default function Profile() {
                                     Contact Number
                                 </p>
                                 <div className="flex items-center justify-between">
-                                    <p className={`text-sm sm:text-lg font-medium ${user?.mobileNo ? 'text-primary' : 'text-lightText'}`}>
+                                    <p className={`text-sm md:text-lg font-medium ${user?.mobileNo ? 'text-primary' : 'text-lightText'}`}>
                                         {user?.mobileNo ? `+1 ${user.mobileNo}` : 'Not added yet'}
                                     </p>
                                     {user?.verified && (
@@ -298,7 +298,7 @@ export default function Profile() {
                                     />
                                 ) : user?.email ? (
                                     <div className="flex items-center justify-between">
-                                        <p className="text-sm sm:text-lg font-medium text-primary truncate" title={user.email}>
+                                        <p className="text-sm md:text-lg font-medium text-primary truncate" title={user.email}>
                                             <span className="hidden sm375:inline">{user.email}</span>
                                             <span className="sm375:hidden">{user.email.split('@')[0]}@...</span>
                                         </p>
@@ -316,7 +316,7 @@ export default function Profile() {
                                     </div>
                                 ) : (
                                     <div className="flex items-start justify-between">
-                                        <p className="text-sm sm:text-lg text-lightText">Not added yet</p>
+                                        <p className="text-sm md:text-lg text-lightText">Not added yet</p>
                                         <button type="button" onClick={handleSendOtp} disabled={emailOtpLoading} className="flex items-center gap-1 text-xs sm:text-base font-semibold text-mainText tracking-widest uppercase hover:opacity-80 transition-opacity mt-0.5 disabled:opacity-50">
                                             <HiOutlineExclamationTriangle className="text-base text-gold" />
                                             Verify
@@ -349,9 +349,9 @@ export default function Profile() {
                     <div className="border-b border-border pb-3">
                         <p className={`text-sm mb-1 font-bold ${addressLine ? 'text-lightText' : 'text-primary'}`}>Address</p>
                         {addressLine ? (
-                            <p className="text-sm sm:text-lg font-medium text-primary">{addressLine}</p>
+                            <p className="text-sm md:text-lg font-medium text-primary">{addressLine}</p>
                         ) : (
-                            <p className="text-sm sm:text-lg text-lightText">No address saved yet.</p>
+                            <p className="text-sm md:text-lg text-lightText">No address saved yet.</p>
                         )}
                     </div>
                 </div>
@@ -388,7 +388,7 @@ export default function Profile() {
                                 </span>
                             </div>
                         ) : (
-                            <p className="text-sm sm:text-lg text-lightText">No payment method saved yet.</p>
+                            <p className="text-sm md:text-lg text-lightText">No payment method saved yet.</p>
                         )}
                     </div>
                 </div>

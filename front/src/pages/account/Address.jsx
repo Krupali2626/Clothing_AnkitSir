@@ -120,7 +120,7 @@ function AddressCard({ addr, isDefault, onEdit, onDelete, onSetDefault, actionLo
                 <p className="text-sm md:text-base font-medium text-lightText mt-1">{addr.phone}</p>
             )}
 
-            <div className="mt-1 flex justify-between md:items-center items-end gap-2 md:flex-row flex-col">
+            <div className="mt-1 flex justify-between md:items-center gap-2 md:flex-row flex-col">
 
                 {/* Address line */}
                 <p className="text-sm md:text-base font-semibold text-primary ">{fullAddress}</p>
@@ -130,7 +130,7 @@ function AddressCard({ addr, isDefault, onEdit, onDelete, onSetDefault, actionLo
                     <button
                         onClick={onSetDefault}
                         disabled={actionLoading}
-                        className="text-sm md:text-base font-semibold text-primary hover:underline disabled:opacity-50 transition-colors"
+                        className="text-sm md:text-base font-semibold text-primary hover:underline disabled:opacity-50 transition-colors text-right"
                     >
                         Set as default
                     </button>

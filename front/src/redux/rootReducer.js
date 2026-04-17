@@ -5,6 +5,7 @@ import productReducer from "./slice/product.slice.js";
 import orderReducer from "./slice/order.slice.js";
 import searchReducer from "./slice/search.slice.js";
 import addressReducer from "./slice/address.slice.js";
+import paymentReducer from "./slice/paymentCard.slice.js";
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -13,4 +14,5 @@ export const rootReducer = combineReducers({
     order: orderReducer,
     search: searchReducer,
     address: addressReducer,
+    payment: paymentReducer,
 });

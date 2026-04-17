@@ -290,7 +290,36 @@ export const authSlice = createSlice({
                 state.emailOtpLoading = false;
                 state.error = action.payload?.message || 'Invalid or expired OTP';
                 toast.error(action.payload?.message || 'Invalid or expired OTP');
-            });
+            })
+
+            // --- Cross-Slice Synchronization ---
+            // Listen for address slice actions to keep auth.user in sync
+            .addMatcher(
+                (action) => action.type.startsWith('address/') && action.type.endsWith('/fulfilled'),
+                (state, action) => {
+                    if (state.user && action.payload) {
+                        // If the payload is a user object (address slice returns user on add/update/delete/select)
+                        if (action.payload.mobileNo || action.payload.address) {
+                            state.user = { ...state.user, ...action.payload };
+                        }
+                    }
+                }
+            )
+            // Listen for payment slice actions to keep auth.user in sync
+            .addMatcher(
+                (action) => action.type.startsWith('payment/') && action.type.endsWith('/fulfilled'),
+                (state, action) => {
+                    if (state.user && action.payload) {
+                        // payment slice actions return { cards, selectedCardId, ... }
+                        if (action.payload.selectedCardId !== undefined) {
+                            state.user.selectedCard = action.payload.selectedCardId;
+                        }
+                        if (action.payload.cards) {
+                            state.user.savedCards = action.payload.cards;
+                        }
+                    }
+                }
+            );
     },
 });
 

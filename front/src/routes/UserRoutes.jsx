@@ -10,6 +10,7 @@ import Profile from '../pages/account/Profile';
 import Orders from '../pages/account/Orders';
 import OrderDetail from '../pages/account/OrderDetail';
 import Address from '../pages/account/Address';
+import PaymentsCard from '../pages/account/PaymentsCard';
 
 const UserRoutes = () => {
     return (
@@ -27,6 +28,7 @@ const UserRoutes = () => {
                 <Route path="/orders" element={<Layout><Orders /></Layout>} />
                 <Route path="/orders/:id" element={<Layout><OrderDetail /></Layout>} />
                 <Route path="/addresses" element={<Layout><Address /></Layout>} />
+                <Route path="/payments" element={<Layout><PaymentsCard /></Layout>} />
             </Route>
         </Routes>
     );
