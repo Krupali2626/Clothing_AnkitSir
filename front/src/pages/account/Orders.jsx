@@ -47,7 +47,7 @@ function OrderCard({ order }) {
     return (
         <div className="bg-white flex flex-col">
             {/* ── Header ── */}
-            <div className="flex items-start justify-between px-5 pt-5 pb-3">
+            <div className="flex flex-col sm375:flex-row items-start justify-between px-5 pt-5 pb-3 sm375:gap-0 gap-1">
                 <div>
                     <p className="text-base font-semibold text-mainText uppercase">#{order.orderId}</p>
                     <p className="text-sm font-medium text-lightText mt-0.5">Placed on {formattedDate}</p>
@@ -56,7 +56,7 @@ function OrderCard({ order }) {
             </div>
 
             {/* ── Product row ── */}
-            <div className="flex items-start gap-4 px-5 py-3">
+            <div className="flex items-center gap-4 px-5 py-3">
                 {/* Thumbnail */}
                 <div className="w-[72px] h-[72px] shrink-0 bg-mainBG border border-border overflow-hidden rounded-sm">
                     {productImage ? (
@@ -74,10 +74,10 @@ function OrderCard({ order }) {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium text-dark leading-snug line-clamp-2">
+                    <p className="text-sm md:text-base font-medium text-dark leading-snug line-clamp-2">
                         {productName}
                     </p>
-                    <div className="mt-1 space-y-0.5 text-sm font-medium text-lightText">
+                    <div className="mt-1 space-y-0.5 text-xs md:text-sm font-medium text-lightText">
                         <div className="flex gap-3 items-center">
                             {productColor && <p>Color: {productColor}</p>}
                             {productSize && <p>Size: {productSize}</p>}
@@ -90,17 +90,17 @@ function OrderCard({ order }) {
             {/* ── Footer ── */}
             <div className="flex items-center justify-between mx-5 py-3 border-t border-border">
                 <div className="flex items-center gap-3">
-                    <span className="text-mainText text-base font-medium">
+                    <span className="text-mainText text-xs md:text-base font-medium">
                         {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                     </span>
                     <div className='border-l border-border h-3 w-px'></div>
-                    <span className="text-mainText text-base font-medium">${order.totalAmount?.toFixed(2)}</span>
+                    <span className="text-mainText text-xs md:text-base font-medium">${order.totalAmount?.toFixed(2)}</span>
                 </div>
                 <Link
                     to={`/orders/${order._id}`}
-                    className="flex items-center gap-1 text-sm font-medium text-dark hover:text-primary transition-colors"
+                    className="flex items-center gap-1 text-xs md:text-sm font-medium text-dark hover:text-primary transition-colors"
                 >
-                    View Details <HiChevronRight className="text-base" />
+                    View Details <HiChevronRight className="text-xs md:text-base" />
                 </Link>
             </div>
         </div>

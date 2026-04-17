@@ -26,8 +26,8 @@ export default function AccountLayout({ children }) {
         <div className="min-h-[calc(100vh-10rem)] bg-mainBG">
 
             {/* Breadcrumb - Sticky below header */}
-            <div className="sticky top-[81px] md:top-[114px] z-20 py-6 px-8 text-center bg-background border-b border-border">
-                <p className="text-base text-lightText leading-5 uppercase font-semibold">
+            <div className="sticky top-[81px] md:top-[114px] z-20 py-3 md:py-6 px-4 md:px-8 text-center bg-background border-b border-border">
+                <p className="text-sm md:text-base text-lightText leading-5 uppercase font-semibold">
                     <Link to="/" className="">Home</Link>
                     <span className="mx-2">/</span>
                     <span className="text-dark">Account</span>

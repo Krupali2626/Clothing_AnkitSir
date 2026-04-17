@@ -20,7 +20,6 @@ export default function Home() {
     const { mainCategories } = useSelector((state) => state.category);
     const { products, loading } = useSelector((state) => state.product);
     const [activeTab, setActiveTab] = useState(null);
-    console.log(products)
 
     useEffect(() => {
         dispatch(fetchMainCategories());
