@@ -85,6 +85,9 @@ const UserSchema = new mongoose.Schema({
       viewedAt: { type: Date, default: Date.now },
     },
   ],
+  wishlist: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Product" }
+  ],
 }, { timestamps: true });
 
 const UserModel = mongoose.model("user", UserSchema);

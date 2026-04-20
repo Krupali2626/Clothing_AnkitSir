@@ -111,7 +111,9 @@ import {
   sendEmailOtpController,
   verifyEmailOtpController,
   addRecentlyViewedController,
-  getRecentlyViewedController
+  getRecentlyViewedController,
+  toggleWishlist,
+  getWishlistController
 } from "../controller/user.controller.js";
 import {
   getMyNotifications,
@@ -262,6 +264,10 @@ router.delete("/notifications/delete/:id", UserAuth, deleteNotification);
 // --- Recently Viewed Products ---
 router.post("/user/recently-viewed/add", OptionalUserAuth, addRecentlyViewedController);
 router.get("/user/recently-viewed/my", OptionalUserAuth, getRecentlyViewedController);
+
+// --- Wishlist Routes ---
+router.post("/user/wishlist/toggle", UserAuth, toggleWishlist);
+router.get("/user/wishlist/my", UserAuth, getWishlistController);
 
 //aws
 router.get("/list", async (req, res) => {

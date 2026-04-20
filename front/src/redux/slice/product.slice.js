@@ -9,6 +9,7 @@ const initialState = {
     pagination: null,
     filterOptions: null,
     recentlyViewed: [],
+    wishlist: [],
     loading: false,
     error: null,
 };
@@ -210,6 +211,30 @@ export const fetchRecentlyViewed = createAsyncThunk(
     }
 );
 
+export const toggleWishlist = createAsyncThunk(
+    'product/toggleWishlist',
+    async (productId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/user/wishlist/toggle', { productId });
+            return { productId, ...response.data };
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const fetchWishlist = createAsyncThunk(
+    'product/fetchWishlist',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get('/user/wishlist/my');
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
 export const productSlice = createSlice({
     name: 'product',
     initialState,
@@ -341,11 +366,17 @@ export const productSlice = createSlice({
                 state.recentlyViewed = action.payload?.result || action.payload?.data || [];
             })
             .addCase(addRecentlyViewed.fulfilled, (state, action) => {
-                // We might not need to update state here if we fetch recently viewed products 
-                // separately, but let's keep it consistent.
-                // The backend returns the list of recently viewed objects (productId, viewedAt)
                 // but we need the actual product objects for the UI.
                 // So fetchRecentlyViewed is more useful.
+            })
+            .addCase(fetchWishlist.fulfilled, (state, action) => {
+                state.wishlist = action.payload?.result || action.payload?.data || [];
+            })
+            .addCase(toggleWishlist.fulfilled, (state, action) => {
+                const { productId, isWishlisted } = action.payload;
+                if (!isWishlisted) {
+                    state.wishlist = state.wishlist.filter(p => (p._id || p) !== productId);
+                }
             });
     },
 });

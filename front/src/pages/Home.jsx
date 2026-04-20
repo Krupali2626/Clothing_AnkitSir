@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMainCategories } from '../redux/slice/category.slice';
 import { fetchProducts } from '../redux/slice/product.slice';
@@ -41,6 +42,7 @@ import newsletterImg from '../assets/images/newsletter.webp'
 
 
 export default function Home() {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { mainCategories } = useSelector((state) => state.category);
     const { products, loading } = useSelector((state) => state.product);
@@ -365,7 +367,8 @@ export default function Home() {
                     ) : filteredProducts.length > 0 ? (
                         filteredProducts.map((product, index, array) => (
                             <div
-                                key={product._id || index}
+                                key={product.slug || index}
+                                onClick={() => navigate(`/product/${product.slug}`)}
                                 className={`group cursor-pointer border border-border p-4 ${index !== array.length - 1 ? 'border-r-0' : ''
                                     }`}
                             >

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductBySlug, addRecentlyViewed } from '../redux/slice/product.slice';
-import { IoHeartOutline, IoShareSocialOutline, IoChevronUp, IoChevronDown } from "react-icons/io5";
+import { IoHeartOutline, IoHeart, IoShareSocialOutline, IoChevronUp, IoChevronDown } from "react-icons/io5";
+import { fetchProductById, fetchVariantsByProductId, clearCurrentProduct, fetchProducts, toggleWishlist, fetchWishlist } from '../redux/slice/product.slice';
 import { SlArrowLeft, SlArrowRight } from "react-icons/sl";
 import Header from '../components/Header';
 import ColorSidebar, { COLOR_VARIANTS } from '../components/ColorSidebar';
@@ -82,123 +83,83 @@ const WEAR_IT_WITH_PRODUCTS = [
     }
 ];
 
-// SIGNATURE SUGGESTIONS products
-const SIGNATURE_PRODUCTS = [
-    {
-        id: 1,
-        name: "Green Monogram Weekender Bag",
-        price: "$2,495",
-        image: product1,
-        alt: "Green Monogram Weekender Bag"
-    },
-    {
-        id: 2,
-        name: "Black Monogram Weekender Bag",
-        price: "$2,495",
-        image: product2,
-        alt: "Black Monogram Weekender Bag"
-    },
-    {
-        id: 3,
-        name: "Paris Store Weekender",
-        price: "$2,495",
-        image: product3,
-        alt: "Paris Store Weekender"
-    },
-    {
-        id: 4,
-        name: "Brown Monogram Weekender",
-        price: "$2,495",
-        image: product4,
-        alt: "Brown Monogram Weekender"
-    },
-    {
-        id: 5,
-        name: "Tennis Collar Crochet Short Sleeve Shirt",
-        price: "$685",
-        image: product5,
-        alt: "Tennis Collar Crochet Short Sleeve Shirt"
-    },
-    {
-        id: 6,
-        name: "Tennis Collar Crochet Shorts",
-        price: "$570",
-        image: product1,
-        alt: "Tennis Collar Crochet Shorts"
-    },
-    {
-        id: 7,
-        name: "Stripe Racket Knit Polo Shirt",
-        price: "$875",
-        image: product2,
-        alt: "Stripe Racket Knit Polo Shirt"
-    },
-    {
-        id: 8,
-        name: "Stripe Racket Golf Trousers",
-        price: "$740",
-        image: product3,
-        alt: "Stripe Racket Golf Trousers"
-    },
-    {
-        id: 9,
-        name: "Green Cropped Knit Polo Shirt",
-        price: "$875",
-        image: product4,
-        alt: "Green Cropped Knit Polo Shirt"
-    },
-    {
-        id: 10,
-        name: "Green Pleated Knit Mini Skirt",
-        price: "$685",
-        image: product5,
-        alt: "Green Pleated Knit Mini Skirt"
-    },
-    {
-        id: 11,
-        name: "Green Pleated Halter Mini Dress",
-        price: "$1,240",
-        image: product1,
-        alt: "Green Pleated Halter Mini Dress"
-    },
-    {
-        id: 12,
-        name: "Green Cropped Short Sleeve Polo Shirt",
-        price: "$875",
-        image: product2,
-        alt: "Green Cropped Short Sleeve Polo Shirt"
-    }
-];
 
 const ProductDetails = () => {
-    const { slug } = useParams();
+    const { slug,id } = useParams();
     const dispatch = useDispatch();
-    const { currentProduct, loading } = useSelector(state => state.product);
+    const navigate = useNavigate();
+    const { currentProduct, variants, loading, wishlist } = useSelector((state) => state.product);
+    const { isAuthenticated } = useSelector((state) => state.auth);
+
+    const isWishlisted = wishlist.some(p => (p._id || p) === currentProduct?._id);
 
     const [colorSidebarOpen, setColorSidebarOpen] = useState(false);
     const [sizeSidebarOpen, setSizeSidebarOpen] = useState(false);
     const [productInfoOpen, setProductInfoOpen] = useState(false);
     const [imageModalOpen, setImageModalOpen] = useState(false);
     const [activeInfoTab, setActiveInfoTab] = useState('Product Details');
-    const [selectedVariant, setSelectedVariant] = useState(COLOR_VARIANTS[2]); // Default: Black
+    const [selectedVariant, setSelectedVariant] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [showMiniBar, setShowMiniBar] = useState(false);
     const sliderRef = useRef(null);
+    const mainSectionRef = useRef(null);
+
+    console.log(id,slug,currentProduct);
+    
 
     useEffect(() => {
         if (slug) {
             dispatch(fetchProductBySlug(slug));
+            dispatch(fetchProducts()); // For related products
+        } else if (id) {
+            dispatch(fetchProductById(id));
+            dispatch(fetchProducts());
         }
-    }, [dispatch, slug]);
+        
+        if (isAuthenticated) {
+            dispatch(fetchWishlist());
+        }
+
+        return () => {
+            dispatch(clearCurrentProduct());
+        };
+    }, [dispatch, slug, id, isAuthenticated]);
 
     useEffect(() => {
         if (currentProduct?._id) {
+            dispatch(fetchVariantsByProductId(currentProduct._id));
             dispatch(addRecentlyViewed(currentProduct._id));
         }
-    }, [dispatch, currentProduct]);
+    }, [dispatch, currentProduct?._id]);
+
+    useEffect(() => {
+        if (variants && variants.length > 0) {
+            const defaultV = variants.find(v => v.isDefault) || variants[0];
+            setSelectedVariant(defaultV);
+        }
+    }, [variants]);
+
+    const productImages = selectedVariant?.images?.map((src, idx) => ({
+        id: idx,
+        src: src,
+        alt: `${currentProduct?.name} - ${selectedVariant?.color} View ${idx + 1}`,
+        type: "product"
+    })) || [];
+
+    const productPrice = selectedVariant?.options?.length > 0
+        ? selectedVariant.options[0].price
+        : (currentProduct?.basePrice || 0);
+
+    const sizeOptions = selectedVariant?.options?.map(opt => ({
+        size: opt.size,
+        available: opt.stock > 0,
+        price: opt.price
+    })) || [];
 
     const handleSelectVariant = (variant) => {
         setSelectedVariant(variant);
+        setSelectedSize(null); // Clear size selection when color Changes
         setColorSidebarOpen(false);
     };
 
@@ -207,6 +168,52 @@ const ProductDetails = () => {
         setSizeSidebarOpen(false);
     };
 
+    const handleWishlistToggle = () => {
+        if (!isAuthenticated) {
+            navigate('/auth');
+            return;
+        }
+        dispatch(toggleWishlist(currentProduct._id));
+    };
+
+    // Filter dynamic related products
+    const relatedProducts = useSelector((state) =>
+        state.product.products.filter(p =>
+            p.category?._id === currentProduct?.category?._id && p._id !== currentProduct?._id
+        ).slice(0, 4)
+    );
+
+    const signatureSuggestions = useSelector((state) => {
+        const allProducts = state.product.products;
+        if (!allProducts || allProducts.length === 0) return [];
+
+        // Exclude current product
+        const otherProducts = allProducts.filter(p => p._id !== currentProduct?._id);
+
+        // Intelligently pick 12 products with category diversity
+        // 1. First, try to pick products from the same main category but different categories (e.g., if this is apparel, pick bags/shoes)
+        // 2. Then fill remaining slots with any other products
+        const uniqueSuggestions = [];
+        const seenCategories = new Set();
+
+        // Try to get one from each category first
+        otherProducts.forEach(p => {
+            if (!seenCategories.has(p.category?._id) && uniqueSuggestions.length < 12) {
+                uniqueSuggestions.push(p);
+                seenCategories.add(p.category?._id);
+            }
+        });
+
+        // Fill remaining slots
+        otherProducts.forEach(p => {
+            if (!uniqueSuggestions.some(us => us._id === p._id) && uniqueSuggestions.length < 12) {
+                uniqueSuggestions.push(p);
+            }
+        });
+
+        return uniqueSuggestions;
+    });
+
     const openProductInfo = (tab) => {
         setActiveInfoTab(tab);
         setProductInfoOpen(true);
@@ -214,7 +221,7 @@ const ProductDetails = () => {
 
     // Navigate to specific image
     const goToImage = (index) => {
-        if (index >= 0 && index < PRODUCT_IMAGES.length) {
+        if (index >= 0 && index < productImages.length) {
             setCurrentImageIndex(index);
             if (sliderRef.current) {
                 const isMobile = window.innerWidth < 1024;
@@ -237,32 +244,34 @@ const ProductDetails = () => {
 
     // Navigate to next image
     const nextImage = () => {
-        const nextIndex = (currentImageIndex + 1) % PRODUCT_IMAGES.length;
+        if (productImages.length === 0) return;
+        const nextIndex = (currentImageIndex + 1) % productImages.length;
         goToImage(nextIndex);
     };
 
     // Navigate to previous image
     const prevImage = () => {
-        const prevIndex = currentImageIndex === 0 ? PRODUCT_IMAGES.length - 1 : currentImageIndex - 1;
+        if (productImages.length === 0) return;
+        const prevIndex = currentImageIndex === 0 ? productImages.length - 1 : currentImageIndex - 1;
         goToImage(prevIndex);
     };
 
     // Handle scroll to update current image index
     const handleScroll = () => {
-        if (sliderRef.current) {
+        if (sliderRef.current && productImages.length > 0) {
             const isMobile = window.innerWidth < 1024;
             if (isMobile) {
                 const scrollLeft = sliderRef.current.scrollLeft;
                 const imageWidth = sliderRef.current.clientWidth;
                 const newIndex = Math.round(scrollLeft / imageWidth);
-                if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < PRODUCT_IMAGES.length) {
+                if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < productImages.length) {
                     setCurrentImageIndex(newIndex);
                 }
             } else {
                 const scrollTop = sliderRef.current.scrollTop;
                 const imageHeight = sliderRef.current.clientHeight;
                 const newIndex = Math.round(scrollTop / imageHeight);
-                if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < PRODUCT_IMAGES.length) {
+                if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < productImages.length) {
                     setCurrentImageIndex(newIndex);
                 }
             }
@@ -306,7 +315,7 @@ const ProductDetails = () => {
             if (isOverRightColumn) {
                 // Check if we're at the boundaries
                 const isAtFirstImage = currentImageIndex === 0;
-                const isAtLastImage = currentImageIndex === PRODUCT_IMAGES.length - 1;
+                const isAtLastImage = currentImageIndex === productImages.length - 1;
 
                 if (e.deltaY < 0 && isAtFirstImage) {
                     return;
@@ -332,12 +341,50 @@ const ProductDetails = () => {
         };
     }, [currentImageIndex]);
 
+    // Handle scroll for Floating Card visibility
+    useEffect(() => {
+        const handleCardVisibility = () => {
+            if (mainSectionRef.current) {
+                const rect = mainSectionRef.current.getBoundingClientRect();
+                setShowMiniBar(rect.bottom < 100);
+            }
+        };
+
+        window.addEventListener('scroll', handleCardVisibility);
+        // Initial check
+        handleCardVisibility();
+
+        return () => {
+            window.removeEventListener('scroll', handleCardVisibility);
+        };
+    }, [loading]);
+
+    if (loading) {
+        return (
+            <div className="w-full h-screen flex items-center justify-center bg-white">
+                <div className="w-12 h-12 border-4 border-[#14372F] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!currentProduct || !selectedVariant) {
+        return (
+            <div className="w-full h-screen flex flex-col items-center justify-center bg-white">
+                <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
+                <button
+                    onClick={() => navigate('/')}
+                    className="px-6 py-2 bg-[#14372F] text-white rounded"
+                >
+                    Back to Shop
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full bg-[#F8F9FA] font-sans text-dark selection:bg-dark selection:text-white">
-            <Header />
-
             {/* Main Product Section */}
-            <div className="w-full grid grid-cols-1 lg:grid-cols-2">
+            <div ref={mainSectionRef} className="w-full grid grid-cols-1 lg:grid-cols-2">
                 {/* Left Column: Vertical Image Slider */}
                 <div className="image-scroll-container relative h-[50vh] md:h-[calc(100vh-113px)] overflow-hidden bg-gray-50/20">
                     {/* Image Slider */}
@@ -347,7 +394,7 @@ const ProductDetails = () => {
                         onScroll={handleScroll}
                     >
                         <div className="flex flex-row lg:flex-col h-full lg:h-auto">
-                            {PRODUCT_IMAGES.map((image, index) => (
+                            {productImages.map((image, index) => (
                                 <div
                                     key={image.id}
                                     onClick={() => setImageModalOpen(true)}
@@ -365,15 +412,14 @@ const ProductDetails = () => {
 
                     {/* Image Indicators */}
                     <div className="absolute z-20 flex gap-3 bottom-10 left-1/2 -translate-x-1/2 flex-row lg:bottom-auto lg:top-[91%] lg:-translate-y-1/2 lg:left-6 lg:translate-x-0 lg:flex-col">
-                        {PRODUCT_IMAGES.map((_, index) => (
+                        {productImages.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => goToImage(index)}
-                                className={`w-[7px] h-[7px] sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
-                                    index === currentImageIndex
-                                        ? 'bg-black scale-125'
-                                        : 'bg-black/30 hover:bg-black/50'
-                                }`}
+                                className={`w-[7px] h-[7px] sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${index === currentImageIndex
+                                    ? 'bg-black scale-125'
+                                    : 'bg-black/30 hover:bg-black/50'
+                                    }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
                         ))}
@@ -385,13 +431,23 @@ const ProductDetails = () => {
                     <div className="max-w-xl w-full flex flex-col">
                         {/* Top Navigation Row */}
                         <div className="flex items-center justify-between mb-8 lg:mb-12">
-                            <button className="flex items-center gap-2 text-[11px] lg:text-[13px] font-bold text-dark transition-all group uppercase tracking-widest">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="flex items-center gap-2 text-[11px] lg:text-[13px] font-bold text-dark transition-all group uppercase tracking-widest"
+                            >
                                 <SlArrowLeft color='black' size={12} className="lg:size-[15px]" />
-                                <span>Men's Shirt</span>
+                                <span>{currentProduct?.category?.categoryName || "Back"}</span>
                             </button>
                             <div className="flex items-center gap-6">
-                                <button className="text-dark/80 hover:text-dark hover:scale-110 transition-all outline-none">
-                                    <IoHeartOutline size={22} />
+                                <button 
+                                    onClick={handleWishlistToggle}
+                                    className="text-dark/80 hover:text-dark hover:scale-110 transition-all outline-none"
+                                >
+                                    {isWishlisted ? (
+                                        <IoHeart size={22} className="text-red-500" />
+                                    ) : (
+                                        <IoHeartOutline size={22} />
+                                    )}
                                 </button>
                                 <button className="text-dark/80 hover:text-dark hover:scale-110 transition-all outline-none">
                                     <IoShareSocialOutline size={22} />
@@ -402,13 +458,13 @@ const ProductDetails = () => {
                         {/* Product Title & Info Section */}
                         <div className="text-center mb-8 lg:mb-10">
                             <span className="text-[11px] lg:text-[13px] uppercase text-lightText font-black mb-3 lg:mb-6 block tracking-widest">
-                                New Arrivals
+                                {currentProduct?.mainCategory?.mainCategoryName || 'New Arrivals'}
                             </span>
                             <h1 className="text-2xl lg:text-2xl xl:text-3xl font-medium mb-3 lg:mb-4 text-dark tracking-tight leading-[1.2] lg:leading-[1.1] selection:bg-dark selection:text-white">
-                                Black & Green Striped Crochet Shorts
+                                {currentProduct?.name}
                             </h1>
                             <p className="text-xl lg:text-2xl text-dark/90 font-light tracking-wide">
-                                $911.00
+                                ${productPrice}
                             </p>
                         </div>
 
@@ -423,10 +479,10 @@ const ProductDetails = () => {
                                 <div className="flex items-center gap-3">
                                     <div
                                         className="w-3.5 h-3.5 rounded-[2px] border border-black/10"
-                                        style={{ backgroundColor: selectedVariant.hex }}
+                                        style={{ backgroundColor: selectedVariant?.colorCode || '#000' }}
                                     />
                                     <span className="text-[14px] lg:text-[15px] text-dark font-normal">
-                                        {selectedVariant.color}
+                                        {selectedVariant?.color}
                                     </span>
                                 </div>
                                 <MdKeyboardArrowRight size={18} />
@@ -446,7 +502,7 @@ const ProductDetails = () => {
 
                         {/* Add to Cart CTA */}
                         {(() => {
-                            const selectedSizeData = SIZE_OPTIONS.find(s => s.size === selectedSize);
+                            const selectedSizeData = sizeOptions.find(s => s.size === selectedSize);
                             const isSoldOut = selectedSizeData && !selectedSizeData.available;
 
                             return (
@@ -502,161 +558,128 @@ const ProductDetails = () => {
 
                     {/* Product Grid */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 bg-white">
-                        {WEAR_IT_WITH_PRODUCTS.map((product, index) => (
-                            <div
-                                key={product.id}
-                                className={`group cursor-pointer p-6 lg:p-8 ${index < WEAR_IT_WITH_PRODUCTS.length - 1 ? 'border-r border-[#E9ECEF]' : ''
-                                    } ${index < 2 ? 'lg:border-r lg:border-[#E9ECEF]' : ''
-                                    }`}
-                            >
-                                <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
-                                    <img
-                                        src={product.image}
-                                        alt={product.alt}
-                                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                    />
+                        {(relatedProducts.length > 0 ? relatedProducts : WEAR_IT_WITH_PRODUCTS).map((product, index) => {
+                            const firstVariant = product.variants?.[0];
+                            const imageUrl = firstVariant?.images?.[0] || product.image;
+                            const name = product.name;
+                            const price = firstVariant?.options?.[0]?.price ? `$${firstVariant.options[0].price}` : product.price;
+
+                            return (
+                                <div
+                                    key={product._id || product.id}
+                                    onClick={() => {
+                                        navigate(`/product/${product._id || product.id}`);
+                                        window.scrollTo(0, 0);
+                                    }}
+                                    className={`group cursor-pointer p-6 lg:p-8 ${index < (relatedProducts.length || WEAR_IT_WITH_PRODUCTS.length) - 1 ? 'border-r border-[#E9ECEF]' : ''} ${index < 2 ? 'lg:border-r lg:border-[#E9ECEF]' : ''}`}
+                                >
+                                    <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
+                                        <img
+                                            src={imageUrl}
+                                            alt={name}
+                                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    </div>
+                                    <div className="text-center">
+                                        <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
+                                            {name}
+                                        </h3>
+                                        <p className="text-sm lg:text-base text-dark font-light">
+                                            {price}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="text-center">
-                                    <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-sm lg:text-base text-dark font-light">
-                                        {product.price}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>
 
-            {/* THE CURATED EDIT Section */}
-            <div className="w-full bg-gray-50/30 py-12 md:py-16 lg:py-20">
+            {/* SIGNATURE SUGGESTIONS Section */}
+            <div className="w-full bg-gray-50/30">
                 <div className="mx-auto px-8">
                     {/* Section Header */}
                     <div className="text-center mb-8 lg:mb-16">
                         <p className="text-[11px] lg:text-[13px] uppercase text-[#343A40] font-black mb-4 tracking-widest">
                             THE CURATED EDIT
                         </p>
-                        <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-[#14372F] tracking-tight">
+                        <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold text-[#14372F] tracking-tight">
                             SIGNATURE SUGGESTIONS
                         </h2>
-                        <p className="text-sm lg:text-base text-[#ADB5BD] mt-4 font-normal">
-                            Explore the latest arrivals and seasonal staples curated by our stylists.
+                        <p className="text-sm lg:text-base text-[#ADB5BD] mt-4 font-normal max-w-2xl mx-auto">
+                            Explore the latest arrivals and seasonal staples curated by our stylists to complete your signature look.
                         </p>
                     </div>
 
                     {/* Responsive Grid Layout */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 bg-white">
-                        {/* Row 1 - 4 Products */}
-                        {SIGNATURE_PRODUCTS.slice(0, 4).map((product, index) => (
-                            <div
-                                key={product.id}
-                                className={`group cursor-pointer p-6 lg:p-8 border-b border-gray-200 ${index < 3 ? 'border-r border-gray-200' : ''
-                                    } ${index === 1 ? 'lg:border-r' : ''
-                                    }`}
-                            >
-                                <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
-                                    <img
-                                        src={product.image}
-                                        alt={product.alt}
-                                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-sm lg:text-base text-dark font-light">
-                                        {product.price}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 bg-white border-t border-l border-gray-100">
+                        {(() => {
+                            // Pure dynamic suggestions
+                            if (signatureSuggestions.length === 0) return null;
+                            const combinedSuggestions = [...signatureSuggestions];
 
-                        {/* Row 2 - 2 Products + Featured Image */}
-                        {SIGNATURE_PRODUCTS.slice(4, 6).map((product, index) => (
-                            <div
-                                key={product.id}
-                                className={`group cursor-pointer p-6 lg:p-8 border-b border-gray-200 ${index === 0 ? 'border-r border-gray-200' : ''
-                                    }`}
-                            >
-                                <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
-                                    <img
-                                        src={product.image}
-                                        alt={product.alt}
-                                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-sm lg:text-base text-dark font-light">
-                                        {product.price}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            const renderSuggestionCard = (product, borderClasses = "") => {
+                                const firstVariant = product.variants?.[0];
+                                const imageUrl = firstVariant?.images?.[0] || product.image;
+                                const name = product.name;
+                                const price = firstVariant?.options?.[0]?.price ? `$${firstVariant.options[0].price}` : (product.price || "$0.00");
 
-                        {/* Featured Image - Spans 2 columns */}
-                        <div className="col-span-2 row-span-2 overflow-hidden border-b border-gray-200">
-                            <img
-                                src="/images/product.png"
-                                alt="Featured Collection"
-                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                            />
-                        </div>
+                                return (
+                                    <div
+                                        key={product._id || product.id || Math.random()}
+                                        onClick={() => {
+                                            if (product._id) {
+                                                navigate(`/product/${product._id}`);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }
+                                        }}
+                                        className={`group cursor-pointer p-4 md:p-6 lg:p-8 border-b border-r border-gray-100 transition-colors hover:bg-[#FDFDFD] ${borderClasses}`}
+                                    >
+                                        <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center bg-gray-50/50">
+                                            <img
+                                                src={imageUrl}
+                                                alt={name}
+                                                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+                                            />
+                                        </div>
+                                        <div className="text-center">
+                                            <h3 className="text-xs md:text-sm font-semibold text-dark mb-1 tracking-tight uppercase line-clamp-1">
+                                                {name}
+                                            </h3>
+                                            <p className="text-xs md:text-sm text-dark/60 font-medium tracking-tight">
+                                                {price}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            };
 
-                        {/* Row 3 - 2 Products (left side) */}
-                        {SIGNATURE_PRODUCTS.slice(6, 8).map((product, index) => (
-                            <div
-                                key={product.id}
-                                className={`group cursor-pointer p-6 lg:p-8 ${index === 0 ? 'border-r border-gray-200' : ''
-                                    }`}
-                            >
-                                <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
-                                    <img
-                                        src={product.image}
-                                        alt={product.alt}
-                                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-sm lg:text-base text-dark font-light">
-                                        {product.price}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            return (
+                                <>
+                                    {/* Slot 1-4 */}
+                                    {combinedSuggestions.slice(0, 4).map((p) => renderSuggestionCard(p))}
 
-                        {/* Row 4 - 4 Products */}
-                        {SIGNATURE_PRODUCTS.slice(8, 12).map((product, index) => (
-                            <div
-                                key={product.id}
-                                className={`group cursor-pointer p-6 lg:p-8 ${index < 3 ? 'border-r border-gray-200' : ''
-                                    }`}
-                            >
-                                <div className="overflow-hidden mb-4 aspect-square flex items-center justify-center">
-                                    <img
-                                        src={product.image}
-                                        alt={product.alt}
-                                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-sm lg:text-base font-medium text-dark mb-1">
-                                        {product.name}
-                                    </h3>
-                                    <p className="text-sm lg:text-base text-dark font-light">
-                                        {product.price}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                                    {/* Slot 5-6 */}
+                                    {combinedSuggestions.slice(4, 6).map((p) => renderSuggestionCard(p))}
+
+                                    {/* Featured Slot (Spans 2x2) */}
+                                    <div className="col-span-2 row-span-2 overflow-hidden border-b border-r border-gray-100 group relative">
+                                        <img
+                                            src={combinedSuggestions[0]?.variants?.[0]?.images?.[1] || combinedSuggestions[0]?.variants?.[0]?.images?.[0] || "/images/product.png"}
+                                            alt="Featured Signature Look"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-in-out"
+                                        />
+                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                    </div>
+
+                                    {/* Slot 7-8 */}
+                                    {combinedSuggestions.slice(6, 8).map((p) => renderSuggestionCard(p))}
+
+                                    {/* Slot 9-12 */}
+                                    {combinedSuggestions.slice(8, 12).map((p) => renderSuggestionCard(p))}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
@@ -666,6 +689,7 @@ const ProductDetails = () => {
                 onClose={() => setColorSidebarOpen(false)}
                 selectedVariant={selectedVariant}
                 onSelectVariant={handleSelectVariant}
+                variants={variants}
             />
 
             <SizeSidebar
@@ -673,20 +697,94 @@ const ProductDetails = () => {
                 onClose={() => setSizeSidebarOpen(false)}
                 selectedSize={selectedSize}
                 onSelectSize={handleSelectSize}
+                sizeOptions={sizeOptions}
             />
 
             <ProductInfoSidebar
                 isOpen={productInfoOpen}
                 onClose={() => setProductInfoOpen(false)}
                 initialTab={activeInfoTab}
+                productDetails={currentProduct?.description}
             />
 
             <ImageModal
                 isOpen={imageModalOpen}
                 onClose={() => setImageModalOpen(false)}
-                images={PRODUCT_IMAGES}
+                images={productImages}
                 initialIndex={currentImageIndex}
             />
+
+            {/* Sticky Mini Product Bar (Floating Card) - Fully Responsive */}
+            <div className={`fixed z-[55] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] transform
+                /* Mobile: Centered at bottom */
+                bottom-4 left-4 right-4 w-auto 
+                /* Tablet/Desktop: Corner anchored */
+                md:left-auto md:right-8 md:bottom-8 lg:right-10 lg:bottom-10 md:w-[500px] lg:w-[650px]
+                bg-white shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-100/50
+                ${showMiniBar ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
+
+                <div className="p-3 md:p-5 lg:p-6 flex items-center justify-between gap-3 md:gap-6">
+                    {/* Left: Product Info Group */}
+                    <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                        {/* Mini Image */}
+                        <div className="w-14 h-14 md:w-20 md:h-20 bg-[#F8F9FA] flex-shrink-0 flex items-center justify-center border border-gray-50">
+                            <img
+                                src={selectedVariant?.images?.[0] || productImages[0]?.src}
+                                alt={currentProduct?.name}
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+
+                        {/* Info Text */}
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-xs md:text-base font-medium text-dark truncate leading-tight mb-1">
+                                {currentProduct?.name}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] md:text-[11px] lg:text-xs">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[#999FA6]">Color:</span>
+                                    <div className="flex items-center gap-1 text-dark font-medium">
+                                        <div className="w-2 h-2 rounded-full hidden xs:block" style={{ backgroundColor: selectedVariant?.colorCode }} />
+                                        <span>{selectedVariant?.color}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[#999FA6]">Size:</span>
+                                    <div className="flex items-center gap-1 text-dark font-medium">
+                                        <span>{selectedSize || '-'}</span>
+                                        <button
+                                            onClick={() => {
+                                                // setSizeSidebarOpen(true);
+                                                if (mainSectionRef.current) {
+                                                    mainSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+                                                }
+                                            }}
+                                            className="text-[#999FA6] font-bold underline ml-1 hover:opacity-70 text-[9px] md:text-[11px]"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-xs md:text-lg font-semibold text-dark mt-0.5 md:mt-1">
+                                ${productPrice}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Right: Action Button */}
+                    <button
+                        disabled={!selectedSize}
+                        className={`whitespace-nowrap flex-shrink-0 px-4 md:px-8 lg:px-10 py-3 md:py-4 text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] transition-all duration-300
+                            ${selectedSize
+                                ? 'bg-[#14372F] text-white hover:opacity-95 active:scale-97 shadow-lg shadow-[#14372F]/10'
+                                : 'bg-[#E9ECEF] text-[#ADB5BD] cursor-not-allowed'
+                            }`}
+                    >
+                        {selectedSize ? 'Add to cart' : 'Select Size'}
+                    </button>
+                </div>
+            </div>
 
             <style dangerouslySetInnerHTML={{
                 __html: `

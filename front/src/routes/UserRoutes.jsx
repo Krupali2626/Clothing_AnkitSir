@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import Home from '../pages/Home';
 import Auth from '../components/Auth';
 import ProductDetails from '../pages/ProductDetails';
+import Wishlist from '../pages/Wishlist';
 import Support from '../pages/Support';
 import SupportDetail from '../pages/SupportDetail';
 import CollectionPage from '../pages/CollectionPage';
@@ -21,9 +22,10 @@ const UserRoutes = () => {
             <Route path="/" element={<Layout><Home /></Layout>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/product" element={<ProductDetails />} />
+            <Route path="/wishlist" element={<Layout><Wishlist /></Layout>} />
             <Route path="/support" element={<Layout><Support /></Layout>} />
             <Route path="/support/:id" element={<Layout><SupportDetail /></Layout>} />
-            <Route path="/product/:slug" element={<ProductDetails />} />
+            <Route path="/product/:slug" element={<Layout><ProductDetails /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />

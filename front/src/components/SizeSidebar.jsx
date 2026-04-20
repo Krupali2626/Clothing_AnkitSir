@@ -12,8 +12,11 @@ export const SIZE_OPTIONS = [
     { size: 'XXXL', available: true, status: 'Low Stock' }
 ];
 
-const SizeSidebar = ({ isOpen, onClose, selectedSize, onSelectSize }) => {
+const SizeSidebar = ({ isOpen, onClose, selectedSize, onSelectSize, sizeOptions }) => {
+    const displayOptions = sizeOptions && sizeOptions.length > 0 ? sizeOptions : SIZE_OPTIONS;
+
     const handleSizeSelect = (sizeOption) => {
+        if (!sizeOption.available) return;
         onSelectSize(sizeOption.size);
     };
 
@@ -48,7 +51,7 @@ const SizeSidebar = ({ isOpen, onClose, selectedSize, onSelectSize }) => {
                 <div className="flex flex-col h-[calc(100%-84px)]">
                     <div className="flex-1 p-8 overflow-y-auto color-sidebar-scroll">
                         <div className="space-y-3">
-                            {SIZE_OPTIONS.map((sizeOption) => {
+                            {displayOptions.map((sizeOption) => {
                                 const isSelected = selectedSize === sizeOption.size;
                                 const isAvailable = sizeOption.available;
 

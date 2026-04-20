@@ -16,7 +16,9 @@ const COLOR_VARIANTS = [
 
 export { COLOR_VARIANTS };
 
-export default function ColorSidebar({ isOpen, onClose, selectedVariant, onSelectVariant }) {
+export default function ColorSidebar({ isOpen, onClose, selectedVariant, onSelectVariant, variants }) {
+    const displayVariants = variants && variants.length > 0 ? variants : [];
+
     return (
         <>
             {/* Backdrop */}
@@ -47,17 +49,21 @@ export default function ColorSidebar({ isOpen, onClose, selectedVariant, onSelec
                     </button>
                 </div>
 
-                {/* Scrollable Grid — table-style with border lines between cells */}
+                {/* Scrollable Grid */}
                 <div className="flex-1 overflow-y-auto color-sidebar-scroll">
                     <div
                         className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 p-4 sm:p-6 lg:p-8 gap-0"
                         style={{ borderTop: '1px solid #e2e2e2', borderLeft: '1px solid #e2e2e2' }}
                     >
-                        {COLOR_VARIANTS.map((variant) => {
-                            const isSelected = selectedVariant.id === variant.id;
+                        {displayVariants.map((variant) => {
+                            const isSelected = selectedVariant?._id === variant._id;
+                            const price = variant.options && variant.options.length > 0 
+                                ? `$${variant.options[0].price}` 
+                                : `$${variant.price || 0}`;
+
                             return (
                                 <button
-                                    key={variant.id}
+                                    key={variant._id}
                                     onClick={() => onSelectVariant(variant)}
                                     className="flex flex-col text-left outline-none transition-all duration-200 group"
                                     style={{ border: '1px solid #e9ecef' }}
@@ -71,8 +77,8 @@ export default function ColorSidebar({ isOpen, onClose, selectedVariant, onSelec
                                         }}
                                     >
                                         <img
-                                            src={variant.img}
-                                            alt={variant.name}
+                                            src={variant.images?.[0] || '/images/product.png'}
+                                            alt={variant.color}
                                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                         />
                                     </div>
@@ -82,10 +88,10 @@ export default function ColorSidebar({ isOpen, onClose, selectedVariant, onSelec
                                         style={{ backgroundColor: isSelected ? '#F8F9FA' : '#fff' }}
                                     >
                                         <p className="text-xs sm:text-sm lg:text-[14px] text-[#1a1a1a] font-normal mb-[2px] sm:mb-[3px] leading-tight">
-                                            {variant.name}
+                                            {variant.color}
                                         </p>
-                                        <p className="text-xs sm:text-sm lg:text-[14px] font-normal">
-                                            {variant.price}
+                                        <p className="text-xs sm:text-sm lg:text-[14px] font-normal text-gray-500">
+                                            {price}
                                         </p>
                                     </div>
                                 </button>

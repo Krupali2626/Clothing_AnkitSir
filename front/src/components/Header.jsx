@@ -113,6 +113,14 @@ export default function Header() {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
     const { popularSearches, recentSearches, trendingProducts, searchResults, searchLoading } = useSelector((state) => state.search);
     const { notifications, unreadCount, loading: notificationsLoading } = useSelector((state) => state.notification);
+    const { wishlist } = useSelector((state) => state.product);
+    const { fetchWishlist } = require('../redux/slice/product.slice');
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            dispatch(fetchWishlist());
+        }
+    }, [dispatch, isAuthenticated]);
 
     // Check if we're on the home page
     const isHomePage = location.pathname === '/';
@@ -382,11 +390,19 @@ export default function Header() {
                                 >
                                     <LuSearch className='text-[clamp(1.1rem,2.5vw,1.4rem)]' />
                                 </button>
-                                <button className={`p-1.5 lg:block hidden rounded-full transition-all duration-300 opacity-70 hover:opacity-100 ${isHomePage
-                                    ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
-                                    : 'hover:bg-mainBG text-dark'
-                                    }`}>
+                                <button 
+                                    onClick={() => navigate('/wishlist')}
+                                    className={`p-1.5 lg:block hidden rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
+                                        ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
+                                        : 'hover:bg-mainBG text-dark'
+                                    }`}
+                                >
                                     <FaRegHeart className='text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                    {wishlist && wishlist.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#14372F] text-[9px] font-bold text-white ring-2 ring-white animate-in zoom-in duration-300">
+                                            {wishlist.length}
+                                        </span>
+                                    )}
                                 </button>
                                 <button className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
                                     ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
