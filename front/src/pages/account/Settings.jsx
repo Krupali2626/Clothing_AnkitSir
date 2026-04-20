@@ -13,18 +13,18 @@ import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { 
-    requestAccountDeletion, 
-    verifyDeletionOtp, 
-    finalizeAccountDeletion 
+import {
+    requestAccountDeletion,
+    verifyDeletionOtp,
+    finalizeAccountDeletion
 } from '../../redux/slice/auth.slice';
 
 export default function Settings() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { 
-        user, 
-        sessions = [], 
+    const {
+        user,
+        sessions = [],
         sessionsLoading,
         deleteRequestLoading,
         deleteVerifyLoading,
@@ -43,7 +43,6 @@ export default function Settings() {
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [showFinalDeleteModal, setShowFinalDeleteModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [selectedReason, setSelectedReason] = useState('');
 
     useEffect(() => {
         if (user?.notificationPreferences) {
@@ -399,9 +398,9 @@ const DeletionSuccessModal = ({ isOpen, onLogout }) => {
             <div className="relative bg-white w-full max-w-[440px] px-6 py-10 md:px-12 md:py-14 shadow-2xl animate-in zoom-in-95 duration-300 text-center rounded-sm">
                 <div className="flex flex-col items-center">
                     <div className="mb-6 md:mb-8 relative">
-                        <img 
-                            src={require("../../assets/images/deleteaccount.webp")} 
-                            alt="deleteaccount" 
+                        <img
+                            src={require("../../assets/images/deleteaccount.webp")}
+                            alt="deleteaccount"
                             className="w-24 h-24 md:w-32 md:h-32 object-contain"
                         />
                     </div>
@@ -435,15 +434,17 @@ const ConfirmDeletionModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
                 className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-300"
                 onClick={onClose}
             />
-            <div className="relative bg-white w-full max-w-md p-6 sm:p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300 rounded-sm">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 sm:top-6 sm:right-6 text-lightText hover:text-dark transition-colors"
-                >
-                    <HiXMark className="text-2xl" />
-                </button>
+            <div className="relative bg-white w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-300 rounded-sm">
 
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-primary mb-4 pr-8">Confirm Permanent Deletion</h2>
+                <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-primary">Confirm Permanent Deletion</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-lightText hover:text-dark transition-colors"
+                    >
+                        <HiXMark className="text-2xl" />
+                    </button>
+                </div>
                 <div className="text-[13px] sm:text-sm md:text-base font-medium text-lightText/60 space-y-4 mb-6 sm:mb-8 leading-relaxed">
                     <p>Everything you&apos;ve built with us—your Order History, Saved Addresses, and Rewards—will be gone forever. This cannot be recovered.</p>
                 </div>
@@ -539,11 +540,11 @@ const VerificationModal = ({ isOpen, onClose, onVerify, phoneNumber, isLoading }
 
         const digits = pasteData.split('');
         const newOtp = [...formik.values.otp];
-        
+
         digits.forEach((digit, idx) => {
             if (idx < 4) newOtp[idx] = digit;
         });
-        
+
         formik.setFieldValue('otp', newOtp);
 
         // Focus the last filled input or the next empty one
@@ -561,14 +562,17 @@ const VerificationModal = ({ isOpen, onClose, onVerify, phoneNumber, isLoading }
                 onClick={onClose}
             />
             <div className="relative bg-white w-full max-w-md p-6 sm:p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300 rounded-sm">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 sm:top-6 sm:right-6 text-lightText hover:text-dark transition-colors"
-                >
-                    <HiXMark className="text-2xl" />
-                </button>
+                <div className="flex justify-between items-center mb-2">
 
-                <h2 className="text-xl sm:text-2xl font-bold text-primary mb-2">Verification</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-primary">Verification</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-lightText hover:text-dark transition-colors"
+                    >
+                        <HiXMark className="text-2xl" />
+                    </button>
+                </div>
+
                 <p className="text-[13px] sm:text-sm font-medium text-lightText/60 mb-6 sm:mb-8 tracking-tight">
                     A 4-digit OTP has been sent to {phoneNumber ? `****${phoneNumber.slice(-4)}` : "****6232"}
                 </p>
@@ -587,7 +591,7 @@ const VerificationModal = ({ isOpen, onClose, onVerify, phoneNumber, isLoading }
                                 onKeyDown={(e) => handleKeyDown(idx, e)}
                                 onPaste={handlePaste}
                                 disabled={isLoading}
-                                className="w-full h-12 sm:h-16 bg-mainBG/30 border border-transparent focus:border-primary/20 text-center text-lg sm:text-xl font-semibold text-dark focus:outline-none transition-all disabled:opacity-50"
+                                className={`h-[50px] w-[50px] bg-mainBG border ${formik.touched.otp && formik.errors.otp ? 'border-red-500' : 'border-border'} focus:ring-1 focus:ring-dark focus:border-transparent transition-all outline-none text-dark text-center`}
                             />
                         ))}
                     </div>
@@ -655,12 +659,12 @@ const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
             />
 
             <div className="relative bg-white w-full max-w-md p-5 sm:p-6 md:p-8 shadow-2xl animate-in zoom-in-95 duration-300 rounded-sm">
-                <div className="flex justify-between items-start mb-2 pr-6">
-                    <h2 className="text-xl sm:text-2xl font-bold text-primary ">Delete Account</h2>
+                <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-primary">Delete Account</h2>
                     <button
                         onClick={onClose}
                         disabled={isLoading}
-                        className="absolute top-5 right-5 text-lightText hover:text-dark transition-colors scale-110 sm:scale-125 md:scale-150 disabled:opacity-30"
+                        className="text-lightText hover:text-dark transition-colors scale-110 sm:scale-125 md:scale-150 disabled:opacity-30"
                     >
                         <HiXMark className="text-lg" />
                     </button>
@@ -672,8 +676,7 @@ const DeleteAccountModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
                         {reasons.map((deleteReason) => (
                             <label key={deleteReason} className="flex items-center gap-3 cursor-pointer group">
                                 <span
-                                    className={`w-4 h-4 md:w-5 md:h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${formik.values.reason === deleteReason ? 'border-dark bg-white' : 'border-gray-300 bg-white group-hover:border-dark'
-                                        }`}
+                                    className={`w-4 h-4 md:w-5 md:h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${formik.values.reason === deleteReason ? 'border-dark bg-white' : 'border-dark bg-white group-hover:border-dark'}`}
                                 >
                                     {formik.values.reason === deleteReason && (
                                         <span className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-dark" />
