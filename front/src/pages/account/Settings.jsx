@@ -120,7 +120,7 @@ export default function Settings() {
                     <div className="bg-white shadow-sm overflow-hidden">
                         <div className="flex items-center gap-2 mx-6 pt-5 pb-4 border-b border-border">
                             <HiOutlineBell className="text-mainText text-lg" />
-                            <span className="text-base font-semibold tracking-widest text-mainText uppercase">Notification</span>
+                            <span className="text-sm md:text-base font-semibold tracking-widest text-mainText uppercase">Notification</span>
                         </div>
                         <div className="px-6 py-2">
                             {[
@@ -129,15 +129,17 @@ export default function Settings() {
                                 { id: 'paymentAlerts', label: 'Payment Alerts', desc: 'Get notified about successful and failed transactions' },
                                 { id: 'accountActivity', label: 'Account Activity', desc: 'Stay informed about login activity and account changes' },
                             ].map((item) => (
-                                <div key={item.id} className="flex items-center justify-between py-4">
-                                    <div>
-                                        <p className="text-base font-medium text-dark">{item.label}</p>
-                                        <p className="text-sm font-medium text-lightText mt-0.5">{item.desc}</p>
+                                <div key={item.id} className="flex items-center justify-between py-4 gap-2 md:gap-4">
+                                    <div className="flex-1">
+                                        <p className="text-sm md:text-base font-medium text-dark">{item.label}</p>
+                                        <p className="text-[12px] md:text-sm font-medium text-lightText mt-0.5">{item.desc}</p>
                                     </div>
-                                    <Toggle
-                                        checked={notifications[item.id]}
-                                        onChange={() => toggleNotification(item.id)}
-                                    />
+                                    <div className="flex-shrink-0">
+                                        <Toggle
+                                            checked={notifications[item.id]}
+                                            onChange={() => toggleNotification(item.id)}
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -148,7 +150,7 @@ export default function Settings() {
                         <div className="flex items-center justify-between mx-6 pt-5 pb-4 border-b border-border">
                             <div className="flex items-center gap-2">
                                 <HiOutlineCreditCard className="text-dark text-lg" />
-                                <span className="text-base font-semibold tracking-wide text-mainText uppercase">Manage Payment</span>
+                                <span className="text-sm md:text-base font-semibold tracking-wide text-mainText uppercase">Manage Payment</span>
                             </div>
                             <button
                                 onClick={() => navigate('/payments')}
@@ -159,14 +161,14 @@ export default function Settings() {
                         </div>
                         <div className="px-6 py-5">
                             {defaultCard ? (
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-center gap-3">
                                         {getCardBadge(defaultCard.cardType)}
-                                        <span className="text-base font-semibold text-dark tracking-widest">
+                                        <span className="text-sm md:text-base font-semibold text-dark tracking-widest leading-none">
                                             ···· {defaultCard.cardNumber.slice(-4)}
                                         </span>
                                     </div>
-                                    <span className="text-base font-semibold text-dark">
+                                    <span className="text-sm md:text-base font-semibold text-dark leading-none">
                                         Expires {defaultCard.expiryDate}
                                     </span>
                                 </div>
@@ -189,7 +191,7 @@ export default function Settings() {
                         <div className="flex items-center justify-between mx-6 pt-5 pb-4 border-b border-border">
                             <div className="flex items-center gap-2">
                                 <HiOutlineQuestionMarkCircle className="text-dark text-lg" />
-                                <span className="text-base font-bold tracking-widest text-mainText uppercase">Support</span>
+                                <span className="text-sm md:text-base font-bold tracking-widest text-mainText uppercase">Support</span>
                             </div>
                             <button
                                 onClick={() => navigate('/support')}
@@ -220,7 +222,7 @@ export default function Settings() {
                     <div className="bg-white overflow-hidden">
                         <div className="flex items-center gap-2 mx-6 pt-5 pb-4 border-b border-border">
                             <HiOutlineShieldCheck className="text-dark text-lg" />
-                            <span className="text-base font-bold tracking-widest text-mainText uppercase">Device &amp; Login Info</span>
+                            <span className="text-sm md:text-base font-bold tracking-widest text-mainText uppercase">Device &amp; Login Info</span>
                         </div>
                         <div className="px-6 py-2">
                             {sessionsLoading ? (
@@ -232,25 +234,22 @@ export default function Settings() {
                             ) : (
                                 <div className="">
                                     {sessions.map((session) => (
-                                        <div key={session._id} className="flex items-center justify-between py-4">
+                                        <div key={session._id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-4 border-b border-border/50 last:border-0">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-12 h-12 rounded-full relative flex items-center justify-center ${session.isCurrent ? 'text-dark' : 'text-lightText'}`}>
+                                                <div className={`w-12 h-12 relative flex items-center justify-center shrink-0 ${session.isCurrent ? 'text-primary' : 'text-lightText'}`}>
                                                     {session.deviceType === 'Desktop'
                                                         ? <HiOutlineGlobeAlt className="text-xl" />
                                                         : <HiOutlineDevicePhoneMobile className="text-xl" />
                                                     }
                                                     {session.isCurrent && (
-                                                        <div className="h-2 w-2 rounded-full bg-[#14AE5C] absolute top-[12px] right-[14px]"></div>
+                                                        <div className="h-2.5 w-2.5 rounded-full bg-green-500 absolute top-2 right-3 border-2 border-white"></div>
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <p className={`text-base font-semibold capitalize ${session.isCurrent ? 'text-dark' : 'text-lightText'}`}>
+                                                    <p className={`text-sm md:text-base font-semibold capitalize ${session.isCurrent ? 'text-dark' : 'text-lightText'}`}>
                                                         {session.os === 'Unknown' ? 'Web Browser' : session.os}
-                                                        {/* {session.isCurrent && (
-                                                            <span className="ml-2 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase">Current</span>
-                                                        )} */}
                                                     </p>
-                                                    <p className="text-sm text-lightText mt-0.5">
+                                                    <p className="text-[12px] md:text-sm text-lightText mt-0.5">
                                                         {session.isCurrent
                                                             ? 'Last used: Today'
                                                             : `Last used: ${formatDistanceToNow(new Date(session.lastActive), { addSuffix: true })}`
@@ -260,7 +259,7 @@ export default function Settings() {
                                             </div>
                                             <button
                                                 onClick={() => handleRevokeSession(session._id)}
-                                                className="px-5 py-1.5 border border-[#EC221F] text-[#EC221F] text-sm font-semibold hover:bg-[#EC221F]/10 transition-colors"
+                                                className="w-full sm:w-auto px-5 py-2 border border-[#EC221F] text-[#EC221F] text-xs md:text-sm font-semibold hover:bg-[#EC221F] hover:text-white transition-all duration-200"
                                             >
                                                 Log Out
                                             </button>
