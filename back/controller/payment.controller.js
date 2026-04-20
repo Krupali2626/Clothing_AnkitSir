@@ -500,7 +500,7 @@ export const confirmStripePaymentController = async (req, res) => {
 
 export const getPaymentStatusController = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id || req.user?.id;
     const { orderId } = req.params;
 
     const payment = await paymentModel.findOne({

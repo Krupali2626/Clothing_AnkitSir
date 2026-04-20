@@ -26,6 +26,10 @@ export const UserAuth = async (req, res, next) => {
                 return sendNotFoundResponse(res, "User not found");
             }
 
+            if (user.isUserDeleted) {
+                return sendForbiddenResponse(res, "This account has been deleted.");
+            }
+
             // Remote Logout Check: If the token has a hash, ensure it still exists in the active sessions
             if (tokenHash && user.sessions && user.sessions.length > 0) {
                 const isSessionActive = user.sessions.some(s => s.tokenHash === tokenHash);

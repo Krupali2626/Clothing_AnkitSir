@@ -88,6 +88,26 @@ const UserSchema = new mongoose.Schema({
   wishlist: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Product" }
   ],
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isUserDeleted: {
+    type: Boolean,
+    default: false
+  },
+  reasonForDeletion: {
+    type: String,
+    default: null
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletionOtpVerified: {
+    type: Boolean,
+    default: false
+  }
 }, { timestamps: true });
 
 const UserModel = mongoose.model("user", UserSchema);

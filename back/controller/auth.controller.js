@@ -48,6 +48,12 @@ export class AuthController {
       const existingUser = await UserModel.findOne({ mobileNo });
 
       if (existingUser) {
+        if (existingUser.isUserDeleted) {
+          return res.status(403).json({
+            success: false,
+            message: "Account is deleted. Please contact support to reactivate."
+          });
+        }
         // LOGIN FLOW: Save OTP to existing user
         existingUser.otp = otp;
         existingUser.resetOtpExpiry = otpExpiry;
@@ -96,6 +102,12 @@ export class AuthController {
       let user = await UserModel.findOne({ mobileNo });
 
       if (user) {
+        if (user.isUserDeleted) {
+          return res.status(403).json({
+            success: false,
+            message: "Account is deleted. Please contact support to reactivate."
+          });
+        }
         // --- LOGIN VERIFICATION ---
         if (user.otp !== Number(otp) || new Date() > user.resetOtpExpiry) {
           return res.status(400).json({

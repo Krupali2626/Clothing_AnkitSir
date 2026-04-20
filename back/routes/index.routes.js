@@ -98,6 +98,11 @@ import {
   confirmStripePaymentController
 } from "../controller/payment.controller.js";
 import {
+  toggleWishlist,
+  getWishlistController,
+  updateProfileController,
+  sendEmailOtpController,
+  verifyEmailOtpController,
   userAddressAddController,
   userAddressUpdateController,
   userAddressDeleteController,
@@ -107,13 +112,11 @@ import {
   getSavedCardsController,
   deleteSavedCardController,
   selectCardController,
-  updateProfileController,
-  sendEmailOtpController,
-  verifyEmailOtpController,
   addRecentlyViewedController,
   getRecentlyViewedController,
-  toggleWishlist,
-  getWishlistController
+  requestAccountDeletionController,
+  verifyDeletionOtpController,
+  finalizeAccountDeletionController
 } from "../controller/user.controller.js";
 import {
   getMyNotifications,
@@ -249,6 +252,9 @@ router.put("/user/address/update/:addressId", UserAuth, userAddressUpdateControl
 router.delete("/user/address/delete/:addressId", UserAuth, userAddressDeleteController);
 router.get("/user/address/my", UserAuth, getUserAddressController);
 router.put("/user/address/select/:addressId", UserAuth, selectAddressController);
+router.post("/user/delete-account/request", UserAuth, requestAccountDeletionController);
+router.post("/user/delete-account/verify", UserAuth, verifyDeletionOtpController);
+router.post("/user/delete-account/finalize", UserAuth, finalizeAccountDeletionController);
 
 // --- User Saved Cards ---
 router.post("/user/card/add", UserAuth, addSavedCardController);

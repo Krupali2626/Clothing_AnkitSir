@@ -377,32 +377,32 @@ export const selectCardController = async (req, res) => {
 export const updateProfileController = async (req, res) => {
     try {
         const id = req.user.id || req.user._id;
-    const { firstName, lastName, email, notificationPreferences } = req.body;
+        const { firstName, lastName, email, notificationPreferences } = req.body;
 
-    const user = await UserModel.findById(id);
-    if (!user) return sendNotFoundResponse(res, "User not found!");
+        const user = await UserModel.findById(id);
+        if (!user) return sendNotFoundResponse(res, "User not found!");
 
-    let emailChanged = false;
-    if (email && email !== user.email) {
-        const existing = await UserModel.findOne({ email });
-        if (existing && existing._id.toString() !== id.toString()) {
-            return sendBadRequestResponse(res, "Email already in use by another account!");
+        let emailChanged = false;
+        if (email && email !== user.email) {
+            const existing = await UserModel.findOne({ email });
+            if (existing && existing._id.toString() !== id.toString()) {
+                return sendBadRequestResponse(res, "Email already in use by another account!");
+            }
+            user.email = email;
+            user.emailVerified = false;
+            emailChanged = true;
         }
-        user.email = email;
-        user.emailVerified = false;
-        emailChanged = true;
-    }
 
-    if (firstName !== undefined) user.firstName = firstName;
-    if (lastName !== undefined) user.lastName = lastName;
-    if (notificationPreferences !== undefined) {
-        user.notificationPreferences = {
-            ...user.notificationPreferences,
-            ...notificationPreferences
-        };
-    }
+        if (firstName !== undefined) user.firstName = firstName;
+        if (lastName !== undefined) user.lastName = lastName;
+        if (notificationPreferences !== undefined) {
+            user.notificationPreferences = {
+                ...user.notificationPreferences,
+                ...notificationPreferences
+            };
+        }
 
-    await user.save();
+        await user.save();
 
         // return the updated sensitive info without OTPs
         const updatedUser = user.toObject();
@@ -534,7 +534,7 @@ export const addRecentlyViewedController = async (req, res) => {
 export const getRecentlyViewedController = async (req, res) => {
     try {
         const id = req.user?.id || req.user?._id;
-        
+
         if (!id) {
             return sendSuccessResponse(res, "Guest mode: no history", []);
         }
@@ -600,5 +600,103 @@ export const getWishlistController = async (req, res) => {
         return sendSuccessResponse(res, "Wishlist items fetched successfully", products);
     } catch (error) {
         return sendErrorResponse(res, 500, "Error fetching wishlist", error.message);
+    }
+};
+
+export const requestAccountDeletionController = async (req, res) => {
+    try {
+        const id = req.user.id || req.user._id;
+        const { reason } = req.body;
+
+        if (!reason) {
+            return sendBadRequestResponse(res, "Reason for deletion is required!");
+        }
+
+        const user = await UserModel.findById(id);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        const otp = Math.floor(1000 + Math.random() * 9000);
+        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+        user.otp = otp;
+        user.resetOtpExpiry = otpExpiry;
+        user.reasonForDeletion = reason;
+        user.deletionOtpVerified = false; // Reset verification status
+        await user.save();
+
+        return sendSuccessResponse(res, "Reason saved and OTP sent successfully!", { otp });
+    } catch (error) {
+        console.error("requestAccountDeletionController Error:", error.message);
+        return sendErrorResponse(res, 500, "Error requesting account deletion", error.message);
+    }
+};
+
+export const verifyDeletionOtpController = async (req, res) => {
+    try {
+        const id = req.user.id || req.user._id;
+        const { otp } = req.body;
+
+        if (!otp) {
+            return sendBadRequestResponse(res, "OTP is required!");
+        }
+
+        const user = await UserModel.findById(id);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        if (user.otp !== Number(otp) || new Date() > user.resetOtpExpiry) {
+            return sendBadRequestResponse(res, "Invalid or expired OTP!");
+        }
+
+        user.deletionOtpVerified = true;
+        user.otp = null;
+        user.resetOtpExpiry = null;
+        await user.save();
+
+        return sendSuccessResponse(res, "OTP verified successfully! You can now proceed to final deletion.");
+    } catch (error) {
+        console.error("verifyDeletionOtpController Error:", error.message);
+        return sendErrorResponse(res, 500, "Error verifying deletion OTP", error.message);
+    }
+};
+
+export const finalizeAccountDeletionController = async (req, res) => {
+    try {
+        const id = req.user.id || req.user._id;
+        const { confirm } = req.body;
+
+        if (confirm !== true) {
+            return sendBadRequestResponse(res, "Please confirm the permanent deletion by checking the checkbox.");
+        }
+
+        const user = await UserModel.findById(id);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        if (!user.deletionOtpVerified) {
+            return sendBadRequestResponse(res, "Please verify OTP before finalized deletion!");
+        }
+
+        // Finalize deletion
+        user.isUserDeleted = true;
+        user.deletedAt = new Date();
+        user.deletionOtpVerified = false; // Reset for security
+        user.refreshToken = null;
+        user.sessions = [];
+
+        await user.save();
+
+        // Clear cookies
+        res.clearCookie("accessToken");
+        res.clearCookie("refreshToken");
+
+        return sendSuccessResponse(res, "Account has been deleted successfully!");
+    } catch (error) {
+        console.error("finalizeAccountDeletionController Error:", error.message);
+        return sendErrorResponse(res, 500, "Error finalizing account deletion", error.message);
     }
 };
