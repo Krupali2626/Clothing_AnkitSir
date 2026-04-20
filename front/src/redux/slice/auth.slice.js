@@ -27,6 +27,9 @@ const initialState = {
     emailOtpLoading: false,
     sessions: [],
     sessionsLoading: false,
+    deleteRequestLoading: false,
+    deleteVerifyLoading: false,
+    deleteFinalizeLoading: false,
     error: null,
     message: null,
     otp: null, // dev only: store OTP returned from backend
@@ -184,6 +187,42 @@ export const logoutUser = createAsyncThunk(
         try {
             await axiosInstance.post('/auth/logout');
             return true;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const requestAccountDeletion = createAsyncThunk(
+    'auth/requestAccountDeletion',
+    async ({ reason }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/user/delete-account/request', { reason });
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const verifyDeletionOtp = createAsyncThunk(
+    'auth/verifyDeletionOtp',
+    async ({ otp }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/user/delete-account/verify', { otp });
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const finalizeAccountDeletion = createAsyncThunk(
+    'auth/finalizeAccountDeletion',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/user/delete-account/finalize', { confirm: true });
+            return response.data;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
         }
@@ -378,7 +417,7 @@ export const authSlice = createSlice({
                 console.error('logoutAllDevices rejected:', action.payload);
                 toast.error(action.payload?.message || 'Failed to logout from all devices');
             })
-            .addCase(logoutUser.fulfilled, (state) => {
+            .addCase(logoutUser.fulfilled, (state, action) => {
                 state.user = null;
                 state.isAuthenticated = false;
                 state.sessions = [];
@@ -389,6 +428,41 @@ export const authSlice = createSlice({
                 state.user = null;
                 state.isAuthenticated = false;
                 clearPersistedStorage();
+            })
+            // --- Account Deletion ---
+            .addCase(requestAccountDeletion.pending, (state) => {
+                state.deleteRequestLoading = true;
+            })
+            .addCase(requestAccountDeletion.fulfilled, (state, action) => {
+                state.deleteRequestLoading = false;
+                toast.success(action.payload?.message || "OTP sent for account deletion");
+            })
+            .addCase(requestAccountDeletion.rejected, (state, action) => {
+                state.deleteRequestLoading = false;
+                toast.error(action.payload?.message || "Failed to request account deletion");
+            })
+            .addCase(verifyDeletionOtp.pending, (state) => {
+                state.deleteVerifyLoading = true;
+            })
+            .addCase(verifyDeletionOtp.fulfilled, (state, action) => {
+                state.deleteVerifyLoading = false;
+                toast.success(action.payload?.message || "OTP verified successfully");
+            })
+            .addCase(verifyDeletionOtp.rejected, (state, action) => {
+                state.deleteVerifyLoading = false;
+                toast.error(action.payload?.message || "Invalid OTP");
+            })
+            .addCase(finalizeAccountDeletion.pending, (state) => {
+                state.deleteFinalizeLoading = true;
+            })
+            .addCase(finalizeAccountDeletion.fulfilled, (state, action) => {
+                state.deleteFinalizeLoading = false;
+                // We don't clear user state here to allow Success Modal timer to finish
+                toast.success(action.payload?.message || "Account deletion request submitted");
+            })
+            .addCase(finalizeAccountDeletion.rejected, (state, action) => {
+                state.deleteFinalizeLoading = false;
+                toast.error(action.payload?.message || "Failed to delete account");
             })
 
             // --- Cross-Slice Synchronization ---
