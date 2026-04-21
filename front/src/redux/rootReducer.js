@@ -8,6 +8,7 @@ import addressReducer from "./slice/address.slice.js";
 import paymentReducer from "./slice/paymentCard.slice.js";
 import notificationReducer from "./slice/notification.slice.js";
 import contactReducer from "./slice/contact.slice.js";
+import cartReducer from "./slice/cart.slice.js";
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -19,4 +20,5 @@ export const rootReducer = combineReducers({
     payment: paymentReducer,
     notification: notificationReducer,
     contact: contactReducer,
+    cart: cartReducer,
 });

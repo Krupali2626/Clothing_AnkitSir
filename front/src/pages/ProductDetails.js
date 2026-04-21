@@ -12,6 +12,9 @@ import SizeSidebar, { SIZE_OPTIONS } from '../components/SizeSidebar';
 import ProductInfoSidebar from '../components/ProductInfoSidebar';
 import ImageModal from '../components/ImageModal';
 import { MdKeyboardArrowRight } from 'react-icons/md';
+import { formatDistanceToNow } from 'date-fns';
+import { addToCart, openCart } from '../redux/slice/cart.slice';
+import toast from 'react-hot-toast';
 import product1 from '../assets/images/product1.png';
 import product2 from '../assets/images/product2.png';
 import product3 from '../assets/images/product3.png';
@@ -86,7 +89,7 @@ const WEAR_IT_WITH_PRODUCTS = [
 
 
 const ProductDetails = () => {
-    const { slug,id } = useParams();
+    const { slug, id } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { currentProduct, variants, loading, wishlist } = useSelector((state) => state.product);
@@ -103,11 +106,12 @@ const ProductDetails = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showMiniBar, setShowMiniBar] = useState(false);
+    const [addingToCart, setAddingToCart] = useState(false);
     const sliderRef = useRef(null);
     const mainSectionRef = useRef(null);
 
-    console.log(id,slug,currentProduct);
-    
+    console.log(id, slug, currentProduct);
+
 
     useEffect(() => {
         if (slug) {
@@ -117,7 +121,7 @@ const ProductDetails = () => {
             dispatch(fetchProductById(id));
             dispatch(fetchProducts());
         }
-        
+
         if (isAuthenticated) {
             dispatch(fetchWishlist());
         }
@@ -140,6 +144,32 @@ const ProductDetails = () => {
             setSelectedVariant(defaultV);
         }
     }, [variants]);
+
+    const handleAddToCartClick = async () => {
+        if (!selectedSize) {
+            setSizeSidebarOpen(true);
+            return;
+        }
+
+        try {
+            setAddingToCart(true);
+            await dispatch(addToCart({
+                productId: currentProduct._id,
+                productVariantId: selectedVariant?._id,
+                selectedSize: selectedSize.size || selectedSize,
+                quantity: 1
+            })).unwrap();
+            
+            // Open cart sidebar and show success message
+            dispatch(openCart());
+            toast.success('Product added to bag');
+        } catch (error) {
+            console.error("Failed to add to cart:", error);
+            toast.error(error?.message || 'Failed to add product to bag');
+        } finally {
+            setAddingToCart(false);
+        }
+    };
 
     const productImages = selectedVariant?.images?.map((src, idx) => ({
         id: idx,
@@ -191,9 +221,6 @@ const ProductDetails = () => {
         // Exclude current product
         const otherProducts = allProducts.filter(p => p._id !== currentProduct?._id);
 
-        // Intelligently pick 12 products with category diversity
-        // 1. First, try to pick products from the same main category but different categories (e.g., if this is apparel, pick bags/shoes)
-        // 2. Then fill remaining slots with any other products
         const uniqueSuggestions = [];
         const seenCategories = new Set();
 
@@ -440,8 +467,8 @@ const ProductDetails = () => {
                                 <span>{currentProduct?.category?.categoryName || "Back"}</span>
                             </button>
                             <div className="flex items-center gap-6">
-                                <WishlistButton 
-                                    productId={currentProduct._id} 
+                                <WishlistButton
+                                    productId={currentProduct._id}
                                     className="text-dark/80 hover:text-dark hover:scale-110 transition-all outline-none"
                                     activeColor="text-[#14372F]"
                                     inactiveColor="text-dark/80"
@@ -499,22 +526,26 @@ const ProductDetails = () => {
 
                         {/* Add to Cart CTA */}
                         {(() => {
+                            const sizeOptions = selectedVariant?.options || [];
                             const selectedSizeData = sizeOptions.find(s => s.size === selectedSize);
-                            const isSoldOut = selectedSizeData && !selectedSizeData.available;
+                            const isSoldOut = selectedSizeData && selectedSizeData.stock <= 0;
 
                             return (
                                 <button
-                                    disabled={!selectedSize}
-                                    className={`w-full py-2 lg:py-4 font-black text-[13px] lg:text-[14px] tracking-[0.25em] uppercase shadow-sm mb-6 lg:mb-8 outline-none transition-all duration-300 ${selectedSize
-                                        ? 'bg-[#14372F] text-white cursor-pointer hover:opacity-90'
-                                        : 'bg-[#E9ECEF] text-[#ADB5BD] cursor-not-allowed'
+                                    onClick={handleAddToCartClick}
+                                    disabled={addingToCart}
+                                    className={`w-full py-2 lg:py-4 font-black text-[13px] lg:text-[14px] tracking-[0.25em] uppercase shadow-sm mb-6 lg:mb-8 outline-none transition-all duration-300 ${(!selectedSize || isSoldOut)
+                                        ? 'bg-[#E9ECEF] text-[#ADB5BD] cursor-not-allowed'
+                                        : 'bg-[#14372F] text-white cursor-pointer hover:opacity-90'
                                         }`}
                                 >
-                                    {!selectedSize
-                                        ? 'Select Size'
-                                        : isSoldOut
-                                            ? 'notify me when available'
-                                            : 'Add to cart'}
+                                    {addingToCart 
+                                        ? 'Adding...' 
+                                        : !selectedSize
+                                            ? 'Select Size'
+                                            : isSoldOut
+                                                ? 'notify me when available'
+                                                : 'Add to cart'}
                                 </button>
                             );
                         })()}

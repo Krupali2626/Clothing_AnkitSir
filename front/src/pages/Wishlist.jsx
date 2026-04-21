@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { IoCloseOutline } from "react-icons/io5";
 import { fetchWishlist, toggleWishlist, fetchRecentlyViewed } from '../redux/slice/product.slice';
+import { addToCart, openCart } from '../redux/slice/cart.slice';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import bgImage from '../assets/images/BG.webp';
@@ -44,7 +46,28 @@ const Wishlist = () => {
 
     const handleAddToCart = (e, product) => {
         e.stopPropagation();
-        navigate(`/product/${product.slug}`);
+        
+        // Find default/first variant and first available size
+        const variant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
+        // Check if size option has stock (stock > 0)
+        const sizeOption = variant?.options?.find(o => o.stock > 0) || variant?.options?.[0];
+
+        if (variant && sizeOption) {
+            dispatch(addToCart({
+                productId: product._id,
+                productVariantId: variant._id,
+                selectedSize: sizeOption.size,
+                quantity: 1
+            })).unwrap().then(() => {
+                dispatch(openCart());
+                toast.success('Product added to bag');
+            }).catch((err) => {
+                toast.error(err?.message || 'Failed to add product to bag');
+            });
+        } else {
+            // If no variants/sizes found, navigate to details for selection
+            navigate(`/product/${product.slug}`);
+        }
     };
 
     const getProductImage = (product) => {
@@ -72,7 +95,7 @@ const Wishlist = () => {
                 {/* Header Section */}
                 <div className="pb-8">
                     <h1 className="text-[10px] md:text-sm font-bold text-[#1a1a1a] uppercase tracking-widest">
-                        {wishlist.length} PRODUCTS
+                        {wishlist?.length} PRODUCTS
                     </h1>
                 </div>
 
@@ -159,10 +182,16 @@ const Wishlist = () => {
                 {/* Recently Viewed Section */}
                 {recentlyViewed.length > 0 && (
                     <div className="mt-32">
-                        <div className="pb-8 border-b border-gray-100 mb-8">
-                            <h2 className="text-[10px] md:text-sm font-bold text-[#1a1a1a] uppercase tracking-[0.3em] text-center">
-                                Recently Viewed
+                        <div className="text-center mb-8 lg:mb-16">
+                            <p className="text-[11px] lg:text-[13px] uppercase text-[#343A40] font-black mb-4 tracking-widest">
+                                THE ARCHIVE OF YOUR SEARCH
+                            </p>
+                            <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-[#14372F] tracking-tight">
+                                RECENTLY VIEWED PRODUCTS
                             </h2>
+                            <p className="text-sm lg:text-base text-[#ADB5BD] mt-4 font-normal">
+                                Don’t let a favorite piece slip away. Re-access your latest searches and pick up your exploration exactly where you left off.
+                            </p>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
                             {recentlyViewed.slice(0, 4).map((product) => (

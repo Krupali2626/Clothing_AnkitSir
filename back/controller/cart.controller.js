@@ -15,7 +15,7 @@ const fetchCartAndCalculateTotals = async (userId, res, message = "Cart fetched 
       })
       .populate({
         path: "items.productVariantId",
-        select: "color images options price stock",
+        select: "color colorCode images options price stock",
       });
 
     if (!cart) {
@@ -48,13 +48,13 @@ const fetchCartAndCalculateTotals = async (userId, res, message = "Cart fetched 
 
     let discount = 0;
     if (cart.appliedCoupon && cart.appliedCoupon.code) {
-       const { discountType, percentageValue, flatValue } = cart.appliedCoupon;
-       if (discountType === "percentage") {
-           discount = (subtotal * percentageValue) / 100;
-       } else if (discountType === "flat") {
-           discount = flatValue;
-       }
-       if (discount > subtotal) discount = subtotal; // Can't discount more than total
+      const { discountType, percentageValue, flatValue } = cart.appliedCoupon;
+      if (discountType === "percentage") {
+        discount = (subtotal * percentageValue) / 100;
+      } else if (discountType === "flat") {
+        discount = flatValue;
+      }
+      if (discount > subtotal) discount = subtotal; // Can't discount more than total
     }
 
     // Example Shipping Logic based on UI: Orders over $250 ship free!
@@ -249,72 +249,72 @@ export const clearCart = async (req, res) => {
 };
 
 export const applyCoupon = async (req, res) => {
-   try {
-       const userId = req.user.id || req.user._id;
-       const { code } = req.body;
-       if (!code) return sendBadRequestResponse(res, "Coupon code is required");
+  try {
+    const userId = req.user.id || req.user._id;
+    const { code } = req.body;
+    if (!code) return sendBadRequestResponse(res, "Coupon code is required");
 
-       const coupon = await Coupon.isValidCoupon(code);
-       if (!coupon) return sendBadRequestResponse(res, "Invalid or expired coupon.");
+    const coupon = await Coupon.isValidCoupon(code);
+    if (!coupon) return sendBadRequestResponse(res, "Invalid or expired coupon.");
 
-       let cart = await Cart.findOne({ userId })
-           .populate("items.productVariantId", "price options");
+    let cart = await Cart.findOne({ userId })
+      .populate("items.productVariantId", "price options colorCode");
 
-       if (!cart || cart.items.length === 0) return sendBadRequestResponse(res, "Cart is empty.");
+    if (!cart || cart.items.length === 0) return sendBadRequestResponse(res, "Cart is empty.");
 
-       let subtotal = 0;
-       cart.items.forEach(item => {
-          const variant = item.productVariantId;
-          if (!variant) return;
-          let itemPrice = 0;
-          if (variant.options && variant.options.length > 0 && item.selectedSize) {
-             const sizeObj = variant.options.find(s => s.size === item.selectedSize);
-             if (sizeObj) itemPrice = sizeObj.price;
-          } else {
-             itemPrice = variant.price || 0;
-          }
-          subtotal += (itemPrice * item.quantity);
-       });
+    let subtotal = 0;
+    cart.items.forEach(item => {
+      const variant = item.productVariantId;
+      if (!variant) return;
+      let itemPrice = 0;
+      if (variant.options && variant.options.length > 0 && item.selectedSize) {
+        const sizeObj = variant.options.find(s => s.size === item.selectedSize);
+        if (sizeObj) itemPrice = sizeObj.price;
+      } else {
+        itemPrice = variant.price || 0;
+      }
+      subtotal += (itemPrice * item.quantity);
+    });
 
-       if (subtotal < coupon.minOrderValue) {
-           return sendBadRequestResponse(res, `Order amount must be at least $${coupon.minOrderValue} to use this coupon.`);
-       }
+    if (subtotal < coupon.minOrderValue) {
+      return sendBadRequestResponse(res, `Order amount must be at least $${coupon.minOrderValue} to use this coupon.`);
+    }
 
-       cart.appliedCoupon = {
-           couponId: coupon._id,
-           code: coupon.code,
-           discountType: coupon.discountType,
-           percentageValue: coupon.percentageValue || 0,
-           flatValue: coupon.flatValue || 0,
-           discountAmount: 0 // dynamically computed during fetch
-       };
+    cart.appliedCoupon = {
+      couponId: coupon._id,
+      code: coupon.code,
+      discountType: coupon.discountType,
+      percentageValue: coupon.percentageValue || 0,
+      flatValue: coupon.flatValue || 0,
+      discountAmount: 0 // dynamically computed during fetch
+    };
 
-       await cart.save();
-       return fetchCartAndCalculateTotals(userId, res, "Coupon applied successfully!");
+    await cart.save();
+    return fetchCartAndCalculateTotals(userId, res, "Coupon applied successfully!");
 
-   } catch (error) {
-       return sendErrorResponse(res, 500, error.message);
-   }
+  } catch (error) {
+    return sendErrorResponse(res, 500, error.message);
+  }
 };
 
 export const removeCoupon = async (req, res) => {
-   try {
-       const userId = req.user.id || req.user._id;
-       const cart = await Cart.findOne({ userId });
-       if (!cart) return sendNotFoundResponse(res, "Cart not found.");
+  try {
+    const userId = req.user.id || req.user._id;
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return sendNotFoundResponse(res, "Cart not found.");
 
-       cart.appliedCoupon = {
-           couponId: null,
-           code: null,
-           discountType: null,
-           percentageValue: 0,
-           flatValue: 0,
-           discountAmount: 0 
-       };
+    cart.appliedCoupon = {
+      couponId: null,
+      code: null,
+      discountType: null,
+      percentageValue: 0,
+      flatValue: 0,
+      discountAmount: 0
+    };
 
-       await cart.save();
-       return fetchCartAndCalculateTotals(userId, res, "Coupon removed successfully!");
-   } catch(error) {
-       return sendErrorResponse(res, 500, error.message);
-   }
+    await cart.save();
+    return fetchCartAndCalculateTotals(userId, res, "Coupon removed successfully!");
+  } catch (error) {
+    return sendErrorResponse(res, 500, error.message);
+  }
 };

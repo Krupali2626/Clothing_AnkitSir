@@ -14,6 +14,8 @@ import { HiArrowUpRight, HiOutlineBell } from 'react-icons/hi2';
 import { ReactComponent as EoLogo } from '../assets/images/eo.svg';
 import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../redux/slice/notification.slice';
 import { formatDistanceToNow } from 'date-fns';
+import { openCart, closeCart, fetchCart } from '../redux/slice/cart.slice';
+import CartSidebar from './CartSidebar';
 
 const ACCOUNT_MENU = [
     { label: 'Profile', href: '/profile' },
@@ -115,11 +117,13 @@ export default function Header() {
     const { popularSearches, recentSearches, trendingProducts, searchResults, searchLoading } = useSelector((state) => state.search);
     const { notifications, unreadCount, loading: notificationsLoading } = useSelector((state) => state.notification);
     const { wishlist } = useSelector((state) => state.product);
+    const { items: cartItems, isCartOpen } = useSelector((state) => state.cart);
 
 
     useEffect(() => {
         if (isAuthenticated) {
             dispatch(fetchWishlist());
+            dispatch(fetchCart());
         }
     }, [dispatch, isAuthenticated]);
 
@@ -127,10 +131,10 @@ export default function Header() {
     const isHomePage = location.pathname === '/';
 
     useEffect(() => {
-        const isLocked = isAccountOpen || isMenuOpen;
+        const isLocked = isAccountOpen || isMenuOpen || isNotificationsOpen || isCartOpen;
         document.body.style.overflow = isLocked ? 'hidden' : '';
         return () => { document.body.style.overflow = ''; };
-    }, [isAccountOpen, isMenuOpen]);
+    }, [isAccountOpen, isMenuOpen, isNotificationsOpen, isCartOpen]);
 
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -178,7 +182,8 @@ export default function Header() {
         setIsMenuOpen(false);
         setMenuStack([]);
         setIsAccountOpen(false);
-    }, [location.pathname, closeMegaMenu]);
+        dispatch(closeCart());
+    }, [location.pathname, closeMegaMenu, dispatch]);
 
     useEffect(() => {
         if (isSearchOpen) {
@@ -406,11 +411,18 @@ export default function Header() {
                                         </span>
                                     )}
                                 </button>
-                                <button className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
+                                <button 
+                                    onClick={() => dispatch(openCart())}
+                                    className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
                                     ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
                                     : 'hover:bg-mainBG text-dark'
                                     }`}>
                                     <HiOutlineShoppingBag className='text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                    {cartItems && cartItems.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#14372F] text-[9px] font-bold text-white ring-2 ring-white animate-in zoom-in duration-300">
+                                            {cartItems.length}
+                                        </span>
+                                    )}
                                 </button>
                                 {user && (
                                     <button
@@ -1113,6 +1125,8 @@ export default function Header() {
                     onClick={() => setIsNotificationsOpen(false)}
                 />
             )}
+
+            <CartSidebar />
         </>
     )
 }
