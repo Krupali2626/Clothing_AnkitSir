@@ -566,6 +566,7 @@ export default function Header() {
                             <Link to="/account" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Account</Link>
                             <Link to="/wishlist" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Wishlist</Link>
                             <Link to="/support" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Customer Care</Link>
+                            <Link to="/journal" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Journal</Link>
                         </div>
                     </div>
                 </div>
