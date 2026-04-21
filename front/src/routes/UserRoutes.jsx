@@ -17,6 +17,8 @@ import PaymentsCard from '../pages/account/PaymentsCard';
 import Settings from '../pages/account/Settings';
 import Contact from '../pages/contact';
 import DeliveryReturns from '../pages/DeliveryReturns';
+import CareGuide from '../pages/CareGuide';
+import Philosophy from '../pages/Philosophy';
 
 const UserRoutes = () => {
     return (
@@ -32,6 +34,8 @@ const UserRoutes = () => {
             <Route path="/product/:slug" element={<Layout><ProductDetails /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
             <Route path="/delivery-returns" element={<Layout><DeliveryReturns /></Layout>} />
+            <Route path="/care-guide" element={<Layout><CareGuide /></Layout>} />
+            <Route path="/philosophy" element={<Layout><Philosophy /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />

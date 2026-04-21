@@ -15,9 +15,9 @@ const shopLinks = [
 
 const aboutLinks = [
     { label: 'The House', to: '/about/the-house' },
-    { label: 'Philosophy', to: '/about/philosophy' },
+    { label: 'Philosophy', to: '/philosophy' },
     { label: 'Craft & Process', to: '/craftsmanship' },
-    { label: 'Journal', to: '/about/journal' },
+    { label: 'Journal', to: '/journal' },
 ];
 
 const serviceLinks = [
