@@ -123,7 +123,7 @@ export default function Evolution() {
             </div>
 
             {/* ── Timeline Header ───────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-6 md:px-10 pt-14 pb-10 text-center">
+            <div className="max-w-7xl mx-auto px-6 md:px-10 2xl:px-0 pt-14 pb-10 text-center">
                 <p className="text-xs md:text-sm uppercase tracking-normal text-mainText font-semibold mb-2">
                     Ten years of relentless craftsmanship and sensory innovation.
                 </p>
@@ -149,7 +149,7 @@ export default function Evolution() {
             </div>
 
             {/* ── Timeline Entries ──────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-6 md:px-10 pb-6 md:pb-16">
+            <div className="max-w-7xl mx-auto px-6 md:px-10 2xl:px-0 pb-6 md:pb-16">
                 {timelineData.map((entry, index) => (
                     <div
                         key={entry.year}
