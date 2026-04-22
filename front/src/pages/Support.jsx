@@ -10,11 +10,11 @@ import FAQItem from '../components/support/FAQItem';
 import SupportContact from '../components/support/SupportContact';
 
 const SupportHero = ({ searchQuery, setSearchQuery }) => (
-    <section className="pt-20 pb-20 px-4 md:px-10 lg:px-20 text-center max-w-5xl mx-auto">
+    <section className="pt-12 pb-12 md:pt-20 md:pb-20 px-4 md:px-10 lg:px-20 text-center max-w-5xl mx-auto">
         <p className="text-[10px] md:text-lg font-semibold uppercase text-mainText mb-4 animate-fade-in">
             NEED HELP?
         </p>
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-primary mb-4">
+        <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-primary mb-4">
             HOW CAN WE HELP YOU?
         </h1>
         <p className="text-sm md:text-lg text-lightText font-light mb-8 mx-auto">
@@ -30,18 +30,18 @@ const SupportHero = ({ searchQuery, setSearchQuery }) => (
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for help (orders, payments, account)"
-                className="w-full pl-16 pr-8 py-5 md:py-6 bg-[#F9F9F9] border-none text-sm md:text-lg text-mainText focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+                className="w-full pl-12 md:pl-16 pr-8 py-4 md:py-6 bg-mainBG border-none text-sm md:text-lg text-mainText focus:ring-1 focus:ring-primary/20 outline-none transition-all"
             />
         </div>
     </section>
 );
 
 const CategoryCard = ({ cat }) => (
-    <div className="bg-[#FBFBFB] p-10 md:p-14 text-center group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-border/10 rounded-sm">
+    <div className="bg-mainBG p-6 md:p-10 lg:p-14 text-center group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-border/10 rounded-sm">
         <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center mx-auto mb-6 text-3xl text-white group-hover:scale-110 transition-transform duration-500 overflow-hidden">
             <img src={cat.icon} alt={cat.title} className="w-full h-full object-cover p-2" />
         </div>
-        <h3 className="text-base md:text-3xl font-bold text-primary mb-2 uppercase tracking-tight">
+        <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary mb-2 uppercase tracking-tight">
             {cat.title}
         </h3>
         <p className="text-[10px] md:text-lg font-semibold uppercase text-mainText mb-2">
@@ -50,8 +50,8 @@ const CategoryCard = ({ cat }) => (
         <p className="text-sm md:text-xl text-lightText mb-6 font-medium">
             {cat.desc}
         </p>
-        <Link 
-            to={`/support/${cat.id}`} 
+        <Link
+            to={`/support/${cat.id}`}
             className="inline-flex items-center gap-2 text-sm md:text-lg font-bold uppercase text-primary group-hover:text-gold transition-colors border-b border-transparent hover:border-gold pb-1"
         >
             {cat.link}
@@ -71,28 +71,28 @@ export default function Support() {
     const faqs = useMemo(() => {
         const baseFaqs = allFaqs.slice(0, 10);
         if (!searchQuery) return baseFaqs;
-        
-        return allFaqs.filter(faq => 
-            faq.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+
+        return allFaqs.filter(faq =>
+            faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
             faq.a.toLowerCase().includes(searchQuery.toLowerCase())
         ).slice(0, 10);
     }, [searchQuery]);
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-background min-h-screen">
             <SupportBreadcrumb />
 
-            <SupportHero 
-                searchQuery={searchQuery} 
-                setSearchQuery={setSearchQuery} 
+            <SupportHero
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
             />
 
-            <section className="pb-24 px-4 md:px-10 lg:px-20 max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-4">
+            <section className="pb-16 md:pb-24 px-4 md:px-10 lg:px-20 max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-2 md:gap-y-4">
                     {faqs.map((faq, index) => (
-                        <FAQItem 
-                            key={`faq-${index}`} 
-                            faq={faq} 
+                        <FAQItem
+                            key={`faq-${index}`}
+                            faq={faq}
                             index={index}
                             isOpen={openFaq === index}
                             onToggle={toggleFaq}
@@ -106,12 +106,12 @@ export default function Support() {
                 </div>
             </section>
 
-            <section className="bg-white px-4 md:px-10 lg:px-20">
-                <div className="max-w-7xl mx-auto text-center mb-16">
+            <section className="bg-background px-4 md:px-10 lg:px-20">
+                <div className="max-w-7xl mx-auto text-center mb-8 md:mb-12 lg:mb-16">
                     <p className="text-[10px] md:text-lg font-semibold uppercase text-mainText mb-4 animate-fade-in">
                         FIND YOUR ANSWER
                     </p>
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-primary mb-4">
+                    <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-primary mb-4">
                         BROWSE BY CATEGORY
                     </h1>
                     <p className="text-sm md:text-lg text-lightText font-light mb-8 mx-auto">
