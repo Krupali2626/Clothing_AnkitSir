@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
@@ -91,6 +91,11 @@ export default function Evolution() {
         },
     });
 
+    const filteredTimeline = useMemo(() => {
+        if (activeYear === 'All Journey') return timelineData;
+        return timelineData.filter((entry) => entry.year === activeYear);
+    }, [activeYear]);
+
     return (
         <div className="bg-mainBG min-h-screen font-urbanist">
 
@@ -137,23 +142,26 @@ export default function Evolution() {
                         <button
                             key={m}
                             onClick={() => setActiveYear(m)}
-                            className={`text-xs md:text-sm font-medium transition-all ${activeYear === m
+                            className={`text-xs md:text-sm font-bold transition-all relative py-2 ${activeYear === m
                                 ? 'text-primary'
                                 : 'text-lightText hover:text-primary'
                                 }`}
                         >
                             {m}
+                            {activeYear === m && (
+                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary animate-scale-x" />
+                            )}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* ── Timeline Entries ──────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-6 md:px-10 2xl:px-0 pb-6 md:pb-16">
-                {timelineData.map((entry, index) => (
+            <div className="max-w-7xl mx-auto px-6 md:px-10 2xl:px-0 pb-6 md:pb-16 min-h-[400px]">
+                {filteredTimeline.map((entry, index) => (
                     <div
                         key={entry.year}
-                        className={`grid grid-cols-1 md:grid-cols-2 gap-0 ${index < timelineData.length - 1 ? 'border-b border-border' : ''
+                        className={`grid grid-cols-1 md:grid-cols-2 gap-0 animate-fade-in ${index < filteredTimeline.length - 1 ? 'border-b border-border' : ''
                             }`}
                     >
                         {/* Image block */}

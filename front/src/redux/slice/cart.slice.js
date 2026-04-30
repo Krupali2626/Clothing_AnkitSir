@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../utils/axiosInstance';
 
 const initialState = {
+    cartData: null,
     items: [],
     wishlistCount: 0,
     totalAmount: 0,
@@ -65,6 +66,30 @@ export const removeFromCart = createAsyncThunk(
     }
 );
 
+export const applyCoupon = createAsyncThunk(
+    'cart/applyCoupon',
+    async (code, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/cart/coupon/apply', { code });
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+export const removeCoupon = createAsyncThunk(
+    'cart/removeCoupon',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.delete('/cart/coupon/remove');
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
 export const cartSlice = createSlice({
     name: 'cart',
     initialState,
@@ -90,6 +115,7 @@ export const cartSlice = createSlice({
             })
             .addCase(fetchCart.fulfilled, (state, action) => {
                 state.loading = false;
+                state.cartData = action.payload?.result || null;
                 state.items = action.payload?.result?.items || [];
                 state.totalAmount = action.payload?.result?.total || 0;
             })
@@ -99,16 +125,31 @@ export const cartSlice = createSlice({
             })
             // addToCart
             .addCase(addToCart.fulfilled, (state, action) => {
+                state.cartData = action.payload?.result || null;
                 state.items = action.payload?.result?.items || [];
                 state.totalAmount = action.payload?.result?.total || 0;
             })
             // updateCartItem
             .addCase(updateCartItem.fulfilled, (state, action) => {
+                state.cartData = action.payload?.result || null;
                 state.items = action.payload?.result?.items || [];
                 state.totalAmount = action.payload?.result?.total || 0;
             })
             // removeFromCart
             .addCase(removeFromCart.fulfilled, (state, action) => {
+                state.cartData = action.payload?.result || null;
+                state.items = action.payload?.result?.items || [];
+                state.totalAmount = action.payload?.result?.total || 0;
+            })
+            // applyCoupon
+            .addCase(applyCoupon.fulfilled, (state, action) => {
+                state.cartData = action.payload?.result || null;
+                state.items = action.payload?.result?.items || [];
+                state.totalAmount = action.payload?.result?.total || 0;
+            })
+            // removeCoupon
+            .addCase(removeCoupon.fulfilled, (state, action) => {
+                state.cartData = action.payload?.result || null;
                 state.items = action.payload?.result?.items || [];
                 state.totalAmount = action.payload?.result?.total || 0;
             });

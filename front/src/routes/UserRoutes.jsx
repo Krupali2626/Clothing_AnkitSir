@@ -21,6 +21,7 @@ import CareGuide from '../pages/CareGuide';
 import Philosophy from '../pages/Philosophy';
 import Evolution from '../pages/Evolution';
 import Journal from '../pages/Journal';
+import CheckOut from '../pages/CheckOut';
 
 const UserRoutes = () => {
     return (
@@ -40,6 +41,7 @@ const UserRoutes = () => {
             <Route path="/philosophy" element={<Layout><Philosophy /></Layout>} />
             <Route path="/evolution" element={<Layout><Evolution /></Layout>} />
             <Route path="/journal" element={<Layout><Journal /></Layout>} />
+            <Route path="/checkout" element={<Layout><CheckOut /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />

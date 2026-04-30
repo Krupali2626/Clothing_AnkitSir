@@ -1,13 +1,16 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../utils/axiosInstance';
+import toast from 'react-hot-toast';
 
 const initialState = {
     orders: [],
     currentOrder: null,
     loading: false,
+    placeOrderLoading: false,
     detailLoading: false,
     cancelLoading: false,
     error: null,
+    placeOrderError: null,
     detailError: null,
     cancelError: null,
 };
@@ -16,6 +19,19 @@ const handleErrors = (error, rejectWithValue) => {
     const errorMessage = error.response?.data?.message || 'An error occurred';
     return rejectWithValue(error.response?.data || { message: errorMessage });
 };
+
+// Place a new order
+export const placeOrder = createAsyncThunk(
+    'order/placeOrder',
+    async (orderData, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/order/place', orderData);
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
 
 // Fetch logged-in user's orders
 export const fetchMyOrders = createAsyncThunk(
@@ -76,6 +92,22 @@ const orderSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // placeOrder
+            .addCase(placeOrder.pending, (state) => {
+                state.placeOrderLoading = true;
+                state.placeOrderError = null;
+            })
+            .addCase(placeOrder.fulfilled, (state, action) => {
+                state.placeOrderLoading = false;
+                state.currentOrder = action.payload?.result || null;
+                state.placeOrderError = null;
+                toast.success(action.payload?.message || 'Order placed successfully!');
+            })
+            .addCase(placeOrder.rejected, (state, action) => {
+                state.placeOrderLoading = false;
+                state.placeOrderError = action.payload?.message || 'Failed to place order';
+                toast.error(action.payload?.message || 'Failed to place order');
+            })
             // fetchMyOrders
             .addCase(fetchMyOrders.pending, (state) => {
                 state.loading = true;
