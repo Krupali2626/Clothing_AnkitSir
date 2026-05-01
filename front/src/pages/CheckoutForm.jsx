@@ -3,14 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { placeOrder } from '../redux/slice/order.slice';
+import { placeOrder, confirmPayment } from '../redux/slice/order.slice';
 import { applyCoupon, removeCoupon } from '../redux/slice/cart.slice';
+import { fetchAddresses, addAddress, selectAddress } from '../redux/slice/address.slice';
+import { fetchSavedCards } from '../redux/slice/paymentCard.slice';
 import { IoClose } from 'react-icons/io5';
-import axiosInstance from '../utils/axiosInstance';
 import toast from 'react-hot-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
 import StripeCardInput from '../components/StripeCardInput';
+
+// All API calls now use Redux slices
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
@@ -45,14 +48,14 @@ function CheckoutFormContent() {
     const stripe = useStripe();
     const elements = useElements();
     const { cartData } = useSelector((state) => state.cart);
-    const { placeOrderLoading } = useSelector((state) => state.order);
+    const { placeOrderLoading, confirmPaymentLoading } = useSelector((state) => state.order);
     const { isAuthenticated } = useSelector((state) => state.auth);
+    const { addresses, selectedAddressId: storeSelectedAddressId, actionLoading: addressActionLoading } = useSelector((state) => state.address);
+    const { cards, loading: cardsLoading } = useSelector((state) => state.payment);
 
     const [showSignIn, setShowSignIn] = useState(false);
-    const [savedCards, setSavedCards] = useState([]);
     const [selectedSavedCard, setSelectedSavedCard] = useState(null);
     const [showAddNewCard, setShowAddNewCard] = useState(false);
-    const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState(null);
     const [stripeError, setStripeError] = useState(null);
 
@@ -98,23 +101,26 @@ function CheckoutFormContent() {
                 // If no address is selected or user filled in new address details, create new address
                 if (!addressId || values.firstName) {
                     try {
-                        const addressResponse = await axiosInstance.post('/user/address/add', {
-                            firstName: values.firstName,
-                            lastName: values.lastName,
-                            country: values.country,
-                            address: values.address,
-                            aptSuite: values.apartment,
-                            city: values.city,
-                            state: values.state,
-                            zipcode: values.postCode,
-                            addressType: values.addressType,
-                            phone: values.mobile,
-                        });
+                        const result = await dispatch(addAddress({
+                            addressData: {
+                                firstName: values.firstName,
+                                lastName: values.lastName,
+                                country: values.country,
+                                address: values.address,
+                                aptSuite: values.apartment,
+                                city: values.city,
+                                state: values.state,
+                                zipcode: values.postCode,
+                                addressType: values.addressType,
+                                phone: values.mobile,
+                            },
+                            setAsDefault: false
+                        })).unwrap();
                         
-                        console.log('Address response:', addressResponse.data);
+                        console.log('Address response:', result);
                         
                         // Get the newly created address ID from the returned address array
-                        const addresses = addressResponse.data?.result?.address || [];
+                        const addresses = result?.address || [];
                         if (addresses.length > 0) {
                             addressId = addresses[addresses.length - 1]._id;
                         }
@@ -122,7 +128,7 @@ function CheckoutFormContent() {
                         console.log('New address ID:', addressId);
                     } catch (addressError) {
                         console.error('Error saving address:', addressError);
-                        toast.error(addressError.response?.data?.message || 'Failed to save shipping address');
+                        toast.error(addressError?.message || 'Failed to save shipping address');
                         return;
                     }
                 }
@@ -130,7 +136,7 @@ function CheckoutFormContent() {
                 // Step 2: Select the address
                 if (addressId) {
                     try {
-                        await axiosInstance.put(`/user/address/select/${addressId}`);
+                        await dispatch(selectAddress(addressId)).unwrap();
                         console.log('Address selected:', addressId);
                     } catch (selectError) {
                         console.error('Error selecting address:', selectError);
@@ -218,22 +224,17 @@ function CheckoutFormContent() {
                     if (paymentIntent.status === 'succeeded') {
                         // Step 5: Confirm payment on backend
                         try {
-                            await axiosInstance.post('/payment/confirm', {
+                            await dispatch(confirmPayment({
                                 paymentIntentId: stripePaymentIntentId,
                                 orderId: orderId,
                                 saveCard: values.saveCard && showAddNewCard, // Only save if it's a new card
-                            });
+                            })).unwrap();
 
                             toast.success('Payment successful! Order confirmed.');
                             
                             // Refresh saved cards if card was saved
                             if (values.saveCard && showAddNewCard) {
-                                try {
-                                    const cardsResponse = await axiosInstance.get('/user/saved-cards');
-                                    setSavedCards(cardsResponse.data?.result || []);
-                                } catch (error) {
-                                    console.error('Error refreshing saved cards:', error);
-                                }
+                                dispatch(fetchSavedCards());
                             }
                             
                             navigate(orderId ? `/orders/${orderId}` : '/orders');
@@ -287,46 +288,32 @@ function CheckoutFormContent() {
         }
     };
 
-    // Fetch saved cards - MUST be before any early returns
+    // Fetch saved cards and addresses
     useEffect(() => {
-        const fetchSavedCards = async () => {
-            try {
-                const response = await axiosInstance.get('/user/saved-cards');
-                const cards = response.data?.result || [];
-                setSavedCards(cards);
-                
-                // Auto-select first card if available
-                if (cards.length > 0) {
-                    setSelectedSavedCard(cards[0]._id);
-                    setShowAddNewCard(false);
-                } else {
-                    setShowAddNewCard(true);
-                }
-            } catch (error) {
-                console.error('Error fetching saved cards:', error);
-                setShowAddNewCard(true);
-            }
-        };
-
-        const fetchUserAddresses = async () => {
-            try {
-                const response = await axiosInstance.get('/user/address/my');
-                const addresses = response.data?.result || [];
-                setUserAddresses(addresses);
-                // Set the first address as selected by default
-                if (addresses.length > 0) {
-                    setSelectedAddressId(addresses[0]._id);
-                }
-            } catch (error) {
-                console.error('Error fetching addresses:', error);
-            }
-        };
-
         if (isAuthenticated) {
-            fetchSavedCards();
-            fetchUserAddresses();
+            dispatch(fetchSavedCards());
+            dispatch(fetchAddresses());
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, dispatch]);
+
+    // Auto-select first card if available
+    useEffect(() => {
+        if (cards.length > 0) {
+            setSelectedSavedCard(cards[0]._id);
+            setShowAddNewCard(false);
+        } else {
+            setShowAddNewCard(true);
+        }
+    }, [cards]);
+
+    // Auto-select first address or use store's selected address
+    useEffect(() => {
+        if (storeSelectedAddressId) {
+            setSelectedAddressId(storeSelectedAddressId);
+        } else if (addresses.length > 0) {
+            setSelectedAddressId(addresses[0]._id);
+        }
+    }, [addresses, storeSelectedAddressId]);
 
     // Get card brand from card number
     const getCardBrand = (cardNumber) => {
@@ -625,9 +612,9 @@ function CheckoutFormContent() {
                                             )}
 
                                             {/* Saved Cards List */}
-                                            {savedCards.length > 0 && (
+                                            {cards.length > 0 && (
                                                 <div className="space-y-3">
-                                                    {savedCards.map((card) => {
+                                                    {cards.map((card) => {
                                                         // Handle missing data gracefully
                                                         const brand = card.brand || 'card';
                                                         const last4 = card.last4 || '****';
@@ -682,7 +669,7 @@ function CheckoutFormContent() {
                                                     })}
 
                                                     {/* Add New Card Option */}
-                                                    {savedCards.length < 3 && (
+                                                    {cards.length < 3 && (
                                                         <label className="flex items-center gap-3 p-3 border border-dashed border-gray-400 rounded cursor-pointer hover:border-primary transition-colors">
                                                             <input
                                                                 type="radio"
@@ -702,10 +689,10 @@ function CheckoutFormContent() {
                                             )}
 
                             {/* New Card Form - Show if no saved cards OR "Add New Card" selected */}
-                                            {(savedCards.length === 0 || showAddNewCard) && (
+                                            {(cards.length === 0 || showAddNewCard) && (
                                                 <StripeCardInput 
                                                     formik={formik}
-                                                    showSaveCard={savedCards.length < 3}
+                                                    showSaveCard={cards.length < 3}
                                                 />
                                             )}
                                         </div>

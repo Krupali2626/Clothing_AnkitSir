@@ -117,7 +117,7 @@ const OrderView = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/admin/orders')}
+                        onClick={() => navigate(-1)}
                         className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
                     >
                         <MdArrowBack size={24} />

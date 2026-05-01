@@ -443,6 +443,26 @@ export const getAllOrdersAdmin = async (req, res) => {
     }
 };
 
+export const getUserOrdersAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return sendBadRequestResponse(res, "Valid User ID is required.");
+        }
+
+        const orders = await Order.find({ userId })
+            .populate("products.productId", "name images slug")
+            .populate("products.variantId", "color sku options")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(res, "User orders fetched successfully", orders);
+
+    } catch (error) {
+        return sendErrorResponse(res, 500, "Error fetching user orders", error.message);
+    }
+};
+
 export const updateOrderStatusAdmin = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
