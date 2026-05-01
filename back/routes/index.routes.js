@@ -85,6 +85,7 @@ import {
   confirmStripePayment,
   orderSummaryController,
   getAllOrdersAdmin,
+  getUserOrdersAdmin,
   updateOrderStatusAdmin,
   cancelOrder
 } from "../controller/order.controller.js";
@@ -118,7 +119,10 @@ import {
   finalizeAccountDeletionController,
   saveCard,
   getSavedCards,
-  deleteCard
+  deleteCard,
+  getAllUsersAdmin,
+  getUserByIdAdmin,
+  updateUserStatusAdmin
 } from "../controller/user.controller.js";
 import {
   getMyNotifications,
@@ -238,6 +242,7 @@ router.post("/order/place", UserAuth, placeOrder);
 router.get("/order/my", UserAuth, getMyOrders);
 router.put("/order/cancel/:id", UserAuth, cancelOrder);
 router.get("/order/admin/all", UserAuth, adminAuth, getAllOrdersAdmin);
+router.get("/order/admin/user/:userId", UserAuth, adminAuth, getUserOrdersAdmin);
 router.put("/order/admin/status/:id", UserAuth, adminAuth, updateOrderStatusAdmin);
 router.get("/order/summary", UserAuth, orderSummaryController);
 
@@ -292,6 +297,11 @@ router.delete("/newsletter/delete/:id", deleteNewsLetter);
 
 router.post("/user/wishlist/toggle", UserAuth, toggleWishlist)
 router.get("/user/wishlist/my", UserAuth, getWishlist)
+
+// --- Admin: User Management Routes ---
+router.get("/user/admin/all", UserAuth, adminAuth, getAllUsersAdmin);
+router.get("/user/admin/:userId", UserAuth, adminAuth, getUserByIdAdmin);
+router.put("/user/admin/status/:userId", UserAuth, adminAuth, updateUserStatusAdmin);
 
 //aws
 router.get("/list", async (req, res) => {

@@ -20,7 +20,7 @@ export const fetchSavedCards = createAsyncThunk(
     'payment/fetchSavedCards',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get('/user/card/my');
+            const response = await axiosInstance.get('/user/saved-cards');
             return response.data?.result;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
@@ -28,25 +28,16 @@ export const fetchSavedCards = createAsyncThunk(
     }
 );
 
-// Add new card (optionally set as default)
+// Add new card (for manual card addition - not used in Stripe flow)
 export const addSavedCard = createAsyncThunk(
     'payment/addSavedCard',
     async ({ cardData, setAsDefault = false }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post('/user/card/add', cardData);
+            const response = await axiosInstance.post('/user/card/save', cardData);
             const result = response.data?.result;
-            const newCardId = result.addedCard?._id;
-
-            if (setAsDefault && newCardId) {
-                const selectResp = await axiosInstance.put(`/user/card/select/${newCardId}`);
-                // Refresh full state after setting default
-                const refreshResp = await axiosInstance.get('/user/card/my');
-                return refreshResp.data?.result;
-            }
-
-            // If not setting default, we still want to refresh the list to get masked numbers from backend logic if any, 
-            // or just returning the previous whole state if backend returned it (backend add currently returns {addedCard})
-            const refreshResp = await axiosInstance.get('/user/card/my');
+            
+            // Refresh the cards list
+            const refreshResp = await axiosInstance.get('/user/saved-cards');
             return refreshResp.data?.result;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
@@ -60,7 +51,7 @@ export const deleteSavedCard = createAsyncThunk(
     async (cardId, { rejectWithValue }) => {
         try {
             await axiosInstance.delete(`/user/card/delete/${cardId}`);
-            const refreshResp = await axiosInstance.get('/user/card/my');
+            const refreshResp = await axiosInstance.get('/user/saved-cards');
             return refreshResp.data?.result;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
@@ -68,14 +59,15 @@ export const deleteSavedCard = createAsyncThunk(
     }
 );
 
-// Set default card
+// Set default card (for selecting which card to use)
 export const selectCard = createAsyncThunk(
     'payment/selectCard',
     async (cardId, { rejectWithValue }) => {
         try {
-            await axiosInstance.put(`/user/card/select/${cardId}`);
-            const refreshResp = await axiosInstance.get('/user/card/my');
-            return refreshResp.data?.result;
+            // Note: This endpoint may not exist in backend, but keeping for compatibility
+            // In Stripe flow, card selection is handled differently
+            const refreshResp = await axiosInstance.get('/user/saved-cards');
+            return { ...refreshResp.data?.result, selectedCardId: cardId };
         } catch (error) {
             return handleErrors(error, rejectWithValue);
         }

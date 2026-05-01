@@ -9,10 +9,12 @@ const initialState = {
     placeOrderLoading: false,
     detailLoading: false,
     cancelLoading: false,
+    confirmPaymentLoading: false,
     error: null,
     placeOrderError: null,
     detailError: null,
     cancelError: null,
+    confirmPaymentError: null,
 };
 
 const handleErrors = (error, rejectWithValue) => {
@@ -71,6 +73,23 @@ export const cancelOrder = createAsyncThunk(
             const response = await axiosInstance.put(`/order/cancel/${id}`, { reason });
             // response.data.result = { orderId, orderStatus, cancelledAt }
             return { id, result: response.data?.result };
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+// Confirm payment after Stripe payment succeeds
+export const confirmPayment = createAsyncThunk(
+    'order/confirmPayment',
+    async ({ paymentIntentId, orderId, saveCard }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/payment/confirm', {
+                paymentIntentId,
+                orderId,
+                saveCard,
+            });
+            return response.data;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
         }
@@ -165,6 +184,21 @@ const orderSlice = createSlice({
             .addCase(cancelOrder.rejected, (state, action) => {
                 state.cancelLoading = false;
                 state.cancelError = action.payload?.message || 'Failed to cancel order';
+            })
+            // confirmPayment
+            .addCase(confirmPayment.pending, (state) => {
+                state.confirmPaymentLoading = true;
+                state.confirmPaymentError = null;
+            })
+            .addCase(confirmPayment.fulfilled, (state, action) => {
+                state.confirmPaymentLoading = false;
+                state.confirmPaymentError = null;
+                toast.success('Payment confirmed successfully!');
+            })
+            .addCase(confirmPayment.rejected, (state, action) => {
+                state.confirmPaymentLoading = false;
+                state.confirmPaymentError = action.payload?.message || 'Failed to confirm payment';
+                toast.error(action.payload?.message || 'Failed to confirm payment');
             });
     },
 });

@@ -787,3 +787,84 @@ export const deleteCard = async (req, res) => {
         return sendErrorResponse(res, 500, error.message);
     }
 };
+
+// ============ ADMIN: GET ALL USERS ============
+export const getAllUsersAdmin = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalUsers = await UserModel.countDocuments({ isUserDeleted: false });
+        const users = await UserModel.find({ isUserDeleted: false })
+            .select('-password -otp -resetOtpExpiry -refreshToken -sessions -savedCards')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        return sendSuccessResponse(res, "Users fetched successfully", {
+            users,
+            currentPage: page,
+            totalPages: Math.ceil(totalUsers / limit),
+            totalUsers
+        });
+    } catch (error) {
+        console.error("getAllUsersAdmin Error:", error.message);
+        return sendErrorResponse(res, 500, "Error fetching users", error.message);
+    }
+};
+
+// ============ ADMIN: GET USER BY ID ============
+export const getUserByIdAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return sendBadRequestResponse(res, "Invalid user ID!");
+        }
+
+        const user = await UserModel.findById(userId)
+            .select('-password -otp -resetOtpExpiry -refreshToken -sessions');
+
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        return sendSuccessResponse(res, "User details fetched successfully", user);
+    } catch (error) {
+        console.error("getUserByIdAdmin Error:", error.message);
+        return sendErrorResponse(res, 500, "Error fetching user details", error.message);
+    }
+};
+
+// ============ ADMIN: UPDATE USER STATUS ============
+export const updateUserStatusAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { isUserDeleted } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return sendBadRequestResponse(res, "Invalid user ID!");
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        if (isUserDeleted !== undefined) {
+            user.isUserDeleted = isUserDeleted;
+            if (isUserDeleted) {
+                user.deletedAt = new Date();
+            }
+        }
+
+        await user.save();
+
+        return sendSuccessResponse(res, "User status updated successfully", user);
+    } catch (error) {
+        console.error("updateUserStatusAdmin Error:", error.message);
+        return sendErrorResponse(res, 500, "Error updating user status", error.message);
+    }
+};
+
