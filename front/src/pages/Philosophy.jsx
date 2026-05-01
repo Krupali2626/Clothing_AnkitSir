@@ -76,20 +76,20 @@ export default function Philosophy() {
                 {/* ── Section 2: Three Philosophy Cards ───────────────────────── */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 md:mb-14">
                     {philosophyCards.map((card) => (
-                        <div key={card.title} className="group bg-white flex flex-col border border-border transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-2">
+                        <div key={card?.title} className="group bg-white flex flex-col border border-border transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-2">
                             <div className="overflow-hidden">
                                 <img
-                                    src={card.img}
-                                    alt={card.title}
+                                    src={card?.img}
+                                    alt={card?.title}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                             </div>
                             <div className="p-6 md:p-8 flex flex-col flex-1">
                                 <h3 className="text-sm md:text-2xl font-bold text-center text-primary mb-3">
-                                    {card.title}
+                                    {card?.title}
                                 </h3>
                                 <p className="text-sm md:text-base text-lightText font-medium leading-relaxed text-center">
-                                    {card.description}
+                                    {card?.description}
                                 </p>
                             </div>
                         </div>

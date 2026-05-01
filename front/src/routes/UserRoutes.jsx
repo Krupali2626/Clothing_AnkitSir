@@ -22,6 +22,9 @@ import Philosophy from '../pages/Philosophy';
 import Evolution from '../pages/Evolution';
 import Journal from '../pages/Journal';
 import CheckOut from '../pages/CheckOut';
+import JournalDetail from '../pages/JournalDetail';
+import LookBook from '../pages/LookBook';
+import LookBookLPL from '../pages/LookBookLPL';
 
 const UserRoutes = () => {
     return (
@@ -42,6 +45,9 @@ const UserRoutes = () => {
             <Route path="/evolution" element={<Layout><Evolution /></Layout>} />
             <Route path="/journal" element={<Layout><Journal /></Layout>} />
             <Route path="/checkout" element={<Layout><CheckOut /></Layout>} />
+            <Route path="/journal/:id" element={<Layout><JournalDetail /></Layout>} />
+            <Route path="/lookbook" element={<Layout><LookBook /></Layout>} />
+            <Route path="/lookbook-lpl" element={<Layout><LookBookLPL /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />

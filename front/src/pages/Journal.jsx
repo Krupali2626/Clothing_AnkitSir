@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import fashion from '../assets/images/fashion.jpg';
 import fragrance1 from '../assets/images/Fragrance1.jpg';
 import cosmetics1 from '../assets/images/Cosmetics1.jpg';
@@ -11,7 +12,7 @@ import Fragrance2 from '../assets/images/Fragrance2.jpg';
 import { GoArrowUpRight } from "react-icons/go";
 import newsletter from '../assets/images/style.jpg';
 
-const CATEGORIES = ["All Stories", "Fashion", "Fragrance", "Cosmetics", "Behind the Scenes", "Bags"];
+const CATEGORIES = ["All Stories", "Fashion", "Fragrance", "Cosmetics", "Behind", "Bags"];
 
 const JOURNAL_ARTICLES = [
     {
@@ -100,6 +101,7 @@ const JOURNAL_ARTICLES = [
 
 const Journal = () => {
     const [activeCategory, setActiveCategory] = useState("All Stories");
+    const navigate = useNavigate();
 
     const featuredArticle = JOURNAL_ARTICLES.find(article => article.isFeatured);
 
@@ -146,7 +148,10 @@ const Journal = () => {
                                 <p className="text-xs md:text-sm lg:text-base text-white/90 font-medium leading-relaxed mb-6 md:mb-8 max-w-xl line-clamp-3 md:line-clamp-none">
                                     {article?.excerpt}
                                 </p>
-                                <button className="w-fit bg-white px-6 md:px-8 py-3 md:py-4 flex items-center gap-4 text-dark text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-white transition-all duration-300">
+                                <button 
+                                    onClick={() => navigate(`/journal/${article.id}`)}
+                                    className="w-fit bg-white px-6 md:px-8 py-3 md:py-4 flex items-center gap-4 text-dark text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-white transition-all duration-300"
+                                >
                                     READ THE STORY
                                     <span className="text-lg">↗</span>
                                 </button>
@@ -211,7 +216,10 @@ const Journal = () => {
                                 <p className="text-sm md:text-base text-lightText leading-relaxed mb-6 line-clamp-3">
                                     {article?.excerpt}
                                 </p>
-                                <button className="text-[14px] md:text-[14px] flex items-center gap-2 uppercase text-[#14372F] border-dark/20 pb-1 w-fit">
+                                <button 
+                                    onClick={() => navigate(`/journal/${article.id}`)}
+                                    className="text-[14px] md:text-[14px] flex items-center gap-2 uppercase text-[#14372F] border-dark/20 pb-1 w-fit"
+                                >
                                     see more <GoArrowUpRight className="text-lg" />
                                 </button>
                             </div>
