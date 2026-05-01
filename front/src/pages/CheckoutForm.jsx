@@ -8,6 +8,12 @@ import { applyCoupon, removeCoupon } from '../redux/slice/cart.slice';
 import { IoClose } from 'react-icons/io5';
 import axiosInstance from '../utils/axiosInstance';
 import toast from 'react-hot-toast';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
+import StripeCardInput from '../components/StripeCardInput';
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const checkoutSchema = Yup.object({
     mobile: Yup.string()
@@ -24,29 +30,10 @@ const checkoutSchema = Yup.object({
     addressType: Yup.string().required('Address type is required'),
     saveInfo: Yup.boolean(),
     paymentMethod: Yup.string().required('Payment method is required'),
-    cardNumber: Yup.string().when('paymentMethod', {
-        is: 'Card',
-        then: (schema) => schema
-            .matches(/^[0-9]{16}$/, 'Card number must be 16 digits')
-            .required('Card number is required'),
-    }),
-    cardExpiry: Yup.string().when('paymentMethod', {
-        is: 'Card',
-        then: (schema) => schema
-            .matches(/^(0[1-9]|1[0-2])\/[0-9]{2}$/, 'Format: MM/YY')
-            .required('Expiry date is required'),
-    }),
-    cardCVV: Yup.string().when('paymentMethod', {
-        is: 'Card',
-        then: (schema) => schema
-            .matches(/^[0-9]{3,4}$/, 'CVV must be 3 or 4 digits')
-            .required('CVV is required'),
-    }),
     cardName: Yup.string().when('paymentMethod', {
         is: 'Card',
         then: (schema) => schema.required('Name on card is required'),
     }),
-    saveCard: Yup.boolean(),
 });
 
 const couponSchema = Yup.object({
@@ -55,9 +42,11 @@ const couponSchema = Yup.object({
 
 const fmt = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export default function CheckoutForm() {
+function CheckoutFormContent() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const stripe = useStripe();
+    const elements = useElements();
     const { cartData } = useSelector((state) => state.cart);
     const { placeOrderLoading } = useSelector((state) => state.order);
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -68,6 +57,7 @@ export default function CheckoutForm() {
     const [showAddNewCard, setShowAddNewCard] = useState(false);
     const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState(null);
+    const [stripeError, setStripeError] = useState(null);
 
     const cartItems = cartData?.items || [];
     const subtotal = cartData?.subtotal || 0;
@@ -91,14 +81,18 @@ export default function CheckoutForm() {
             addressType: 'Home',
             saveInfo: false,
             paymentMethod: 'Card',
-            cardNumber: '',
-            cardExpiry: '',
-            cardCVV: '',
             cardName: '',
-            saveCard: false,
         },
         validationSchema: checkoutSchema,
         onSubmit: async (values) => {
+            setStripeError(null);
+
+            // Validate Stripe is loaded
+            if (values.paymentMethod === 'Card' && (!stripe || !elements)) {
+                toast.error('Stripe is not loaded yet. Please wait a moment and try again.');
+                return;
+            }
+
             try {
                 // Step 1: Use existing address or create new one
                 let addressId = selectedAddressId;
@@ -150,49 +144,60 @@ export default function CheckoutForm() {
                     return;
                 }
 
-                // Step 3: Save card if checkbox is checked and it's a new card
-                if (values.saveCard && showAddNewCard && values.cardNumber) {
-                    try {
-                        await axiosInstance.post('/user/card/save', {
-                            cardNumber: values.cardNumber,
-                            cardHolderName: values.cardName,
-                            expiryDate: values.cardExpiry,
-                            cvv: values.cardCVV,
-                        });
-                    } catch (cardError) {
-                        console.error('Error saving card:', cardError);
-                        // Don't block order if card save fails
-                    }
+                // Step 3: Place the order (backend creates payment intent)
+                const orderPayload = {
+                    paymentMethod: values.paymentMethod,
+                };
+
+                // If using saved card
+                if (selectedSavedCard && !showAddNewCard) {
+                    orderPayload.savedCardId = selectedSavedCard;
                 }
 
-                // Step 4: Place the order
-                const result = await dispatch(
-                    placeOrder({
-                        paymentMethod: values.paymentMethod,
-                        cardNumber: selectedSavedCard ? 
-                            savedCards.find(c => c._id === selectedSavedCard)?.cardNumber : 
-                            values.cardNumber,
-                        cardHolderName: selectedSavedCard ?
-                            savedCards.find(c => c._id === selectedSavedCard)?.cardHolderName :
-                            values.cardName,
-                        expiryDate: selectedSavedCard ?
-                            savedCards.find(c => c._id === selectedSavedCard)?.expiryDate :
-                            values.cardExpiry,
-                        cvv: values.cardCVV,
-                    })
-                ).unwrap();
+                const result = await dispatch(placeOrder(orderPayload)).unwrap();
                 
-                // Step 5: Re-fetch saved cards after successful order
-                try {
-                    const cardsResponse = await axiosInstance.get('/user/saved-cards');
-                    setSavedCards(cardsResponse.data?.result || []);
-                } catch (cardFetchError) {
-                    console.error('Error re-fetching saved cards:', cardFetchError);
+                const { clientSecret, stripePaymentIntentId, _id: orderId } = result?.result || {};
+
+                // Step 4: Confirm payment with Stripe (for Card payment)
+                if (values.paymentMethod === 'Card' && clientSecret) {
+                    const cardElement = elements.getElement(CardNumberElement);
+
+                    const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: values.cardName,
+                            },
+                        },
+                    });
+
+                    if (stripeError) {
+                        setStripeError(stripeError.message);
+                        toast.error(stripeError.message);
+                        return;
+                    }
+
+                    if (paymentIntent.status === 'succeeded') {
+                        // Step 5: Confirm payment on backend
+                        try {
+                            await axiosInstance.post('/payment/confirm', {
+                                paymentIntentId: stripePaymentIntentId,
+                                orderId: orderId,
+                            });
+
+                            toast.success('Payment successful! Order confirmed.');
+                            navigate(orderId ? `/orders/${orderId}` : '/orders');
+                        } catch (confirmError) {
+                            console.error('Error confirming payment:', confirmError);
+                            toast.error('Payment succeeded but order confirmation failed. Please contact support.');
+                        }
+                    }
+                } else {
+                    // For other payment methods (PayPal, ZipPay, AfterPay)
+                    toast.success('Order placed successfully!');
+                    navigate(orderId ? `/orders/${orderId}` : '/orders');
                 }
                 
-                const orderId = result?.result?._id;
-                toast.success('Order placed successfully!');
-                navigate(orderId ? `/orders/${orderId}` : '/orders');
             } catch (error) {
                 console.error('Order placement error:', error);
                 toast.error(error?.message || 'Failed to place order');
@@ -557,6 +562,13 @@ export default function CheckoutForm() {
 
                                     {formik.values.paymentMethod === 'Card' && (
                                         <div className="space-y-4 mt-4 ">
+                                            {/* Stripe Error Display */}
+                                            {stripeError && (
+                                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                                                    {stripeError}
+                                                </div>
+                                            )}
+
                                             {/* Saved Cards List */}
                                             {savedCards.length > 0 && (
                                                 <div className="space-y-3">
@@ -620,106 +632,9 @@ export default function CheckoutForm() {
 
                                             {/* New Card Form - Show if no saved cards OR "Add New Card" selected */}
                                             {(savedCards.length === 0 || showAddNewCard) && (
-                                                <div className="space-y-4">
-                                            <div>
-                                                <input
-                                                    type="text"
-                                                    name="cardNumber"
-                                                    placeholder="Card Number"
-                                                    value={formik.values.cardNumber}
-                                                    onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
-                                                    maxLength="16"
-                                                    className={`w-full px-4 py-3 border ${
-                                                        formik.touched.cardNumber && formik.errors.cardNumber
-                                                            ? 'border-red-400'
-                                                            : 'border-border'
-                                                    } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
+                                                <StripeCardInput 
+                                                    formik={formik}
                                                 />
-                                                {formik.touched.cardNumber && formik.errors.cardNumber && (
-                                                    <p className="text-xs text-red-500 mt-1">{formik.errors.cardNumber}</p>
-                                                )}
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <input
-                                                        type="text"
-                                                        name="cardExpiry"
-                                                        placeholder="MM/YY"
-                                                        value={formik.values.cardExpiry}
-                                                        onChange={(e) => {
-                                                            let value = e.target.value.replace(/\D/g, '');
-                                                            if (value.length >= 2) {
-                                                                value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                                                            }
-                                                            formik.setFieldValue('cardExpiry', value);
-                                                        }}
-                                                        onBlur={formik.handleBlur}
-                                                        maxLength="5"
-                                                        className={`w-full px-4 py-3 border ${
-                                                            formik.touched.cardExpiry && formik.errors.cardExpiry
-                                                                ? 'border-red-400'
-                                                                : 'border-border'
-                                                        }text-base text-dark focus:outline-none focus:border-primary transition-colors`}
-                                                    />
-                                                    {formik.touched.cardExpiry && formik.errors.cardExpiry && (
-                                                        <p className="text-xs text-red-500 mt-1">{formik.errors.cardExpiry}</p>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <input
-                                                        type="text"
-                                                        name="cardCVV"
-                                                        placeholder="CVV"
-                                                        value={formik.values.cardCVV}
-                                                        onChange={formik.handleChange}
-                                                        onBlur={formik.handleBlur}
-                                                        maxLength="4"
-                                                        className={`w-full px-4 py-3 border ${
-                                                            formik.touched.cardCVV && formik.errors.cardCVV
-                                                                ? 'border-red-400'
-                                                                : 'border-border'
-                                                        } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
-                                                    />
-                                                    {formik.touched.cardCVV && formik.errors.cardCVV && (
-                                                        <p className="text-xs text-red-500 mt-1">{formik.errors.cardCVV}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <input
-                                                    type="text"
-                                                    name="cardName"
-                                                    placeholder="Name on card"
-                                                    value={formik.values.cardName}
-                                                    onChange={formik.handleChange}
-                                                    onBlur={formik.handleBlur}
-                                                    className={`w-full px-4 py-3 border ${
-                                                        formik.touched.cardName && formik.errors.cardName
-                                                            ? 'border-red-400'
-                                                            : 'border-border'
-                                                    } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
-                                                />
-                                                {formik.touched.cardName && formik.errors.cardName && (
-                                                    <p className="text-xs text-red-500 mt-1">{formik.errors.cardName}</p>
-                                                )}
-                                            </div>
-
-                                            {savedCards.length < 2 && (
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="saveCard"
-                                                        checked={formik.values.saveCard}
-                                                        onChange={formik.handleChange}
-                                                        className="w-4 h-4 text-primary"
-                                                    />
-                                                    <span className="text-sm text-gray-700">Save this card information for next time</span>
-                                                </label>
-                                            )}
-                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -964,5 +879,14 @@ export default function CheckoutForm() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// Wrapper component with Stripe Elements provider
+export default function CheckoutForm() {
+    return (
+        <Elements stripe={stripePromise}>
+            <CheckoutFormContent />
+        </Elements>
     );
 }

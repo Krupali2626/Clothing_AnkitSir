@@ -163,6 +163,8 @@ export const placeOrder = async (req, res) => {
         let finalCvv = cvv;
 
         // --- Card Specific Data Prep ---
+        // Note: When using Stripe, card details are handled on frontend
+        // We only save card info if explicitly provided (for saved cards feature)
         if (paymentMethod === "Card") {
             if (savedCardId) {
                 const matchingCard = user.savedCards.find(c => c._id.toString() === savedCardId.toString());
@@ -174,22 +176,18 @@ export const placeOrder = async (req, res) => {
                 finalCardHolderName = matchingCard.cardHolderName;
                 finalExpiryDate = matchingCard.expiryDate;
                 finalCvv = matchingCard.cvv;
-            } else {
-                if (!finalCardNumber || !finalExpiryDate || !finalCvv) {
-                    await session.abortTransaction();
-                    return sendBadRequestResponse(res, "Please provide Card Number, Expiry Date, and CVV.");
-                }
-
-                if (saveCardInfo) {
-                    user.savedCards.push({
-                        cardNumber: finalCardNumber,
-                        cardHolderName: finalCardHolderName || "Unknown",
-                        expiryDate: finalExpiryDate,
-                        cvv: finalCvv,
-                        cardType: "Card"
-                    });
-                    await user.save({ session });
-                }
+            }
+            // Card details are optional when using Stripe (handled on frontend)
+            // Only save if provided and saveCardInfo is true
+            else if (saveCardInfo && finalCardNumber && finalExpiryDate && finalCvv) {
+                user.savedCards.push({
+                    cardNumber: finalCardNumber,
+                    cardHolderName: finalCardHolderName || "Unknown",
+                    expiryDate: finalExpiryDate,
+                    cvv: finalCvv,
+                    cardType: "Card"
+                });
+                await user.save({ session });
             }
         }
 
@@ -239,17 +237,9 @@ export const placeOrder = async (req, res) => {
 
         await paymentRecord.save({ session });
 
-        // Decrement Stock
-        for (const item of orderProducts) {
-            const variant = await ProductVariant.findById(item.variantId).session(session);
-            if (variant.options && variant.options.length > 0 && item.selectedSize) {
-                const sizeObj = variant.options.find(o => o.size === item.selectedSize);
-                if (sizeObj) sizeObj.stock -= item.quantity;
-            } else {
-                variant.stock -= item.quantity;
-            }
-            await variant.save({ session });
-        }
+        // Note: Stock will be decremented after payment confirmation
+        // This prevents stock issues if payment fails
+        
         // Empty Cart
         await Cart.deleteOne({ userId }, { session });
 
@@ -318,10 +308,10 @@ export const confirmStripePayment = async (req, res) => {
 
         const order = await Order.findById(orderId);
         if (order) {
-            order.orderStatus = "Order Confirmed";
+            order.orderStatus = "Pending"; // Keep as Pending after payment
             order.paymentStatus = "Paid";
             order.timeline.push({
-                status: "Order Confirmed",
+                status: "Pending",
                 message: "Payment successful.",
                 updatedBy: "system"
             });
@@ -457,8 +447,7 @@ export const updateOrderStatusAdmin = async (req, res) => {
         const { orderStatus } = req.body;
 
         const validStatuses = [
-            "Pending", "Order Confirmed", "Processing", "Shipped",
-            "Out For Delivery", "Delivered", "Cancelled"
+            "Pending", "On the way", "Delivered", "Cancelled"
         ];
 
         if (!orderStatus || !validStatuses.includes(orderStatus)) {

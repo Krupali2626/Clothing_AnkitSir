@@ -20,7 +20,7 @@ const stripe = new Stripe(STRIPE_SECRET)
 
 export const myPaymentController = async (req, res) => {
   try {
-    const userId = req?.user?.id;
+    const userId = req?.user?.id || req?.user?._id;
     if (!userId) {
       return sendBadRequestResponse(res, "User ID is required");
     }
@@ -382,7 +382,7 @@ export const paymentStatusChangeController = async (req, res) => {
 
     if (mappedStatus === "Paid" && oldPaymentStatus !== "Paid") {
       payment.paymentDate = new Date();
-      order.orderStatus = "Order Confirmed";
+      order.orderStatus = "Pending"; // Keep as Pending, admin will update to "On the way" later
     }
 
     await payment.save({ session });
@@ -404,7 +404,7 @@ export const paymentStatusChangeController = async (req, res) => {
 };
 
 export const confirmStripePaymentController = async (req, res) => {
-  if (!req.user || !req.user.id) {
+  if (!req.user || (!req.user.id && !req.user._id)) {
     return sendErrorResponse(res, 401, "Authentication required. Please log in.");
   }
 
@@ -413,7 +413,7 @@ export const confirmStripePaymentController = async (req, res) => {
   try {
     await session.startTransaction();
 
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
     const { paymentIntentId, orderId, testMode } = req.body;
 
     if (!paymentIntentId || !orderId) {
@@ -450,10 +450,10 @@ export const confirmStripePaymentController = async (req, res) => {
     payment.paymentDate = new Date();
     await payment.save({ session });
 
-    order.orderStatus = "Order Confirmed";
+    order.orderStatus = "Pending"; // Keep as Pending after payment confirmation
     order.paymentStatus = "Paid";
     order.timeline.push({
-      status: "Order Confirmed",
+      status: "Pending",
       message: "Payment received successfully. Order confirmed.",
       updatedBy: "system"
     });
@@ -522,7 +522,7 @@ export const getPaymentStatusController = async (req, res) => {
           await payment.save();
 
           await orderModel.findByIdAndUpdate(orderId, {
-            orderStatus: "Order Confirmed",
+            orderStatus: "Pending", // Keep as Pending after payment
             paymentStatus: "Paid"
           });
         }
@@ -564,7 +564,7 @@ export const getAllPaymentHistory = async (req, res) => {
 
 export const getSavedCardsController = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
     const user = await UserModel.findById(userId);
 
     if (!user) {
@@ -590,7 +590,7 @@ export const getSavedCardsController = async (req, res) => {
 
 export const deleteSavedCardController = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
     const { cardId } = req.params;
 
     const user = await UserModel.findById(userId);
