@@ -113,7 +113,10 @@ import {
   getRecentlyViewedController,
   requestAccountDeletionController,
   verifyDeletionOtpController,
-  finalizeAccountDeletionController
+  finalizeAccountDeletionController,
+  saveCard,
+  getSavedCards,
+  deleteCard
 } from "../controller/user.controller.js";
 import {
   getMyNotifications,
@@ -252,6 +255,11 @@ router.put("/user/address/update/:addressId", UserAuth, userAddressUpdateControl
 router.delete("/user/address/delete/:addressId", UserAuth, userAddressDeleteController);
 router.get("/user/address/my", UserAuth, getUserAddressController);
 router.put("/user/address/select/:addressId", UserAuth, selectAddressController);
+
+// --- Card Management Routes ---
+router.post("/user/card/save", UserAuth, saveCard);
+router.get("/user/saved-cards", UserAuth, getSavedCards);
+router.delete("/user/card/delete/:cardId", UserAuth, deleteCard);
 router.post("/user/delete-account/request", UserAuth, requestAccountDeletionController);
 router.post("/user/delete-account/verify", UserAuth, verifyDeletionOtpController);
 router.post("/user/delete-account/finalize", UserAuth, finalizeAccountDeletionController);

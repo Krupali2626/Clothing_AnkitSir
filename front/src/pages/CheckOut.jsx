@@ -8,6 +8,7 @@ import { IoClose } from 'react-icons/io5';
 import { updateCartItem, removeFromCart, fetchCart, applyCoupon, removeCoupon } from '../redux/slice/cart.slice';
 import { placeOrder } from '../redux/slice/order.slice';
 import toast from 'react-hot-toast';
+import EditCartItemModal from '../components/EditCartItemModal';
 
 // ─── Coupon Formik schema ────────────────────────────────────────────────────
 const couponSchema = Yup.object({
@@ -29,6 +30,8 @@ export default function CheckOut() {
 
     const { cartData, loading: cartLoading } = useSelector((state) => state.cart);
     const [updatingId, setUpdatingId] = useState(null); // item._id being updated
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -51,7 +54,7 @@ export default function CheckOut() {
                     productVariantId: item?.productVariantId?._id,
                     selectedSize: item.selectedSize,
                 })
-            );
+            ).unwrap();
         } finally {
             setUpdatingId(null);
         }
@@ -67,7 +70,7 @@ export default function CheckOut() {
                     productVariantId: item?.productVariantId?._id,
                     selectedSize: item?.selectedSize,
                 })
-            );
+            ).unwrap();
         } finally {
             setUpdatingId(null);
         }
@@ -78,16 +81,12 @@ export default function CheckOut() {
         validationSchema: couponSchema,
         onSubmit: async (values, { setSubmitting, setFieldError }) => {
             try {
-                const resultAction = await dispatch(applyCoupon(values.code.trim().toUpperCase()));
-                if (applyCoupon.fulfilled.match(resultAction)) {
-                    toast.success(resultAction.payload?.message || 'Coupon applied!');
-                } else {
-                    const msg = resultAction.payload?.message || 'Invalid or expired coupon';
-                    setFieldError('code', msg);
-                    toast.error(msg);
-                }
+                const result = await dispatch(applyCoupon(values.code.trim().toUpperCase())).unwrap();
+                toast.success(result?.message || 'Coupon applied!');
             } catch (err) {
-                toast.error('Something went wrong');
+                const msg = err?.message || 'Invalid or expired coupon';
+                setFieldError('code', msg);
+                toast.error(msg);
             } finally {
                 setSubmitting(false);
             }
@@ -96,13 +95,9 @@ export default function CheckOut() {
 
     const handleRemoveCoupon = async () => {
         try {
-            const resultAction = await dispatch(removeCoupon());
-            if (removeCoupon.fulfilled.match(resultAction)) {
-                couponFormik.resetForm();
-                toast.success('Coupon removed');
-            } else {
-                toast.error('Failed to remove coupon');
-            }
+            await dispatch(removeCoupon()).unwrap();
+            couponFormik.resetForm();
+            toast.success('Coupon removed');
         } catch {
             toast.error('Failed to remove coupon');
         }
@@ -110,13 +105,26 @@ export default function CheckOut() {
 
     // ── Place order ───────────────────────────────────────────────────────────
     const handleCheckout = async () => {
-        const result = await dispatch(
-            placeOrder({ paymentMethod: 'Card' })
-        );
-        if (!result.error) {
-            const orderId = result.payload?.result?._id;
+        try {
+            const result = await dispatch(
+                placeOrder({ paymentMethod: 'Card' })
+            ).unwrap();
+            const orderId = result?.result?._id;
             navigate(orderId ? `/orders/${orderId}` : '/orders');
+        } catch (error) {
+            toast.error(error?.message || 'Failed to place order');
         }
+    };
+
+    // ── Handle Edit Item ──────────────────────────────────────────────────────
+    const handleEditItem = (item) => {
+        setEditingItem(item);
+        setEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setEditModalOpen(false);
+        setEditingItem(null);
     };
 
     // ── Derived values ────────────────────────────────────────────────────────
@@ -134,7 +142,13 @@ export default function CheckOut() {
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-white flex flex-col">
+        <>
+            <EditCartItemModal
+                isOpen={editModalOpen}
+                onClose={handleCloseEditModal}
+                item={editingItem}
+            />
+            <div className="min-h-screen bg-white flex flex-col">
             <div className="flex-1 flex flex-col lg:flex-row">
                 {/* ══════════════════════════════════════════════════════════
                     LEFT — Cart items (White Background)
@@ -198,6 +212,15 @@ export default function CheckOut() {
                                     const variant = item.productVariantId;
                                     const isUpdating = updatingId === item._id;
 
+                                    // Calculate item price based on size or default price
+                                    let itemPrice = 0;
+                                    if (variant?.options && variant.options.length > 0 && item.selectedSize) {
+                                        const sizeObj = variant.options.find(s => s.size === item.selectedSize);
+                                        itemPrice = sizeObj?.price || 0;
+                                    } else {
+                                        itemPrice = variant?.price || 0;
+                                    }
+
                                     return (
                                         <div
                                             key={item._id}
@@ -239,8 +262,8 @@ export default function CheckOut() {
                                                         </span>
                                                     </div>
                                                     <button
-                                                        onClick={() => navigate(`/product/${item?.productId?.slug}`)}
-                                                        className="text-xs font-semibold text-gold underline cursor-pointer mt-1 block tracking-wider"
+                                                        onClick={() => handleEditItem(item)}
+                                                        className="text-xs font-semibold text-gold underline cursor-pointer mt-1 block tracking-wider hover:text-gold/80 transition-colors"
                                                     >
                                                         Change
                                                     </button>
@@ -273,7 +296,7 @@ export default function CheckOut() {
                                                     </button>
 
                                                     <span className="text-sm font-extrabold text-dark">
-                                                        ${fmt(item?.price * item.quantity)}
+                                                        ${fmt(itemPrice * item.quantity)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -287,7 +310,7 @@ export default function CheckOut() {
                         {!isEmpty && !cartLoading && (
                             <div className="mt-16">
                                 <button
-                                    onClick={handleCheckout}
+                                    onClick={() => navigate('/checkout-form')}
                                     disabled={placeOrderLoading}
                                     className="w-full h-[54px] bg-primary text-white text-[13px] font-bold uppercase tracking-[2px] hover:bg-primary/90 transition-all disabled:opacity-50"
                                 >
@@ -403,5 +426,6 @@ export default function CheckOut() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

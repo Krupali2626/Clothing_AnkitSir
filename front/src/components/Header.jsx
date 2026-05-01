@@ -413,11 +413,18 @@ export default function Header() {
                                     )}
                                 </button>
                                 {/* Cart */}
-                                <button className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
+                                <button
+                                    onClick={() => navigate('/checkout')}
+                                className={`p-1.5 rounded-full transition-all duration-300 opacity-70 hover:opacity-100 relative ${isHomePage
                                     ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
                                     : 'hover:bg-mainBG text-dark'
                                     }`}>
                                     <HiOutlineShoppingBag className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                    {cartItems && cartItems.length > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#14372F] text-[8px] font-bold text-white ring-1 ring-white">
+                                            {cartItems.length}
+                                        </span>
+                                    )}
                                 </button>
                                 {/* Notifications — logged in only */}
                                 {user && (

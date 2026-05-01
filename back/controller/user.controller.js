@@ -653,3 +653,137 @@ export const finalizeAccountDeletionController = async (req, res) => {
         return sendErrorResponse(res, 500, "Error finalizing account deletion", error.message);
     }
 };
+
+
+// ============ CARD MANAGEMENT ============
+
+export const saveCard = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user._id;
+        const { cardNumber, cardHolderName, expiryDate, cvv } = req.body;
+
+        if (!cardNumber || !cardHolderName || !expiryDate || !cvv) {
+            return sendBadRequestResponse(res, "All card fields are required!");
+        }
+
+        // Validate card number (16 digits)
+        if (!/^\d{16}$/.test(cardNumber)) {
+            return sendBadRequestResponse(res, "Invalid card number!");
+        }
+
+        // Validate expiry date (MM/YY format)
+        if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiryDate)) {
+            return sendBadRequestResponse(res, "Invalid expiry date format (MM/YY)!");
+        }
+
+        // Validate CVV (3-4 digits)
+        if (!/^\d{3,4}$/.test(cvv)) {
+            return sendBadRequestResponse(res, "Invalid CVV!");
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        // Check if user already has 2 cards
+        if (user.savedCards && user.savedCards.length >= 2) {
+            return sendBadRequestResponse(res, "You can only save up to 2 cards!");
+        }
+
+        // Check if card already exists
+        const cardExists = user.savedCards.some(
+            card => card.cardNumber === cardNumber
+        );
+
+        if (cardExists) {
+            return sendBadRequestResponse(res, "This card is already saved!");
+        }
+
+        // Determine card type
+        const firstDigit = cardNumber.charAt(0);
+        let cardType = "Card";
+        if (firstDigit === '4') cardType = "Visa";
+        else if (firstDigit === '5') cardType = "Mastercard";
+        else if (firstDigit === '3') cardType = "Amex";
+
+        // Add new card
+        user.savedCards.push({
+            cardNumber,
+            cardHolderName,
+            expiryDate,
+            cvv,
+            cardType
+        });
+
+        await user.save();
+
+        return sendSuccessResponse(res, "Card saved successfully!", {
+            savedCards: user.savedCards.map(card => ({
+                _id: card._id,
+                cardNumber: card.cardNumber,
+                cardHolderName: card.cardHolderName,
+                expiryDate: card.expiryDate,
+                cardType: card.cardType
+            }))
+        });
+    } catch (error) {
+        return sendErrorResponse(res, 500, error.message);
+    }
+};
+
+export const getSavedCards = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user._id;
+
+        const user = await UserModel.findById(userId).select('savedCards');
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        // Return cards without CVV for security
+        const cards = user.savedCards.map(card => ({
+            _id: card._id,
+            cardNumber: card.cardNumber,
+            cardHolderName: card.cardHolderName,
+            expiryDate: card.expiryDate,
+            cardType: card.cardType,
+            createdAt: card.createdAt
+        }));
+
+        return sendSuccessResponse(res, "Cards fetched successfully!", cards);
+    } catch (error) {
+        return sendErrorResponse(res, 500, error.message);
+    }
+};
+
+export const deleteCard = async (req, res) => {
+    try {
+        const userId = req.user.id || req.user._id;
+        const { cardId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(cardId)) {
+            return sendBadRequestResponse(res, "Invalid card ID!");
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return sendNotFoundResponse(res, "User not found!");
+        }
+
+        const cardIndex = user.savedCards.findIndex(
+            card => card._id.toString() === cardId
+        );
+
+        if (cardIndex === -1) {
+            return sendNotFoundResponse(res, "Card not found!");
+        }
+
+        user.savedCards.splice(cardIndex, 1);
+        await user.save();
+
+        return sendSuccessResponse(res, "Card deleted successfully!");
+    } catch (error) {
+        return sendErrorResponse(res, 500, error.message);
+    }
+};

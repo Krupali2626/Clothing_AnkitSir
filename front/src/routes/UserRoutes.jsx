@@ -25,6 +25,7 @@ import CheckOut from '../pages/CheckOut';
 import JournalDetail from '../pages/JournalDetail';
 import LookBook from '../pages/LookBook';
 import LookBookLPL from '../pages/LookBookLPL';
+import CheckoutForm from '../pages/CheckoutForm';
 
 const UserRoutes = () => {
     return (
@@ -48,6 +49,7 @@ const UserRoutes = () => {
             <Route path="/journal/:id" element={<Layout><JournalDetail /></Layout>} />
             <Route path="/lookbook" element={<Layout><LookBook /></Layout>} />
             <Route path="/lookbook-lpl" element={<Layout><LookBookLPL /></Layout>} />
+            <Route path="/checkout-form" element={<Layout><CheckoutForm /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />
