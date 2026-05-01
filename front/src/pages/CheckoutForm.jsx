@@ -30,10 +30,7 @@ const checkoutSchema = Yup.object({
     addressType: Yup.string().required('Address type is required'),
     saveInfo: Yup.boolean(),
     paymentMethod: Yup.string().required('Payment method is required'),
-    cardName: Yup.string().when('paymentMethod', {
-        is: 'Card',
-        then: (schema) => schema.required('Name on card is required'),
-    }),
+   
 });
 
 const couponSchema = Yup.object({
@@ -162,22 +159,61 @@ function CheckoutFormContent() {
 
                 // Step 4: Confirm payment with Stripe (for Card payment)
                 if (values.paymentMethod === 'Card' && clientSecret) {
-                    const cardElement = elements.getElement(CardNumberElement);
+                    let confirmResult;
+                    
+                    // Check if using saved card or new card
+                    if (selectedSavedCard && !showAddNewCard) {
+                        // Using saved card - confirm with payment method already attached
+                        console.log('💳 Confirming payment with saved card:', selectedSavedCard);
+                        
+                        try {
+                            // When payment method is already attached to Payment Intent,
+                            // we just need to confirm without providing card details
+                            confirmResult = await stripe.confirmCardPayment(clientSecret);
+                            console.log('✅ Payment confirmed with saved card');
+                        } catch (error) {
+                            console.error('❌ Error confirming saved card payment:', error);
+                            toast.error('Failed to process payment with saved card. Please try a different card.');
+                            return;
+                        }
+                        
+                    } else {
+                        // Using new card - get card element and confirm
+                        console.log('💳 Confirming payment with new card');
+                        const cardElement = elements.getElement(CardNumberElement);
+                        
+                        if (!cardElement) {
+                            toast.error('Card information is required');
+                            return;
+                        }
 
-                    const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: {
-                                name: values.cardName,
-                            },
-                        },
-                    });
+                        try {
+                            confirmResult = await stripe.confirmCardPayment(clientSecret, {
+                                payment_method: {
+                                    card: cardElement,
+                                    billing_details: {
+                                        name: values.cardName,
+                                    },
+                                },
+                            });
+                            console.log('✅ Payment confirmed with new card');
+                        } catch (error) {
+                            console.error('❌ Error confirming new card payment:', error);
+                            toast.error('Failed to process payment. Please check your card details.');
+                            return;
+                        }
+                    }
+
+                    const { error: stripeError, paymentIntent } = confirmResult;
 
                     if (stripeError) {
+                        console.error('❌ Stripe error:', stripeError);
                         setStripeError(stripeError.message);
                         toast.error(stripeError.message);
                         return;
                     }
+
+                    console.log('💰 Payment Intent status:', paymentIntent.status);
 
                     if (paymentIntent.status === 'succeeded') {
                         // Step 5: Confirm payment on backend
@@ -205,6 +241,11 @@ function CheckoutFormContent() {
                             console.error('Error confirming payment:', confirmError);
                             toast.error('Payment succeeded but order confirmation failed. Please contact support.');
                         }
+                    } else if (paymentIntent.status === 'requires_action') {
+                        // 3D Secure or other authentication required
+                        toast.error('Additional authentication required. Please complete the verification.');
+                    } else {
+                        toast.error(`Payment status: ${paymentIntent.status}. Please try again.`);
                     }
                 } else {
                     // For other payment methods (PayPal, ZipPay, AfterPay)
@@ -772,6 +813,7 @@ function CheckoutFormContent() {
                         {/* Pay Now Button */}
                         <div className="mt-8">
                             <button
+                                type="button"
                                 onClick={formik.handleSubmit}
                                 disabled={placeOrderLoading}
                                 className="w-full h-14 bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
