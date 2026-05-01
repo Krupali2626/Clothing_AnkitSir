@@ -11,6 +11,7 @@ import OrderList from '../admin/pages/Order/OrderList';
 import OrderView from '../admin/pages/Order/OrderView';
 import CustomerList from '../admin/pages/Customer/CustomerList';
 import CustomerView from '../admin/pages/Customer/CustomerView';
+import Settings from '../admin/pages/Settings/Settings';
 import ProtectedRoute from './ProtectedRoute';
 
 const AdminRoutes = () => {
@@ -32,6 +33,7 @@ const AdminRoutes = () => {
                     <Route path="order/view/:id" element={<OrderView />} />
                     <Route path="customers" element={<CustomerList />} />
                     <Route path="customer/view/:id" element={<CustomerView />} />
+                    <Route path="settings" element={<Settings />} />
                 </Route>
             </Route>
         </Routes>
