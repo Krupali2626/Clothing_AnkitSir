@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { fetchMyOrders } from '../../redux/slice/order.slice';
 import { HiChevronRight, HiArrowRight } from 'react-icons/hi2';
-import Pagination from '../../components/Pagination';
+import Pagination from '../../admin/components/Pagination';
 
 // Status colour mapping
 const STATUS_STYLES = {
@@ -33,7 +33,7 @@ function OrderCard({ order }) {
     const productName = firstProduct?.name || firstProduct?.productId?.name || 'Product';
     const productColor = firstProduct?.variantId?.color || null;
     const productSize = firstProduct?.selectedSize || null;
-    const productPrice = firstProduct?.price != null ? `$${firstProduct.price}` : null;
+    const productPrice = firstProduct?.price != null ? `${firstProduct.price}` : null;
 
     const itemCount = order.products?.length ?? 0;
 
@@ -110,22 +110,16 @@ function OrderCard({ order }) {
 
 export default function Orders() {
     const dispatch = useDispatch();
-    const { orders, loading, error } = useSelector((state) => state.order);
-
-    const [currentPage, setCurrentPage] = React.useState(1);
-    const itemsPerPage = 6;
+    const { orders, loading, error, currentPage, totalPages, totalOrders } = useSelector((state) => state.order);
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
-        dispatch(fetchMyOrders());
-    }, [dispatch]);
+        dispatch(fetchMyOrders({ page, limit: itemsPerPage }));
+    }, [dispatch, page]);
 
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -177,18 +171,23 @@ export default function Orders() {
                 {!loading && !error && orders.length > 0 && (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {currentOrders.map((order) => (
+                            {orders.map((order) => (
                                 <OrderCard key={order._id} order={order} />
                             ))}
                         </div>
 
                         {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalItems={orders.length}
-                            itemsPerPage={itemsPerPage}
-                            onPageChange={handlePageChange}
-                        />
+                        {totalPages > 1 && (
+                            <div className="mt-8">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={totalOrders}
+                                    itemsPerPage={itemsPerPage}
+                                    onPageChange={handlePageChange}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
             </div>

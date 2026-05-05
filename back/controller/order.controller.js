@@ -224,13 +224,26 @@ export const placeOrder = async (req, res) => {
 export const getMyOrders = async (req, res) => {
     try {
         const userId = req.user.id || req.user._id;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const count = await Order.countDocuments({ userId, orderStatus: { $ne: "Awaiting Payment" } });
+
         const orders = await Order.find({ userId, orderStatus: { $ne: "Awaiting Payment" } })
             .populate("products.productId", "name images slug")
             .populate("products.variantId", "color images")
             .populate("userId", "firstName lastName email mobileNo")
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        return sendSuccessResponse(res, "Orders fetched successfully", orders);
+        return sendSuccessResponse(res, "Orders fetched successfully", {
+            orders,
+            currentPage: page,
+            totalPages: Math.ceil(count / limit),
+            totalOrders: count
+        });
     } catch (error) {
         return sendErrorResponse(res, 500, error.message);
     }

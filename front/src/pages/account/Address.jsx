@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AccountLayout from './AccountLayout';
 import AddressSidebar from './AddressSidebar';
 import { fetchAddresses, deleteAddress, selectAddress } from '../../redux/slice/address.slice';
 import { FaPlus, FaHome, FaBriefcase, FaMapMarkerAlt } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
-import Pagination from '../../components/Pagination';
+import Pagination from '../../admin/components/Pagination';
 
 // Icon per address type
 const TYPE_ICON = {
@@ -148,21 +148,24 @@ export default function Address() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [editAddress, setEditAddress] = useState(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 4;
+    const itemsPerPage = 5;
 
     useEffect(() => {
         dispatch(fetchAddresses());
     }, [dispatch]);
 
-    // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentAddresses = addresses.slice(indexOfFirstItem, indexOfLastItem);
+    // Client-side pagination
+    const paginatedAddresses = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return addresses.slice(startIndex, endIndex);
+    }, [addresses, currentPage, itemsPerPage]);
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    const totalPages = Math.ceil(addresses.length / itemsPerPage);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -188,6 +191,10 @@ export default function Address() {
     const handleConfirmDelete = () => {
         dispatch(deleteAddress(confirmDeleteId)).then(() => {
             setConfirmDeleteId(null);
+            // Reset to page 1 if current page becomes empty
+            if (paginatedAddresses.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
         });
     };
 
@@ -253,7 +260,7 @@ export default function Address() {
                 {!loading && !error && addresses.length > 0 && (
                     <>
                         <div className="flex flex-col gap-4">
-                            {currentAddresses.map((addr) => (
+                            {paginatedAddresses.map((addr) => (
                                 <AddressCard
                                     key={addr._id}
                                     addr={addr}
@@ -267,12 +274,17 @@ export default function Address() {
                         </div>
 
                         {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalItems={addresses.length}
-                            itemsPerPage={itemsPerPage}
-                            onPageChange={handlePageChange}
-                        />
+                        {totalPages > 1 && (
+                            <div className="mt-8">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={addresses.length}
+                                    itemsPerPage={itemsPerPage}
+                                    onPageChange={handlePageChange}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
             </div>

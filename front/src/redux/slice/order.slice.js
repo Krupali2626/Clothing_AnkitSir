@@ -15,6 +15,10 @@ const initialState = {
     detailError: null,
     cancelError: null,
     confirmPaymentError: null,
+    // Pagination
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
 };
 
 const handleErrors = (error, rejectWithValue) => {
@@ -38,9 +42,9 @@ export const placeOrder = createAsyncThunk(
 // Fetch logged-in user's orders
 export const fetchMyOrders = createAsyncThunk(
     'order/fetchMyOrders',
-    async (_, { rejectWithValue }) => {
+    async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get('/order/my');
+            const response = await axiosInstance.get(`/order/my?page=${page}&limit=${limit}`);
             return response.data;
         } catch (error) {
             return handleErrors(error, rejectWithValue);
@@ -133,7 +137,10 @@ const orderSlice = createSlice({
             })
             .addCase(fetchMyOrders.fulfilled, (state, action) => {
                 state.loading = false;
-                state.orders = action.payload?.result || [];
+                state.orders = action.payload?.result?.orders || [];
+                state.currentPage = action.payload?.result?.currentPage || 1;
+                state.totalPages = action.payload?.result?.totalPages || 1;
+                state.totalOrders = action.payload?.result?.totalOrders || 0;
                 state.error = null;
             })
             .addCase(fetchMyOrders.rejected, (state, action) => {
