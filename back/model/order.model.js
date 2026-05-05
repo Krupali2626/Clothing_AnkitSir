@@ -30,7 +30,7 @@ const orderSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true, default: 0 },
   paymentStatus: {
     type: String,
-    enum: ["Pending", "Paid", "Failed", "Processing", "Refunded"],
+    enum: ["Pending", "Paid", "Failed", "Processing", "Refunded",],
     default: "Pending",
     index: true,
   },
@@ -56,8 +56,11 @@ const orderSchema = new mongoose.Schema({
       "On the way",
       "Delivered",
       "Cancelled",
+      "Returned",
+      "Replacement",
+      "Awaiting Payment"
     ],
-    default: "Pending",
+    default: "Awaiting Payment",
   },
   stripePaymentIntentId: { type: String, default: null },
   clientSecret: { type: String, default: null },

@@ -120,7 +120,6 @@ const orderSlice = createSlice({
                 state.placeOrderLoading = false;
                 state.currentOrder = action.payload?.result || null;
                 state.placeOrderError = null;
-                toast.success(action.payload?.message || 'Order placed successfully!');
             })
             .addCase(placeOrder.rejected, (state, action) => {
                 state.placeOrderLoading = false;

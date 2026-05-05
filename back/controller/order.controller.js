@@ -129,32 +129,9 @@ export const placeOrder = async (req, res) => {
             cart.appliedCoupon.discountAmount = discountAmount;
         }
 
+        // --- Calculate Total Amount ---
         let shippingCost = 25;
-
-        // Create Order
-        let orderStatus = "Pending";
-        let paymentStatus = "Pending";
-
-        const newOrder = new Order({
-            userId,
-            products: orderProducts,
-            billingAmount,
-            discountAmount,
-            shippingCost,
-            // totalAmount will be auto calculated by pre-save hooks
-            paymentStatus,
-            paymentMethod,
-            shippingAddress: activeAddress,
-            orderStatus,
-            appliedCoupon: cart.appliedCoupon || {},
-            timeline: [{
-                status: orderStatus,
-                message: "Order placed successfully.",
-                updatedBy: "system"
-            }]
-        });
-
-        const savedOrder = await newOrder.save({ session });
+        const totalAmount = Math.max(0, billingAmount - discountAmount) + shippingCost;
 
         let clientSecret = null;
         let stripePaymentIntentId = null;
@@ -176,7 +153,7 @@ export const placeOrder = async (req, res) => {
         // --- Stripe Payment Intent Generic Block ---
         if (["Card", "Zip Pay", "After Pay"].includes(paymentMethod)) {
             try {
-                const amountInCents = Math.round(savedOrder.totalAmount * 100);
+                const amountInCents = Math.round(totalAmount * 100);
                 
                 // Create Stripe customer if doesn't exist
                 if (!user.stripeCustomerId) {
@@ -194,9 +171,11 @@ export const placeOrder = async (req, res) => {
                     currency: "aud",
                     customer: user.stripeCustomerId,
                     metadata: {
-                        orderId: savedOrder._id.toString(),
                         userId: userId.toString(),
-                        methodSelected: paymentMethod
+                        methodSelected: paymentMethod,
+                        // Store minimal info to verify later if needed
+                        subtotal: billingAmount.toString(),
+                        discount: discountAmount.toString(),
                     }
                 };
                 
@@ -219,53 +198,16 @@ export const placeOrder = async (req, res) => {
                 
                 clientSecret = paymentIntent.client_secret;
                 stripePaymentIntentId = paymentIntent.id;
-
-                savedOrder.stripePaymentIntentId = stripePaymentIntentId;
-                savedOrder.clientSecret = clientSecret;
-                await savedOrder.save({ session });
             } catch (stripeError) {
                 console.error("Stripe Error:", stripeError);
                 await session.abortTransaction();
                 return sendErrorResponse(res, 500, `Stripe payment creation failed for ${paymentMethod}.`, stripeError.message);
             }
         }
-
-        // Create Payment Record
-        const paymentRecord = new Payment({
-            userId,
-            orderId: savedOrder._id,
-            amount: savedOrder.totalAmount,
-            paymentMethod,
-            paymentStatus,
-            clientSecret,
-            stripePaymentIntentId,
-        });
-
-        await paymentRecord.save({ session });
-
-        // Note: Stock will be decremented after payment confirmation
-        // This prevents stock issues if payment fails
-        
-        // Empty Cart
-        await Cart.deleteOne({ userId }, { session });
-
         await session.commitTransaction();
-
-        // Send notification (non-blocking)
-        createNotification({
-            userId,
-            title: "Order Placed!",
-            message: `Your order #${savedOrder.orderId} has been placed successfully.`,
-            type: "Order",
-            metadata: { orderId: savedOrder._id }
-        });
-
-        return sendSuccessResponse(res, "Order placed successfully.", {
-            orderId: savedOrder.orderId,
-            _id: savedOrder._id,
-            totalAmount: savedOrder.totalAmount,
-            orderStatus: savedOrder.orderStatus,
-            paymentStatus: savedOrder.paymentStatus,
+ 
+        return sendSuccessResponse(res, "Payment intent initialized.", {
+            totalAmount,
             clientSecret,
             stripePaymentIntentId,
             message: `Use client_secret to confirm ${paymentMethod} payment on frontend`
@@ -282,7 +224,7 @@ export const placeOrder = async (req, res) => {
 export const getMyOrders = async (req, res) => {
     try {
         const userId = req.user.id || req.user._id;
-        const orders = await Order.find({ userId })
+        const orders = await Order.find({ userId, orderStatus: { $ne: "Awaiting Payment" } })
             .populate("products.productId", "name images slug")
             .populate("products.variantId", "color images")
             .populate("userId", "firstName lastName email mobileNo")
@@ -295,44 +237,171 @@ export const getMyOrders = async (req, res) => {
 };
 
 export const confirmStripePayment = async (req, res) => {
-    // Boilerplate for confirming payment after front-end handles clientSecret
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const { paymentIntentId, orderId } = req.body;
-        if (!paymentIntentId || !orderId) return sendBadRequestResponse(res, "Payment Intent ID and Order ID are required.");
+        const { paymentIntentId } = req.body;
+        if (!paymentIntentId) return sendBadRequestResponse(res, "Payment Intent ID is required.");
 
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
         if (paymentIntent.status !== "succeeded") {
+            await session.abortTransaction();
             return sendErrorResponse(res, 400, `Payment not completed. Status: ${paymentIntent.status}`);
         }
 
-        const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
-        if (payment) {
-            payment.paymentStatus = "Paid";
-            payment.paymentDate = new Date();
-            await payment.save();
+        const userId = req.user.id || req.user._id;
+
+        // --- Now Create the Order because payment is successful ---
+        
+        // 1. Get current cart to build the order
+        const cart = await Cart.findOne({ userId })
+            .populate("items.productId")
+            .populate("items.productVariantId")
+            .session(session);
+
+        if (!cart || cart.items.length === 0) {
+            // This is a rare edge case where cart was cleared between steps
+            await session.abortTransaction();
+            return sendErrorResponse(res, 400, "Cart is empty. Order cannot be reconstructed.");
         }
 
-        const order = await Order.findById(orderId);
-        if (order) {
-            order.orderStatus = "Pending"; // Keep as Pending after payment
-            order.paymentStatus = "Paid";
-            order.timeline.push({
-                status: "Pending",
-                message: "Payment successful.",
-                updatedBy: "system"
+        const user = await User.findById(userId).session(session);
+        const activeAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
+
+        let billingAmount = 0;
+        const orderProducts = [];
+
+        for (const item of cart.items) {
+            const product = item.productId;
+            const variant = item.productVariantId;
+            if (!product || !variant) continue;
+
+            let unitPrice = variant.price;
+            let optionSku = variant.sku;
+
+            if (variant.options && variant.options.length > 0 && item.selectedSize) {
+                const sizeObj = variant.options.find(o => o.size === item.selectedSize);
+                if (sizeObj) {
+                    unitPrice = sizeObj.price;
+                    optionSku = sizeObj.sku || optionSku;
+                }
+            }
+
+            const subtotal = unitPrice * item.quantity;
+            billingAmount += subtotal;
+
+            orderProducts.push({
+                productId: product._id,
+                variantId: variant._id,
+                sku: optionSku,
+                name: product.name,
+                quantity: item.quantity,
+                price: unitPrice,
+                subtotal,
+                selectedSize: item.selectedSize
             });
-            await order.save();
-            
-            // Send Confirmation Email
-            const user = await User.findById(order.userId);
-            if (user && user.email) {
-                sendOrderConfirmationEmail(user, order);
+        }
+
+        let discountAmount = 0;
+        if (cart.appliedCoupon && cart.appliedCoupon.code) {
+            const { discountType, percentageValue, flatValue } = cart.appliedCoupon;
+            if (discountType === "percentage") discountAmount = (billingAmount * percentageValue) / 100;
+            else if (discountType === "flat") discountAmount = flatValue;
+            if (discountAmount > billingAmount) discountAmount = billingAmount;
+        }
+
+        const shippingCost = 25;
+
+        // Create the final Order record
+        const newOrder = new Order({
+            userId,
+            products: orderProducts,
+            billingAmount,
+            discountAmount,
+            shippingCost,
+            paymentStatus: "Paid",
+            paymentMethod: paymentIntent.metadata.methodSelected || "Card",
+            shippingAddress: activeAddress,
+            orderStatus: "Pending",
+            appliedCoupon: cart.appliedCoupon || {},
+            stripePaymentIntentId: paymentIntentId,
+            timeline: [{
+                status: "Pending",
+                message: "Order placed and payment confirmed.",
+                updatedBy: "system"
+            }]
+        });
+
+        const savedOrder = await newOrder.save({ session });
+
+        // Create Payment record
+        const paymentRecord = new Payment({
+            userId,
+            orderId: savedOrder._id,
+            amount: savedOrder.totalAmount,
+            paymentMethod: savedOrder.paymentMethod,
+            paymentStatus: "Paid",
+            paymentDate: new Date(),
+            stripePaymentIntentId: paymentIntentId,
+        });
+        await paymentRecord.save({ session });
+
+        // 2. Reduce Stock and Increment Sold Count
+        for (const item of orderProducts) {
+            const variant = await ProductVariant.findById(item.variantId).session(session);
+            if (variant) {
+                if (variant.options && variant.options.length > 0 && item.selectedSize) {
+                    const sizeObj = variant.options.find(o => o.size === item.selectedSize);
+                    if (sizeObj) sizeObj.stock -= item.quantity;
+                } else {
+                    variant.stock -= item.quantity;
+                }
+                await variant.save({ session });
+            }
+
+            if (item.productId) {
+                await productModel.findByIdAndUpdate(
+                    item.productId,
+                    { $inc: { sold: item.quantity } },
+                    { session }
+                );
             }
         }
 
-        return sendSuccessResponse(res, "Payment confirmed successfully", { orderId: order._id, paymentStatus: "Paid" });
+        // 3. Finally empty the cart
+        await Cart.deleteOne({ userId }).session(session);
+
+        await session.commitTransaction();
+
+        // --- Non-blocking actions after commit ---
+        
+        // Send Confirmation Email
+        if (user && user.email) {
+            sendOrderConfirmationEmail(user, savedOrder);
+        }
+
+        // Send Notification
+        createNotification({
+            userId,
+            title: "Order Placed!",
+            message: `Your order #${savedOrder.orderId} has been placed successfully.`,
+            type: "Order",
+            metadata: { orderId: savedOrder._id }
+        });
+
+        return sendSuccessResponse(res, "Order created and payment confirmed successfully", { 
+            orderId: savedOrder.orderId,
+            _id: savedOrder._id,
+            paymentStatus: "Paid" 
+        });
+
     } catch (err) {
+        await session.abortTransaction();
+        console.error("Confirm Payment Error:", err);
         return sendErrorResponse(res, 500, err.message);
+    } finally {
+        session.endSession();
     }
 };
 

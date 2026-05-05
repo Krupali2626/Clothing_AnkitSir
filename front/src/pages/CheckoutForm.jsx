@@ -119,6 +119,7 @@ function CheckoutFormContent() {
     const isEmpty = !cartLoading && cartItems.length === 0;
 
 
+    const [isProcessing, setIsProcessing] = useState(false);
     const [showSignIn, setShowSignIn] = useState(false);
     const [selectedSavedCard, setSelectedSavedCard] = useState(null);
     const [showAddNewCard, setShowAddNewCard] = useState(false);
@@ -151,7 +152,10 @@ function CheckoutFormContent() {
         },
         validationSchema: checkoutSchema,
         onSubmit: async (values) => {
+            if (isProcessing) return; // Prevent double submission
+            
             setStripeError(null);
+            setIsProcessing(true);
 
             // Validate Stripe is loaded
             if (values.paymentMethod === 'Card' && (!stripe || !elements)) {
@@ -194,6 +198,7 @@ function CheckoutFormContent() {
                     } catch (addressError) {
                         console.error('Error saving address:', addressError);
                         toast.error(addressError?.message || 'Failed to save shipping address');
+                        setIsProcessing(false);
                         return;
                     }
                 }
@@ -206,10 +211,12 @@ function CheckoutFormContent() {
                     } catch (selectError) {
                         console.error('Error selecting address:', selectError);
                         toast.error('Failed to select shipping address');
+                        setIsProcessing(false);
                         return;
                     }
                 } else {
                     toast.error('No address available. Please add a shipping address.');
+                    setIsProcessing(false);
                     return;
                 }
 
@@ -226,7 +233,7 @@ function CheckoutFormContent() {
 
                 const result = await dispatch(placeOrder(orderPayload)).unwrap();
                 
-                const { clientSecret, stripePaymentIntentId, _id: orderId } = result?.result || {};
+                const { clientSecret, stripePaymentIntentId } = result?.result || {};
 
                 // Step 4: Confirm payment with Stripe (for Card payment)
                 if (values.paymentMethod === 'Card' && clientSecret) {
@@ -248,6 +255,7 @@ function CheckoutFormContent() {
                         } catch (error) {
                             console.error('❌ Error confirming saved card payment:', error);
                             toast.error('Failed to process payment with saved card. Please try a different card.');
+                            setIsProcessing(false);
                             return;
                         }
                         
@@ -258,6 +266,7 @@ function CheckoutFormContent() {
                         
                         if (!cardElement) {
                             toast.error('Card information is required');
+                            setIsProcessing(false);
                             return;
                         }
 
@@ -274,6 +283,7 @@ function CheckoutFormContent() {
                         } catch (error) {
                             console.error('❌ Error confirming new card payment:', error);
                             toast.error('Failed to process payment. Please check your card details.');
+                            setIsProcessing(false);
                             return;
                         }
                     }
@@ -284,17 +294,17 @@ function CheckoutFormContent() {
                         console.error('❌ Stripe error:', stripeError);
                         setStripeError(stripeError.message);
                         toast.error(stripeError.message);
+                        setIsProcessing(false);
                         return;
                     }
 
                     console.log('💰 Payment Intent status:', paymentIntent.status);
 
                     if (paymentIntent.status === 'succeeded') {
-                        // Step 5: Confirm payment on backend
+                        // Step 5: Confirm payment on backend - THIS IS WHERE THE ORDER IS CREATED
                         try {
-                            await dispatch(confirmPayment({
+                            const confirmResponse = await dispatch(confirmPayment({
                                 paymentIntentId: stripePaymentIntentId,
-                                orderId: orderId,
                                 saveCard: values.saveCard && showAddNewCard, // Only save if it's a new card
                             })).unwrap();
 
@@ -305,26 +315,34 @@ function CheckoutFormContent() {
                                 dispatch(fetchSavedCards());
                             }
                             
-                            navigate(orderId ? `/orders/${orderId}` : '/checkout');
+                            const finalOrderId = confirmResponse?.result?._id;
+                            navigate(finalOrderId ? `/orders/${finalOrderId}` : '/checkout');
                         } catch (confirmError) {
                             console.error('Error confirming payment:', confirmError);
                             toast.error('Payment succeeded but order confirmation failed. Please contact support.');
+                            setIsProcessing(false);
                         }
                     } else if (paymentIntent.status === 'requires_action') {
                         // 3D Secure or other authentication required
                         toast.error('Additional authentication required. Please complete the verification.');
+                        setIsProcessing(false);
                     } else {
                         toast.error(`Payment status: ${paymentIntent.status}. Please try again.`);
+                        setIsProcessing(false);
                     }
                 } else {
                     // For other payment methods (PayPal, ZipPay, AfterPay)
+                    // They might still need to be handled similarly if they are async
                     toast.success('Order placed successfully!');
-                    navigate(orderId ? `/orders/${orderId}` : '/checkout');
+                    // For now, these might still return an orderId from placeOrder 
+                    // or we might need to update them too.
+                    navigate('/orders'); 
                 }
                 
             } catch (error) {
                 console.error('Order placement error:', error);
                 toast.error(error?.message || 'Failed to place order');
+                setIsProcessing(false);
             }
         },
     });
@@ -921,10 +939,10 @@ function CheckoutFormContent() {
                             <button
                                 type="button"
                                 onClick={formik.handleSubmit}
-                                disabled={placeOrderLoading}
+                                disabled={isProcessing}
                                 className="w-full h-14 bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {placeOrderLoading ? 'Processing...' : 'PAY NOW'}
+                                {isProcessing ? 'Processing...' : 'PAY NOW'}
                             </button>
                         </div>
                     </div>
