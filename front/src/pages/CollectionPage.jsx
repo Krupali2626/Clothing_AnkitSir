@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import { fetchProductsByCategory, fetchFilterOptions, fetchRecentlyViewed, fetchWishlist } from '../redux/slice/product.slice';
 import { fetchMainCategories, fetchCategories, fetchSubCategories } from '../redux/slice/category.slice';
 import Layout from '../components/Layout';
@@ -19,7 +20,7 @@ const SkeletonCard = () => (
 );
 
 // ── Product Card ──────────────────────────────────────────────────
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, index = 0 }) => {
     const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
     const image1 = defaultVariant?.images?.[0] || null;
     const image2 = defaultVariant?.images?.[1] || image1; // fallback to image1 if no second image
@@ -38,10 +39,16 @@ const ProductCard = ({ product }) => {
     const price = getPrice();
 
     return (
-        <Link
-            to={`/product/${product.slug}`}
-            className="group flex flex-col bg-white hover:bg-mainBG transition-all duration-700 hover:border-border"
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: (index % 12) * 0.05, ease: [0.215, 0.61, 0.355, 1] }}
+            className="h-full"
         >
+            <Link
+                to={`/product/${product.slug}`}
+                className="group flex flex-col bg-white hover:bg-mainBG transition-all duration-700 hover:border-border h-full"
+            >
             <div className="relative overflow-hidden bg-white h-[450px]">
                 {/* Image 1 (Initial) */}
                 <div className={`w-full h-full transition-all  group-hover:bg-mainBG duration-1000 ${image2 && image1 !== image2 ? 'group-hover:opacity-0' : ''}`}>
@@ -86,56 +93,12 @@ const ProductCard = ({ product }) => {
                     <p className="font-medium text-[14px] leading-[20px] text-[#495057] text-center opacity-90">{price}</p>
                 )}
             </div>
-        </Link>
+            </Link>
+        </motion.div>
     );
 };
 
-// ── Pagination ────────────────────────────────────────────────────
-const Pagination = ({ pagination, onPageChange }) => {
-    if (!pagination || pagination.totalPages <= 1) return null;
-    const { page, totalPages } = pagination;
-
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-        if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) pages.push(i);
-        else if (pages[pages.length - 1] !== '...') pages.push('...');
-    }
-
-    return (
-        <div className="flex items-center justify-center gap-1 py-10 border-t border-border">
-            <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page === 1}
-                className="w-10 h-10 flex items-center justify-center border border-border text-[#343A40] hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-            {pages.map((p, i) =>
-                p === '...' ? (
-                    <span key={`e-${i}`} className="w-10 h-10 flex items-center justify-center text-lightText text-sm">…</span>
-                ) : (
-                    <button
-                        key={p}
-                        onClick={() => onPageChange(p)}
-                        className={`w-10 h-10 flex items-center justify-center border text-sm font-bold transition-colors ${p === page
-                            ? 'bg-primary text-white border-primary'
-                            : 'border-border text-[#343A40] hover:bg-primary hover:text-white hover:border-primary'
-                            }`}
-                    >
-                        {p}
-                    </button>
-                )
-            )}
-            <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page === totalPages}
-                className="w-10 h-10 flex items-center justify-center border border-border text-[#343A40] hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
-        </div>
-    );
-};
+// Pagination component removed as requested.
 
 // ── Filter Section Component ──────────────────────────────────────
 const FilterSection = ({ title, children, defaultOpen = false }) => {
@@ -328,7 +291,7 @@ export default function CollectionPage() {
         materials: [],
         categories: [],
     });
-    const LIMIT = 12;
+    const LIMIT = 20;
 
     const currentMainCat = mainCategories.find(m => m.slug === mainCategorySlug);
     const currentCat = categories.find(c => c.slug === categorySlug);
@@ -391,10 +354,7 @@ export default function CollectionPage() {
 
     useEffect(() => { setPage(1); }, [sort, activeFilters]);
 
-    const handlePageChange = (p) => {
-        setPage(p);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+
 
     const handleFilterChange = (type, value) => {
         setActiveFilters(prev => {
@@ -435,7 +395,12 @@ export default function CollectionPage() {
                         <span className="font-semibold text-[18px] leading-[22px] text-primary whitespace-nowrap flex-shrink-0">
                             {pageTitle}
                         </span>
-                        <div className="flex-1 flex items-center justify-center gap-8 overflow-x-auto scrollbar-hide">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className="flex-1 flex items-center justify-center gap-8 overflow-x-auto scrollbar-hide"
+                        >
                             <Link
                                 to={`/collection/${mainCategorySlug}`}
                                 className={`text-[14px] font-medium leading-[22px] whitespace-nowrap transition-colors flex-shrink-0 ${!categorySlug ? 'text-primary font-semibold' : 'text-lightText hover:text-[#343A40]'}`}
@@ -451,7 +416,7 @@ export default function CollectionPage() {
                                     {cat.categoryName}
                                 </Link>
                             ))}
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
 
@@ -509,7 +474,7 @@ export default function CollectionPage() {
                 </div>
 
                 {/* ── Product Grid ── */}
-                {loading ? (
+                {loading && page === 1 ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4">
                         {Array.from({ length: LIMIT }).map((_, i) => (
                             <div key={i} className={`border-border border-b border-r last:border-r-0 ${i % 2 === 1 ? 'lg:border-r' : ''} ${i % 4 === 3 ? 'lg:border-r-0' : ''}`}>
@@ -538,16 +503,28 @@ export default function CollectionPage() {
                         <CollectionGrid products={collectionProducts} />
 
                         {/* Progress and Load More Section */}
-                        <div className="flex flex-col items-center justify-center py-20 gap-6 border-t border-border bg-white">
-                            <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-lightText">
-                                {collectionProducts.length} / {pagination?.total || 100} products
-                            </span>
-                            <button className="px-10 py-4 bg-gray-100 hover:bg-gray-200 text-dark text-[12px] font-bold uppercase tracking-[0.2em] transition-all duration-300">
-                                SHOW {Math.min(24, (pagination?.total || 100) - collectionProducts.length)} MORE
-                            </button>
-                        </div>
-
-                        <Pagination pagination={pagination} onPageChange={handlePageChange} />
+                        {pagination && pagination.page < pagination.totalPages && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 1, delay: 0.5 }}
+                                className="flex flex-col items-center justify-center py-20 gap-6 border-t border-border bg-white"
+                            >
+                                <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-lightText">
+                                    {collectionProducts.length} / {pagination?.total} products
+                                </span>
+                                <button
+                                    onClick={() => setPage(prev => prev + 1)}
+                                    disabled={loading}
+                                    className="px-10 py-4 bg-gray-100 hover:bg-gray-200 text-dark text-[12px] font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 relative overflow-hidden group"
+                                >
+                                    <span className="relative z-10">{loading ? 'LOADING...' : `SHOW 20 MORE`}</span>
+                                    <motion.div 
+                                        className="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"
+                                    />
+                                </button>
+                            </motion.div>
+                        )}
                     </>
                 )}
 
@@ -586,7 +563,8 @@ function CollectionGrid({ products }) {
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full overflow-hidden bg-white">
+            <AnimatePresence mode="popLayout">
             {rows.map((row, idx) => {
                 if (row.isFeatureRow && row.products.length >= 3) {
                     const [large, ...smalls] = row.products;
@@ -624,14 +602,14 @@ function CollectionGrid({ products }) {
                                 </Link>
                             </div>
                             {/* Right side: 2×2 grid (full width on mobile, half on desktop) */}
-                            <div className="w-full md:w-1/2 grid grid-cols-2">
+                            <div className="w-full md:w-1/2 grid grid-cols-2 bg-white">
                                 {smalls.slice(0, 4).map((product, si) => (
                                     <div key={product._id} className={`border-[#E9ECEF] ${si % 2 === 0 ? 'border-r' : ''} ${si < 2 ? 'border-b' : ''}`}>
-                                        <ProductCard product={product} />
+                                        <ProductCard product={product} index={si} />
                                     </div>
                                 ))}
                                 {smalls.length < 4 && Array.from({ length: 4 - smalls.length }).map((_, ei) => (
-                                    <div key={`fe-${ei}`} className="bg-[#1B1B1B] h-[450px]" />
+                                    <div key={`fe-${ei}`} className="    h-[450px]" />
                                 ))}
                             </div>
                         </div>
@@ -639,12 +617,12 @@ function CollectionGrid({ products }) {
                 }
 
                 return (
-                    <div key={idx} className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
-                        {row.products.map((product, pi) => (
-                            <div key={product._id} className={`border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
-                                <ProductCard product={product} />
-                            </div>
-                        ))}
+                    <div key={idx} className="grid grid-cols-2 md:grid-cols-4 border-b border-border bg-white">
+                                {row.products.map((product, pi) => (
+                                    <div key={product._id} className={`border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
+                                        <ProductCard product={product} index={pi} />
+                                    </div>
+                                ))}
                         {row.products.length < 4 && Array.from({ length: 4 - row.products.length }).map((_, ei) => {
                             const pi = row.products.length + ei;
                             return (
@@ -654,6 +632,7 @@ function CollectionGrid({ products }) {
                     </div>
                 );
             })}
+            </AnimatePresence>
         </div>
     );
 }
@@ -679,7 +658,7 @@ function NewFormsSection({ products }) {
             <div className="w-full grid grid-cols-2 md:grid-cols-4 border-t border-border">
                 {featured.map((product, pi) => (
                     <div key={product._id} className={`border-border border-b border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
-                        <ProductCard product={product} />
+                        <ProductCard product={product} index={pi} />
                     </div>
                 ))}
                 {featured.length < 4 && Array.from({ length: 4 - featured.length }).map((_, ei) => {

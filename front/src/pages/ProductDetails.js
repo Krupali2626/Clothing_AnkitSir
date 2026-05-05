@@ -653,8 +653,8 @@ const ProductDetails = () => {
                                     <div
                                         key={product._id || product.id || Math.random()}
                                         onClick={() => {
-                                            if (product._id) {
-                                                navigate(`/product/${product._id}`);
+                                            if (product.slug) {
+                                                navigate(`/product/${product.slug}`);
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }
                                         }}

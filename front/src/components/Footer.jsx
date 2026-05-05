@@ -4,9 +4,9 @@ import instaImg from '../assets/images/insta.webp';
 import fbImg from '../assets/images/fb.webp';
 
 const shopLinks = [
-    { label: 'Seasonal Edit', to: '/collection/shop/seasonal-edit' },
-    { label: 'New Arrivals', to: '/collection/shop/new-arrivals' },
-    { label: 'All Collections', to: '/collection/all-collections' },
+    { label: 'Seasonal Edit', to: '/collection/seasonal-edit' },
+    { label: 'New Arrivals', to: '/collection/new-arrivals' },
+    { label: 'All Collections', to: '/collection/all-collection' },
     { label: 'Men', to: '/collection/men' },
     { label: 'Women', to: '/collection/women' },
     { label: 'Lux Care', to: '/collection/lux-care' },

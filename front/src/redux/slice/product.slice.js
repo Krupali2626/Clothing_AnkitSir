@@ -255,8 +255,17 @@ export const productSlice = createSlice({
             })
             .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
                 state.loading = false;
-                state.collectionProducts = action.payload?.result?.products || action.payload?.data?.products || [];
-                state.pagination = action.payload?.result?.pagination || action.payload?.data?.pagination || null;
+                const newProducts = action.payload?.result?.products || action.payload?.data?.products || [];
+                const pagination = action.payload?.result?.pagination || action.payload?.data?.pagination || null;
+                
+                if (pagination && pagination.page > 1) {
+                    // Append products for "Show More"
+                    state.collectionProducts = [...state.collectionProducts, ...newProducts];
+                } else {
+                    // Replace products for initial load or filter/sort changes
+                    state.collectionProducts = newProducts;
+                }
+                state.pagination = pagination;
             })
             .addCase(fetchProductsByCategory.rejected, (state, action) => {
                 state.loading = false;

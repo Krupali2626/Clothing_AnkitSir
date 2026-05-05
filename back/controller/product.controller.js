@@ -467,9 +467,31 @@ export const getFilterOptions = async (req, res) => {
 
     const filter = { isActive: true };
 
-    if (mainCategorySlug) {
+    const bypassSlugs = ['shop', 'all', 'all-collection', 'new-arrivals', 'seasonal-edit'];
+
+    if (mainCategorySlug && !bypassSlugs.includes(mainCategorySlug.toLowerCase())) {
       const mainCat = await MainCategoryModel.findOne({ slug: mainCategorySlug });
       if (mainCat) filter.mainCategory = mainCat._id;
+    }
+
+    if (mainCategorySlug === 'new-arrivals') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      filter.$or = [{ badge: "NEW" }, { createdAt: { $gte: thirtyDaysAgo } }];
+    } else if (mainCategorySlug === 'seasonal-edit') {
+      const month = new Date().getMonth();
+      let keywords = ["seasonal"];
+      if (month >= 2 && month <= 4) keywords.push("spring", "floral", "pastel");
+      else if (month >= 5 && month <= 7) keywords.push("summer", "beach", "linen");
+      else if (month >= 8 && month <= 10) keywords.push("autumn", "fall", "knitwear");
+      else keywords.push("winter", "coat", "wool", "holiday");
+
+      const regex = new RegExp(keywords.join("|"), "i");
+      filter.$or = [
+        { name: regex },
+        { tags: regex },
+        { "productDetails.description": regex }
+      ];
     }
     if (categorySlug) {
       const cat = await CategoryModel.findOne({ slug: categorySlug });
@@ -482,7 +504,7 @@ export const getFilterOptions = async (req, res) => {
 
     // 1. Fetch labels from DB MODELS (Full list)
     let categoryMap = {}; 
-    if (mainCategorySlug) {
+    if (mainCategorySlug && !bypassSlugs.includes(mainCategorySlug.toLowerCase())) {
       const mc = await MainCategoryModel.findOne({ slug: mainCategorySlug });
       if (mc) {
         const dbCats = await CategoryModel.find({ mainCategoryId: mc._id });
@@ -494,6 +516,16 @@ export const getFilterOptions = async (req, res) => {
           dbSubs.forEach(s => { if (s.subCategoryName) categoryMap[s.subCategoryName] = 0; });
           dbInsides.forEach(i => { if (i.insideSubCategoryName) categoryMap[i.insideSubCategoryName] = 0; });
         }
+      }
+    } else if (!mainCategorySlug || ['shop', 'all', 'all-collection', 'new-arrivals', 'seasonal-edit'].includes(mainCategorySlug)) {
+      const dbCats = await CategoryModel.find({});
+      for (const c of dbCats) {
+        const [dbSubs, dbInsides] = await Promise.all([
+          SubCategoryModel.find({ categoryId: c._id }),
+          InsideSubCategoryModel.find({ categoryId: c._id })
+        ]);
+        dbSubs.forEach(s => { if (s.subCategoryName) categoryMap[s.subCategoryName] = 0; });
+        dbInsides.forEach(i => { if (i.insideSubCategoryName) categoryMap[i.insideSubCategoryName] = 0; });
       }
     }
 
@@ -587,10 +619,32 @@ export const getProductsByCategory = async (req, res) => {
 
     const filter = { isActive: true };
 
-    if (mainCategorySlug) {
+    const bypassSlugs = ['shop', 'all', 'all-collection', 'new-arrivals', 'seasonal-edit'];
+
+    if (mainCategorySlug && !bypassSlugs.includes(mainCategorySlug.toLowerCase())) {
       const mainCat = await MainCategoryModel.findOne({ slug: mainCategorySlug });
       if (!mainCat) return sendNotFoundResponse(res, "Main category not found!");
       filter.mainCategory = mainCat._id;
+    }
+
+    if (mainCategorySlug === 'new-arrivals') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      filter.$or = [{ badge: "NEW" }, { createdAt: { $gte: thirtyDaysAgo } }];
+    } else if (mainCategorySlug === 'seasonal-edit') {
+      const month = new Date().getMonth();
+      let keywords = ["seasonal"];
+      if (month >= 2 && month <= 4) keywords.push("spring", "floral", "pastel");
+      else if (month >= 5 && month <= 7) keywords.push("summer", "beach", "linen");
+      else if (month >= 8 && month <= 10) keywords.push("autumn", "fall", "knitwear");
+      else keywords.push("winter", "coat", "wool", "holiday");
+
+      const regex = new RegExp(keywords.join("|"), "i");
+      filter.$or = [
+        { name: regex },
+        { tags: regex },
+        { "productDetails.description": regex }
+      ];
     }
 
     if (categorySlug) {
@@ -629,12 +683,19 @@ export const getProductsByCategory = async (req, res) => {
         ];
 
         if (matchingIds.length) {
-          // Match any level of the hierarchy
-          filter.$or = [
+          const sidebarOr = [
             { category: { $in: matchingIds } },
             { subCategory: { $in: matchingIds } },
             { insideSubCategory: { $in: matchingIds } }
           ];
+
+          if (filter.$or) {
+            const existingOr = filter.$or;
+            delete filter.$or;
+            filter.$and = [{ $or: existingOr }, { $or: sidebarOr }];
+          } else {
+            filter.$or = sidebarOr;
+          }
         }
       }
     }
