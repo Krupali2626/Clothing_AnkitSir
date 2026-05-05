@@ -9,6 +9,7 @@ import { RiVisaLine, RiMastercardLine } from 'react-icons/ri'
 import { SiAmericanexpress } from 'react-icons/si'
 import { Elements } from '@stripe/react-stripe-js'
 import { stripePromise } from '../../utils/stripe'
+import Pagination from '../../components/Pagination'
 
 export default function PaymentsCard() {
     const dispatch = useDispatch();
@@ -18,9 +19,22 @@ export default function PaymentsCard() {
     const [removeModalOpen, setRemoveModalOpen] = useState(false);
     const [cardToRemove, setCardToRemove] = useState(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 4;
+
     useEffect(() => {
         dispatch(fetchSavedCards());
     }, [dispatch]);
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentCards = cards.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleOpenAdd = () => {
         setSidebarOpen(true);
@@ -117,7 +131,7 @@ export default function PaymentsCard() {
                 {!loading && !error && cards.length > 0 && (
                     <div className="md:space-y-6 space-y-4">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                            {cards.map((card) => {
+                            {currentCards.map((card) => {
                                 // const isDefault = card._id === selectedCardId;
                                 return (
                                     <div
@@ -170,6 +184,14 @@ export default function PaymentsCard() {
                                 );
                             })}
                         </div>
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={cards.length}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={handlePageChange}
+                        />
 
                         {/* Security Footer Note */}
                         <div className="flex items-center gap-2">

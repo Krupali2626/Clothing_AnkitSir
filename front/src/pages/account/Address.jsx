@@ -5,6 +5,7 @@ import AddressSidebar from './AddressSidebar';
 import { fetchAddresses, deleteAddress, selectAddress } from '../../redux/slice/address.slice';
 import { FaPlus, FaHome, FaBriefcase, FaMapMarkerAlt } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
+import Pagination from '../../components/Pagination';
 
 // Icon per address type
 const TYPE_ICON = {
@@ -148,9 +149,22 @@ export default function Address() {
     const [editAddress, setEditAddress] = useState(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 4;
+
     useEffect(() => {
         dispatch(fetchAddresses());
     }, [dispatch]);
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentAddresses = addresses.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleOpenAdd = () => {
         setEditAddress(null);
@@ -237,19 +251,29 @@ export default function Address() {
 
                 {/* Address list */}
                 {!loading && !error && addresses.length > 0 && (
-                    <div className="flex flex-col gap-4">
-                        {addresses.map((addr) => (
-                            <AddressCard
-                                key={addr._id}
-                                addr={addr}
-                                isDefault={addr._id?.toString() === selectedAddressId?.toString()}
-                                onEdit={() => handleOpenEdit(addr)}
-                                onDelete={() => handleDelete(addr._id)}
-                                onSetDefault={() => handleSetDefault(addr._id)}
-                                actionLoading={actionLoading}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="flex flex-col gap-4">
+                            {currentAddresses.map((addr) => (
+                                <AddressCard
+                                    key={addr._id}
+                                    addr={addr}
+                                    isDefault={addr._id?.toString() === selectedAddressId?.toString()}
+                                    onEdit={() => handleOpenEdit(addr)}
+                                    onDelete={() => handleDelete(addr._id)}
+                                    onSetDefault={() => handleSetDefault(addr._id)}
+                                    actionLoading={actionLoading}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={addresses.length}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </div>
 

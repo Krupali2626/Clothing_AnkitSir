@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { fetchMyOrders } from '../../redux/slice/order.slice';
 import { HiChevronRight, HiArrowRight } from 'react-icons/hi2';
+import Pagination from '../../components/Pagination';
 
 // Status colour mapping
 const STATUS_STYLES = {
@@ -111,9 +112,22 @@ export default function Orders() {
     const dispatch = useDispatch();
     const { orders, loading, error } = useSelector((state) => state.order);
 
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const itemsPerPage = 6;
+
     useEffect(() => {
         dispatch(fetchMyOrders());
     }, [dispatch]);
+
+    // Pagination logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         <AccountLayout>
@@ -161,11 +175,21 @@ export default function Orders() {
 
                 {/* Orders grid */}
                 {!loading && !error && orders.length > 0 && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {orders.map((order) => (
-                            <OrderCard key={order._id} order={order} />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {currentOrders.map((order) => (
+                                <OrderCard key={order._id} order={order} />
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={orders.length}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </div>
         </AccountLayout>
