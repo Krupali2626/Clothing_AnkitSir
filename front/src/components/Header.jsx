@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
-import { CgProfile } from "react-icons/cg";
-import { HiOutlineShoppingBag } from "react-icons/hi";
-import { LuSearch } from "react-icons/lu";
-import { FaRegHeart } from "react-icons/fa";
+import { HiOutlineShoppingBag, HiOutlineMagnifyingGlass, HiOutlineHeart, HiOutlineBell, HiArrowUpRight, HiOutlineUser } from "react-icons/hi2";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMainCategories, fetchCategories, fetchSubCategories } from '../redux/slice/category.slice';
@@ -10,7 +7,6 @@ import { logoutUser } from '../redux/slice/auth.slice';
 import { logSearch, fetchPopularSearches, fetchRecentSearches, fetchTrendingProducts, searchProducts, clearSearchResults } from '../redux/slice/search.slice';
 import { fetchWishlist } from '../redux/slice/product.slice';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { HiArrowUpRight, HiOutlineBell } from 'react-icons/hi2';
 import { ReactComponent as EoLogo } from '../assets/images/eo.svg';
 import { fetchNotifications, markAsRead, markAllAsRead, deleteNotification } from '../redux/slice/notification.slice';
 import { formatDistanceToNow } from 'date-fns';
@@ -481,7 +477,7 @@ export default function Header() {
                                         : 'hover:bg-mainBG text-dark'
                                         }`}
                                 >
-                                    <LuSearch className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                    <HiOutlineMagnifyingGlass className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
                                 </button>
                                 {/* Wishlist — desktop only */}
                                 <button
@@ -491,7 +487,7 @@ export default function Header() {
                                         : 'hover:bg-mainBG text-dark'
                                         }`}
                                 >
-                                    <FaRegHeart className='text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                    <HiOutlineHeart className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
                                     {wishlist && wishlist.length > 0 && (
                                         <span className="absolute -top-0.5 -right-0.5 flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#14372F] text-[8px] font-bold text-white ring-1 ring-white">
                                             {wishlist.length}
@@ -547,7 +543,7 @@ export default function Header() {
                                         ? (isScrolled || hoveredCategory || isMenuOpen ? 'hover:bg-mainBG text-dark' : 'hover:bg-white/5 text-white')
                                         : 'hover:bg-mainBG text-dark'
                                         }`}>
-                                        <CgProfile className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
+                                        <HiOutlineUser className='text-[1.2rem] lg:text-[clamp(1.1rem,2.5vw,1.4rem)]' />
                                     </Link>
                                 )}
                             </div>
@@ -879,7 +875,7 @@ export default function Header() {
                             <div className="flex-1 flex flex-col px-6 md:px-10 pb-10 pt-2 overflow-y-auto">
                                 {/* Search Input */}
                                 <div className="flex items-center gap-3 border border-border px-4 py-3 mb-8 bg-[#F9F9F9]">
-                                    <LuSearch className="text-lg text-primary/40 shrink-0" />
+                                    <HiOutlineMagnifyingGlass className="text-lg text-primary/40 shrink-0" />
                                     <input
                                         type="text"
                                         value={searchQuery}
@@ -933,7 +929,7 @@ export default function Header() {
                                                                 </span>
                                                             )}
                                                             <button className="absolute top-3 right-3 p-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-sm">
-                                                                <FaRegHeart className="text-xs" />
+                                                                <HiOutlineHeart className="text-xs" />
                                                             </button>
                                                         </div>
                                                         <h4 className="text-sm font-medium text-dark group-hover:text-gold transition-colors leading-snug">
@@ -975,7 +971,7 @@ export default function Header() {
                                                                 </span>
                                                             )}
                                                             <button className="absolute top-3 right-3 p-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-sm">
-                                                                <FaRegHeart className="text-xs" />
+                                                                <HiOutlineHeart className="text-xs" />
                                                             </button>
                                                         </div>
                                                         <h4 className="text-sm font-medium text-dark group-hover:text-gold transition-colors leading-snug">
