@@ -7,7 +7,7 @@ import { addSavedCard } from '../../redux/slice/paymentCard.slice';
 
 const validationSchema = Yup.object({
     cardNumber: Yup.string()
-        .test('len', 'Card number must be exactly 12 digits', val => val?.replace(/\s/g, '').length === 12)
+        .test('len', 'Card number must be exactly 16 digits', val => val?.replace(/\s/g, '').length === 16)
         .required('Card number is required'),
     cardHolderName: Yup.string()
         .min(2, 'Too Short!')
@@ -52,7 +52,7 @@ export default function PaymentCardSidebar({ isOpen, onClose, editPayment = null
         for (let i = 0; i < v.length; i += 4) {
             parts.push(v.slice(i, i + 4));
         }
-        return parts.join(' ').slice(0, 14); // 12 digits + 2 spaces
+        return parts.join(' ').slice(0, 19); // 16 digits + 3 spaces
     };
 
     const formik = useFormik({
@@ -148,8 +148,8 @@ export default function PaymentCardSidebar({ isOpen, onClose, editPayment = null
                                 value={formik.values.cardNumber}
                                 onChange={handleCardNumberChange}
                                 onBlur={formik.handleBlur}
-                                placeholder="0000 0000 0000"
-                                maxLength={14}
+                                placeholder="0000 0000 0000 0000"
+                                maxLength={19}
                                 className={`w-full border-b ${formik.touched.cardNumber && formik.errors.cardNumber
                                     ? 'border-red-400'
                                     : 'border-border'
