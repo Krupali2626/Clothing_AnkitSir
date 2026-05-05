@@ -31,7 +31,9 @@ const PaymentList = () => {
         payment.orderId?._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.transactionId?.toLowerCase().includes(searchTerm.toLowerCase())
+        payment.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.paymentStatus?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.paymentMethod?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -41,34 +43,50 @@ const PaymentList = () => {
 
     const getStatusBadge = (status) => {
         const baseClass = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-none text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm transition-all";
-        switch (status?.toLowerCase()) {
-            case 'success':
-            case 'succeeded':
-            case 'paid':
+
+        switch (status) {
+            case 'Paid':
+            case 'Success':
+            case 'Succeeded':
                 return (
-                    <span className={`${baseClass} bg-emerald-500/10 text-emerald-600 border-emerald-500/10`}>
+                    <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}>
                         <MdCheckCircle size={14} />
-                        Settled
+                        Paid
                     </span>
                 );
-            case 'pending':
+            case 'Refunded':
                 return (
-                    <span className={`${baseClass} bg-amber-500/10 text-amber-600 border-amber-500/10`}>
+                    <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100`}>
+                        <MdRefresh size={14} />
+                        Refunded
+                    </span>
+                );
+            case 'Processing':
+                return (
+                    <span className={`${baseClass} bg-indigo-50 text-indigo-600 border-indigo-100`}>
+                        <MdAccessTime size={14} className="animate-pulse" />
+                        Processing
+                    </span>
+                );
+            case 'Pending':
+                return (
+                    <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}>
                         <MdAccessTime size={14} />
-                        Awaiting
+                        Pending
                     </span>
                 );
-            case 'failed':
+            case 'Failed':
+            case 'Declined':
                 return (
-                    <span className={`${baseClass} bg-red-500/10 text-red-600 border-red-500/10`}>
+                    <span className={`${baseClass} bg-red-50 text-red-600  border-red-100`}>
                         <MdError size={14} />
-                        Declined
+                        Failed
                     </span>
                 );
             default:
                 return (
-                    <span className={`${baseClass} bg-mainBG text-lightText border-border`}>
-                        {status}
+                    <span className={`${baseClass} bg-slate-50 text-slate-500 border-slate-100`}>
+                        {status || 'Unknown'}
                     </span>
                 );
         }
@@ -186,7 +204,7 @@ const PaymentList = () => {
                                             </span>
                                         </td>
                                         <td className="px-8 py-5 whitespace-nowrap">
-                                            {getStatusBadge(payment.status)}
+                                            {getStatusBadge(payment.paymentStatus)}
                                         </td>
                                         <td className="px-8 py-5 text-right whitespace-nowrap">
                                             <div className="flex flex-col">
