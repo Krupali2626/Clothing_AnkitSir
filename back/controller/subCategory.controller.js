@@ -8,7 +8,7 @@ import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createSubCategory = async (req, res) => {
   try {
-    const { subCategoryName, categoryId, mainCategoryId, attributes } = req.body;
+    const { subCategoryName, categoryId, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!subCategoryName || !categoryId || !mainCategoryId) {
       return sendBadRequestResponse(res, "subCategoryName, categoryId, and mainCategoryId are required!!!")
@@ -48,7 +48,8 @@ export const createSubCategory = async (req, res) => {
       categoryId,
       subCategoryName,
       subCategoryImage: imageUrl,
-      attributes: attributes ? JSON.parse(attributes) : []
+      attributes: attributes ? JSON.parse(attributes) : [],
+      sizeGuide: sizeGuide || null
     })
 
     return sendSuccessResponse(res, "SubCategory added successfully...", newSubCategory)
@@ -63,6 +64,7 @@ export const getAllSubCategory = async (req, res) => {
     const subCategory = await SubCategoryModel.find({})
       .populate("mainCategoryId")
       .populate("categoryId")
+      .populate("sizeGuide")
 
     if (!subCategory || subCategory.length === 0) {
       return sendNotFoundResponse(res, "No SubCategory found!!!")
@@ -86,6 +88,7 @@ export const getSubCategoryById = async (req, res) => {
     const subCategory = await SubCategoryModel.findById(id)
       .populate("mainCategoryId")
       .populate("categoryId")
+      .populate("sizeGuide")
 
     if (!subCategory) {
       return sendNotFoundResponse(res, "SubCategory Not found...")
@@ -101,7 +104,7 @@ export const getSubCategoryById = async (req, res) => {
 export const updateSubCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { subCategoryName, categoryId, mainCategoryId, attributes } = req.body;
+    const { subCategoryName, categoryId, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid SubCategoryId!!!");
@@ -143,7 +146,8 @@ export const updateSubCategoryById = async (req, res) => {
       subCategoryName,
       categoryId,
       mainCategoryId,
-      subCategoryImage: imageUrl
+      subCategoryImage: imageUrl,
+      sizeGuide: sizeGuide || null
     };
 
     if (attributes) {
@@ -208,6 +212,7 @@ export const getSubCategoriesByCategoryId = async (req, res) => {
     const subCategories = await SubCategoryModel.find({ categoryId })
       .populate("mainCategoryId")
       .populate("categoryId")
+      .populate("sizeGuide")
 
     if (!subCategories || subCategories.length === 0) {
       return sendNotFoundResponse(res, "No SubCategories found for this Category!!!")

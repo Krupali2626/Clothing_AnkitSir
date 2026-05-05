@@ -34,7 +34,12 @@ const categorySchema = new mongoose.Schema({
       type: Boolean,
       default: false
     }
-  }]
+  }],
+  sizeGuide: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "sizeGuide",
+    default: null
+  }
 }, { timestamps: true })
 
 categorySchema.pre('save', function (next) {

@@ -7,7 +7,7 @@ import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createCategory = async (req, res) => {
   try {
-    const { categoryName, mainCategoryId, attributes } = req.body;
+    const { categoryName, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!categoryName || !mainCategoryId) {
       return sendBadRequestResponse(res, "categoryName & mainCategoryId are required!!!")
@@ -37,7 +37,8 @@ export const createCategory = async (req, res) => {
       mainCategoryId,
       categoryName,
       categoryImage: imageUrl,
-      attributes: attributes ? JSON.parse(attributes) : []
+      attributes: attributes ? JSON.parse(attributes) : [],
+      sizeGuide: sizeGuide || null
     })
 
     return sendSuccessResponse(res, "Category added successfully...", newCategory)
@@ -49,7 +50,7 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategory = async (req, res) => {
   try {
-    const category = await CategoryModel.find({}).populate("mainCategoryId")
+    const category = await CategoryModel.find({}).populate("mainCategoryId").populate("sizeGuide")
 
     if (!category || category.length === 0) {
       return sendNotFoundResponse(res, "No category found!!!")
@@ -70,7 +71,7 @@ export const getCategoryById = async (req, res) => {
       return sendBadRequestResponse(res, "Invalid CategoryId!!!")
     }
 
-    const category = await CategoryModel.findById(id).populate("mainCategoryId")
+    const category = await CategoryModel.findById(id).populate("mainCategoryId").populate("sizeGuide")
     if (!category) {
       return sendNotFoundResponse(res, "Category Not found...")
     }
@@ -85,7 +86,7 @@ export const getCategoryById = async (req, res) => {
 export const updateCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { categoryName, mainCategoryId, attributes } = req.body;
+    const { categoryName, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid category id!");
@@ -117,7 +118,8 @@ export const updateCategoryById = async (req, res) => {
     const updateData = {
       categoryName,
       mainCategoryId,
-      categoryImage: imageUrl
+      categoryImage: imageUrl,
+      sizeGuide: sizeGuide || null
     };
 
     if (attributes) {
@@ -181,6 +183,7 @@ export const getCategoriesByMainCategoryId = async (req, res) => {
 
     const categories = await CategoryModel.find({ mainCategoryId })
       .populate("mainCategoryId")
+      .populate("sizeGuide")
 
     if (!categories || categories.length === 0) {
       return sendNotFoundResponse(res, "No categories found for this MainCategory!!!")

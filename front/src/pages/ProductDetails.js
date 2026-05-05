@@ -693,7 +693,7 @@ const ProductDetails = () => {
                 isOpen={productInfoOpen}
                 onClose={() => setProductInfoOpen(false)}
                 initialTab={activeInfoTab}
-                productDetails={currentProduct?.description}
+                product={currentProduct}
             />
 
             <ImageModal

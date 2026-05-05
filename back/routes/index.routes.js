@@ -58,6 +58,7 @@ import {
   createSizeGuide,
   getAllSizeGuides,
   getSizeGuideById,
+  updateSizeGuide,
   deleteSizeGuide,
   updateProductSizeGuide,
   getProductSizeGuide
@@ -226,11 +227,13 @@ router.delete("/product-variant/delete/:id", UserAuth, adminAuth, deleteProductV
 
 // --- Size Guide Routes ---
 router.post("/size-guide/create/:productId", UserAuth, adminAuth, createSizeGuide);
+router.post("/size-guide/create", UserAuth, adminAuth, createSizeGuide);
 router.get("/size-guide/get-all", getAllSizeGuides);
 router.get("/size-guide/get-by-id/:id", getSizeGuideById);
+router.put("/size-guide/update/:id", UserAuth, adminAuth, updateSizeGuide);
+router.delete("/size-guide/delete/:id", UserAuth, adminAuth, deleteSizeGuide);
 router.put("/size-guide/update-product/:productId", UserAuth, adminAuth, updateProductSizeGuide);
 router.get("/size-guide/get-product/:productId", getProductSizeGuide);
-router.delete("/size-guide/delete/:id", UserAuth, adminAuth, deleteSizeGuide);
 
 // --- Coupon Routes ---
 router.post("/coupon/create", UserAuth, adminAuth, upload.single("couponImage"), createCoupon);

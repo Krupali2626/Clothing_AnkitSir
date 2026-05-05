@@ -9,7 +9,7 @@ import { uploadFile, deleteFileFromS3 } from "../middleware/imageupload.js";
 
 export const createInsideSubCategory = async (req, res) => {
   try {
-    const { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId, attributes } = req.body;
+    const { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!insideSubCategoryName || !subCategoryId || !categoryId || !mainCategoryId) {
       return sendBadRequestResponse(res, "insideSubCategoryName, subCategoryId, categoryId, and mainCategoryId are required!!!")
@@ -59,7 +59,8 @@ export const createInsideSubCategory = async (req, res) => {
       subCategoryId,
       insideSubCategoryName,
       insideSubCategoryImage: imageUrl,
-      attributes: attributes ? JSON.parse(attributes) : []
+      attributes: attributes ? JSON.parse(attributes) : [],
+      sizeGuide: sizeGuide || null
     })
 
     return sendSuccessResponse(res, "InsideSubCategory added successfully...", newInsideSubCategory)
@@ -75,6 +76,7 @@ export const getAllInsideSubCategory = async (req, res) => {
       .populate("mainCategoryId")
       .populate("categoryId")
       .populate("subCategoryId")
+      .populate("sizeGuide")
 
     if (!insideSubCategory || insideSubCategory.length === 0) {
       return sendNotFoundResponse(res, "No InsideSubCategory found!!!")
@@ -99,6 +101,7 @@ export const getInsideSubCategoryById = async (req, res) => {
       .populate("mainCategoryId")
       .populate("categoryId")
       .populate("subCategoryId")
+      .populate("sizeGuide")
 
     if (!insideSubCategory) {
       return sendNotFoundResponse(res, "InsideSubCategory Not found...")
@@ -114,7 +117,7 @@ export const getInsideSubCategoryById = async (req, res) => {
 export const updateInsideSubCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId, attributes } = req.body;
+    const { insideSubCategoryName, subCategoryId, categoryId, mainCategoryId, attributes, sizeGuide } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid InsideSubCategoryId!!!");
@@ -166,7 +169,8 @@ export const updateInsideSubCategoryById = async (req, res) => {
       subCategoryId,
       categoryId,
       mainCategoryId,
-      insideSubCategoryImage: imageUrl
+      insideSubCategoryImage: imageUrl,
+      sizeGuide: sizeGuide || null
     };
 
     if (attributes) {
@@ -232,6 +236,7 @@ export const getInsideSubCategoriesBySubCategoryId = async (req, res) => {
       .populate("mainCategoryId")
       .populate("categoryId")
       .populate("subCategoryId")
+      .populate("sizeGuide")
 
     if (!insideSubCategories || insideSubCategories.length === 0) {
       return sendNotFoundResponse(res, "No InsideSubCategories found for this SubCategory!!!")

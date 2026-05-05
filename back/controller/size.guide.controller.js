@@ -57,21 +57,15 @@ export const updateSizeGuide = async (req, res) => {
     const { id } = req.params;
     const { name, tables } = req.body;
 
+    if (req.user.role !== "admin") {
+      return sendForbiddenResponse(res, "Access denied.");
+    }
+
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return sendBadRequestResponse(res, "Invalid size guide ID.");
     }
 
-    if (req.user.role !== "admin") {
-      return sendForbiddenResponse(res, "Access denied. Only admin can update size guides!");
-    }
-
-    const existing = await sizeGuideModel.findById(id);
-    if (!existing) {
-      return sendNotFoundResponse(res, "Size guide not found.");
-    }
-
-    let updateData = {};
-
+    const updateData = {};
     if (name) updateData.name = name;
     if (tables && Array.isArray(tables)) {
       updateData.tables = tables.map(table => ({
@@ -82,9 +76,15 @@ export const updateSizeGuide = async (req, res) => {
       }));
     }
 
-    const updated = await sizeGuideModel.findByIdAndUpdate(id, updateData, {
-      new: true
-    });
+    const updated = await sizeGuideModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!updated) {
+      return sendNotFoundResponse(res, "Size guide not found.");
+    }
 
     return sendSuccessResponse(res, "Size guide updated successfully.", updated);
 
@@ -93,6 +93,7 @@ export const updateSizeGuide = async (req, res) => {
     return ThrowError(res, 500, error.message);
   }
 };
+
 
 export const deleteSizeGuide = async (req, res) => {
   try {
@@ -126,10 +127,7 @@ export const getAllSizeGuides = async (req, res) => {
     const result = await sizeGuideModel.find({})
       .sort({ createdAt: -1 });
 
-    return sendSuccessResponse(res, "Size guides retrieved successfully.", {
-      total: result.length,
-      result: result
-    });
+    return sendSuccessResponse(res, "Size guides retrieved successfully.", result);
 
   } catch (error) {
     return ThrowError(res, 500, error.message);

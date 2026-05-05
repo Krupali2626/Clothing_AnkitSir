@@ -3,12 +3,19 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { MdClose, MdSave, MdCloudUpload, MdDelete, MdAdd, MdLayers } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSizeGuides } from '../../../redux/slice/sizeGuide.slice';
 
 const CategoryForm = ({ initialValues, onSubmit, onCancel, isLoading }) => {
+  const dispatch = useDispatch();
   const [preview, setPreview] = useState(null);
   const [attributes, setAttributes] = useState(initialValues?.attributes || []);
   const { mainCategories } = useSelector((state) => state.category);
+  const { sizeGuides = [] } = useSelector((state) => state.sizeGuide || {});
+
+  useEffect(() => {
+    dispatch(fetchSizeGuides());
+  }, [dispatch]);
 
   useEffect(() => {
     if (initialValues?.categoryImage) {
@@ -22,6 +29,7 @@ const CategoryForm = ({ initialValues, onSubmit, onCancel, isLoading }) => {
     initialValues: {
       categoryName: initialValues?.categoryName || '',
       mainCategoryId: initialValues?.mainCategoryId?._id || initialValues?.mainCategoryId || '',
+      sizeGuide: initialValues?.sizeGuide?._id || initialValues?.sizeGuide || '',
       categoryImage: null
     },
     validationSchema: Yup.object({
@@ -155,6 +163,28 @@ const CategoryForm = ({ initialValues, onSubmit, onCancel, isLoading }) => {
             {formik.touched.mainCategoryId && formik.errors.mainCategoryId && (
               <p className="text-[10px] font-black text-red-500 ml-1 uppercase tracking-widest mt-1">{formik.errors.mainCategoryId}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="sizeGuide" className="text-[11px] font-black text-mainText uppercase tracking-widest ml-1 opacity-70">
+              Assigned Size Guide
+            </label>
+            <select
+              id="sizeGuide"
+              name="sizeGuide"
+              className="w-full px-6 py-4 rounded-none border border-border focus:border-primary focus:ring-8 focus:ring-primary/5 transition-all outline-none text-sm font-black tracking-tight appearance-none bg-mainBG/10"
+              {...formik.getFieldProps('sizeGuide')}
+            >
+              <option value="" className="font-black">No Size Guide (Inherit)</option>
+              {sizeGuides.map((guide) => (
+                <option key={guide._id} value={guide._id} className="font-black">
+                  {guide.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-[9px] text-lightText font-bold uppercase tracking-tight mt-1 ml-1">
+              Products in this category will use this guide unless overridden.
+            </p>
           </div>
         </div>
 

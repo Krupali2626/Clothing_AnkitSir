@@ -84,6 +84,12 @@ const AdminSidebar = () => {
       activePatterns: ['/admin/lookbook']
     },
     {
+      name: 'Size Guide',
+      icon: <MdGridView size={20} />,
+      path: '/admin/size-guide',
+      activePatterns: ['/admin/size-guide']
+    },
+    {
       name: 'Coupons',
       icon: <MdLocalOffer size={20} />,
       path: '/admin/coupons',

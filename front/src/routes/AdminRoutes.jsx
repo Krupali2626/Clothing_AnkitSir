@@ -19,6 +19,7 @@ import ContactList from '../admin/pages/Contact/ContactList';
 import SupportList from '../admin/pages/Contact/SupportList';
 import NewsletterList from '../admin/pages/Newsletter/NewsletterList';
 import PaymentList from '../admin/pages/Payment/PaymentList';
+import SizeGuideList from '../admin/pages/SizeGuide/SizeGuideList';
 import ProtectedRoute from './ProtectedRoute';
 
 const AdminRoutes = () => {
@@ -46,6 +47,7 @@ const AdminRoutes = () => {
                     <Route path="support" element={<SupportList />} />
                     <Route path="newsletter" element={<NewsletterList />} />
                     <Route path="payments" element={<PaymentList />} />
+                    <Route path="size-guide" element={<SizeGuideList />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>
             </Route>

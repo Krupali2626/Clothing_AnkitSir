@@ -17,6 +17,7 @@ import {
     fetchSubCategories,
     fetchInsideSubCategories
 } from '../../../redux/slice/category.slice';
+import { fetchSizeGuides } from '../../../redux/slice/sizeGuide.slice';
 import { MdArrowBack, MdSave, MdAdd, MdDelete, MdCloudUpload, MdCheck } from 'react-icons/md';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 
@@ -28,6 +29,7 @@ const ProductForm = () => {
 
     const { currentProduct, loading } = useSelector((state) => state.product || {});
     const { mainCategories = [], categories = [], subCategories = [], insideSubCategories = [] } = useSelector((state) => state.category || {});
+    const { sizeGuides = [] } = useSelector((state) => state.sizeGuide || {});
 
     const [filteredCategories, setFilteredCategories] = useState([]);
     const [filteredSubCategories, setFilteredSubCategories] = useState([]);
@@ -51,6 +53,7 @@ const ProductForm = () => {
         dispatch(fetchCategories());
         dispatch(fetchSubCategories());
         dispatch(fetchInsideSubCategories());
+        dispatch(fetchSizeGuides());
 
         if (isEditMode) {
             dispatch(fetchProductById(id));
@@ -90,6 +93,7 @@ const ProductForm = () => {
             category: currentProduct?.category?._id || '',
             subCategory: currentProduct?.subCategory?._id || '',
             insideSubCategory: currentProduct?.insideSubCategory?._id || '',
+            sizeGuide: currentProduct?.sizeGuide?._id || currentProduct?.sizeGuide || '',
             badge: currentProduct?.badge || '',
             tags: currentProduct?.tags?.join(', ') || '',
             productDetails: {
@@ -574,6 +578,22 @@ const ProductForm = () => {
                                     <option key={cat._id} value={cat._id}>{cat.insideSubCategoryName}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-mainText uppercase tracking-widest ml-1 opacity-70">Specific Size Guide</label>
+                            <select
+                                className="w-full px-6 py-4 rounded-none border border-border bg-mainBG/10 focus:border-primary focus:ring-8 focus:ring-primary/5 transition-all outline-none text-sm font-black tracking-tight appearance-none"
+                                {...formik.getFieldProps('sizeGuide')}
+                            >
+                                <option value="">No Override (Inherit from Category)</option>
+                                {sizeGuides.map((guide) => (
+                                    <option key={guide._id} value={guide._id}>{guide.name}</option>
+                                ))}
+                            </select>
+                            <p className="text-[9px] text-lightText font-bold uppercase tracking-tight mt-1 ml-1">
+                                Overrides the category-level guide for this specific product.
+                            </p>
                         </div>
                     </div>
                 </div>

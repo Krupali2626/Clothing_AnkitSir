@@ -217,6 +217,22 @@ export const getProductById = async (req, res) => {
       return sendNotFoundResponse(res, "Product not found!");
     }
 
+    // --- HIERARCHICAL SIZE GUIDE LOGIC ---
+    if (!product.sizeGuide) {
+      // 1. Try InsideSubCategory
+      if (product.insideSubCategory && product.insideSubCategory.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.insideSubCategory.sizeGuide);
+      } 
+      // 2. Try SubCategory
+      else if (product.subCategory && product.subCategory.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.subCategory.sizeGuide);
+      }
+      // 3. Try Category
+      else if (product.category && product.category.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.category.sizeGuide);
+      }
+    }
+
     // --- WEAR IT WITH LOGIC ---
     let wearItWith = [];
     
@@ -290,6 +306,22 @@ export const getProductBySlug = async (req, res) => {
 
     if (!product) {
       return sendNotFoundResponse(res, "Product not found!");
+    }
+
+    // --- HIERARCHICAL SIZE GUIDE LOGIC ---
+    if (!product.sizeGuide) {
+      // 1. Try InsideSubCategory
+      if (product.insideSubCategory && product.insideSubCategory.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.insideSubCategory.sizeGuide);
+      } 
+      // 2. Try SubCategory
+      else if (product.subCategory && product.subCategory.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.subCategory.sizeGuide);
+      }
+      // 3. Try Category
+      else if (product.category && product.category.sizeGuide) {
+        product.sizeGuide = await mongoose.model("sizeGuide").findById(product.category.sizeGuide);
+      }
     }
 
     // --- WEAR IT WITH LOGIC ---

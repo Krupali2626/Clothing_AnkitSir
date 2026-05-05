@@ -41,7 +41,12 @@ const insideSubCategorySchema = mongoose.Schema({
       type: Boolean,
       default: false
     }
-  }]
+  }],
+  sizeGuide: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "sizeGuide",
+    default: null
+  }
 }, { timestamps: true })
 
 insideSubCategorySchema.pre('save', function (next) {
