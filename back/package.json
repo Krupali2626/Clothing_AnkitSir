@@ -7,7 +7,8 @@
   "scripts": {
     "start": "nodemon index.js",
     "dev": "nodemon index.js",
-    "seed:shop": "node seeds/shopCategories.seed.js"
+    "seed:shop": "node seeds/shopCategories.seed.js",
+    "migrate:cleanup-cards": "node migrations/cleanupInvalidCards.js"
   },
   "author": "",
   "license": "ISC",

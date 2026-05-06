@@ -26,6 +26,14 @@ export default function PaymentsCard() {
         dispatch(fetchSavedCards());
     }, [dispatch]);
 
+    // Debug: Log cards data to see what we're receiving
+    useEffect(() => {
+        if (cards.length > 0) {
+            console.log('💳 Cards data:', cards);
+            console.log('💳 First card structure:', cards[0]);
+        }
+    }, [cards]);
+
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -65,11 +73,12 @@ export default function PaymentsCard() {
         dispatch(selectCard(cardId));
     };
 
-    const getCardIcon = (cardNumber) => {
-        // Very basic logic since we only store masked numbers usually
-        if (cardNumber.includes('Visa')) return <RiVisaLine className="text-3xl text-blue-700" />;
-        if (cardNumber.includes('Mastercard')) return <RiMastercardLine className="text-3xl text-orange-500" />;
-        if (cardNumber.includes('American Express')) return <SiAmericanexpress className="text-3xl text-blue-500" />;
+    const getCardIcon = (brand) => {
+        // Use brand from Stripe (visa, mastercard, amex, etc.)
+        const brandLower = brand?.toLowerCase() || '';
+        if (brandLower === 'visa') return <RiVisaLine className="text-3xl text-blue-700" />;
+        if (brandLower === 'mastercard') return <RiMastercardLine className="text-3xl text-orange-500" />;
+        if (brandLower === 'amex' || brandLower === 'american_express') return <SiAmericanexpress className="text-3xl text-blue-500" />;
         return <FaRegCreditCard className="text-2xl text-primary" />;
     };
 
@@ -132,7 +141,17 @@ export default function PaymentsCard() {
                     <div className="md:space-y-6 space-y-4">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                             {currentCards.map((card) => {
-                                // const isDefault = card._id === selectedCardId;
+                                // Validate card has required fields
+                                if (!card.brand || !card.last4 || !card.expiryDate) {
+                                    console.warn('⚠️ Invalid card data:', card);
+                                    return null; // Skip invalid cards
+                                }
+
+                                // Format brand name for display (capitalize first letter)
+                                const brandDisplay = card.brand 
+                                    ? card.brand.charAt(0).toUpperCase() + card.brand.slice(1).toLowerCase()
+                                    : 'Card';
+                                
                                 return (
                                     <div
                                         key={card._id}
@@ -141,10 +160,10 @@ export default function PaymentsCard() {
                                         <div className="flex justify-between items-center mb-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-8 flex items-center justify-center">
-                                                    {getCardIcon(card.cardType || '')}
+                                                    {getCardIcon(card.brand)}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="md:text-base text-sm font-bold text-dark">{card.cardType || 'Card'}</span>
+                                                    <span className="md:text-base text-sm font-bold text-dark">{brandDisplay}</span>
                                                     {card.isDefault && (
                                                         <>
                                                             <div className="border-l border-border h-5 w-px"></div>
@@ -164,10 +183,16 @@ export default function PaymentsCard() {
                                         </div>
 
                                         <div className="">
-                                            <p className="md:text-base text-sm font-semibold text-mainText tracking-widest">{card.cardNumber}</p>
-                                            <p className="md:text-base text-sm font-semibold text-mainText mt-1">{card.cardHolderName}</p>
+                                            <p className="md:text-base text-sm font-semibold text-mainText tracking-widest">
+                                                {card.displayNumber || `•••• •••• •••• ${card.last4}`}
+                                            </p>
+                                            <p className="md:text-base text-sm font-semibold text-mainText mt-1">
+                                                {card.cardHolderName || 'Card Holder'}
+                                            </p>
                                             <div className="flex items-center gap-2 justify-between">
-                                                <p className="md:text-base text-sm font-medium text-lightText mt-1">Expires {card.expiryDate}</p>
+                                                <p className="md:text-base text-sm font-medium text-lightText mt-1">
+                                                    Expires {card.expiryDate}
+                                                </p>
                                                 {!card.isDefault && (
                                                     <div className="flex justify-end">
                                                         <button
@@ -227,7 +252,7 @@ export default function PaymentsCard() {
                                 </button>
                             </div>
                             <p className="md:text-base text-sm font-medium text-lightText mb-8 leading-relaxed tracking-wide">
-                                Are you sure you want to remove this saved card ending in {cardToRemove?.cardNumber?.slice(-4)}? This action cannot be undone.
+                                Are you sure you want to remove this saved card ending in {cardToRemove?.last4}? This action cannot be undone.
                             </p>
                             <div className="flex gap-4">
                                 <button
