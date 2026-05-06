@@ -52,7 +52,7 @@ const checkoutSchema = Yup.object({
     addressType: Yup.string().required('Address type is required'),
     saveInfo: Yup.boolean(),
     paymentMethod: Yup.string().required('Payment method is required'),
-   
+
 });
 
 const couponSchema = Yup.object({
@@ -79,7 +79,7 @@ const RecentlyViewedCard = ({ product }) => {
     };
 
     return (
-        <div 
+        <div
             onClick={() => navigate(`/product/${product.slug}`)}
             className="flex flex-col items-center bg-white border border-border/10 cursor-pointer group"
         >
@@ -153,7 +153,7 @@ function CheckoutFormContent() {
         validationSchema: checkoutSchema,
         onSubmit: async (values) => {
             if (isProcessing) return; // Prevent double submission
-            
+
             setStripeError(null);
             setIsProcessing(true);
 
@@ -166,7 +166,7 @@ function CheckoutFormContent() {
             try {
                 // Step 1: Use existing address or create new one
                 let addressId = selectedAddressId;
-                
+
                 // If no address is selected or user filled in new address details, create new address
                 if (!addressId || values.firstName) {
                     try {
@@ -185,15 +185,15 @@ function CheckoutFormContent() {
                             },
                             setAsDefault: false
                         })).unwrap();
-                        
+
                         console.log('Address response:', result);
-                        
+
                         // Get the newly created address ID from the returned address array
                         const addresses = result?.address || [];
                         if (addresses.length > 0) {
                             addressId = addresses[addresses.length - 1]._id;
                         }
-                        
+
                         console.log('New address ID:', addressId);
                     } catch (addressError) {
                         console.error('Error saving address:', addressError);
@@ -232,18 +232,18 @@ function CheckoutFormContent() {
                 }
 
                 const result = await dispatch(placeOrder(orderPayload)).unwrap();
-                
+
                 const { clientSecret, stripePaymentIntentId } = result?.result || {};
 
                 // Step 4: Confirm payment with Stripe (for Card payment)
                 if (values.paymentMethod === 'Card' && clientSecret) {
                     let confirmResult;
-                    
+
                     // Check if using saved card or new card
                     if (selectedSavedCard && !showAddNewCard) {
                         // Using saved card - confirm with payment method already attached
                         console.log('💳 Confirming payment with saved card:', selectedSavedCard);
-                        
+
                         try {
                             const selectedCardObj = cards.find(c => c._id === selectedSavedCard);
                             const stripePMId = selectedCardObj?.stripePaymentMethodId;
@@ -258,12 +258,12 @@ function CheckoutFormContent() {
                             setIsProcessing(false);
                             return;
                         }
-                        
+
                     } else {
                         // Using new card - get card element and confirm
                         console.log('💳 Confirming payment with new card');
                         const cardElement = elements.getElement(CardNumberElement);
-                        
+
                         if (!cardElement) {
                             toast.error('Card information is required');
                             setIsProcessing(false);
@@ -309,12 +309,12 @@ function CheckoutFormContent() {
                             })).unwrap();
 
                             toast.success('Payment successful! Order confirmed.');
-                            
+
                             // Refresh saved cards if card was saved
                             if (values.saveCard && showAddNewCard) {
                                 dispatch(fetchSavedCards());
                             }
-                            
+
                             const finalOrderId = confirmResponse?.result?._id;
                             navigate(finalOrderId ? `/orders/${finalOrderId}` : '/checkout');
                         } catch (confirmError) {
@@ -336,9 +336,9 @@ function CheckoutFormContent() {
                     toast.success('Order placed successfully!');
                     // For now, these might still return an orderId from placeOrder 
                     // or we might need to update them too.
-                    navigate('/orders'); 
+                    navigate('/orders');
                 }
-                
+
             } catch (error) {
                 console.error('Order placement error:', error);
                 toast.error(error?.message || 'Failed to place order');
@@ -398,9 +398,33 @@ function CheckoutFormContent() {
         if (storeSelectedAddressId) {
             setSelectedAddressId(storeSelectedAddressId);
         } else if (addresses.length > 0) {
-            setSelectedAddressId(addresses[0]._id);
+            // Find default address if exists, otherwise first
+            const defaultAddr = addresses.find(a => a._id === storeSelectedAddressId) || addresses[0];
+            setSelectedAddressId(defaultAddr._id);
         }
     }, [addresses, storeSelectedAddressId]);
+
+    // Autofill formik when selectedAddressId changes
+    useEffect(() => {
+        if (selectedAddressId && addresses.length > 0) {
+            const addr = addresses.find(a => a._id === selectedAddressId);
+            if (addr) {
+                formik.setValues({
+                    ...formik.values,
+                    mobile: addr.phone || '',
+                    country: addr.country || '',
+                    firstName: addr.firstName || '',
+                    lastName: addr.lastName || '',
+                    address: addr.address || '',
+                    apartment: addr.aptSuite || '',
+                    city: addr.city || '',
+                    state: addr.state || '',
+                    postCode: addr.zipcode || '',
+                    addressType: addr.addressType || 'Home',
+                });
+            }
+        }
+    }, [selectedAddressId, addresses]);
 
     // Get card brand from card number
     const getCardBrand = (cardNumber) => {
@@ -518,11 +542,10 @@ function CheckoutFormContent() {
                                 value={formik.values.mobile}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
-                                className={`w-full px-4 py-3 border ${
-                                    formik.touched.mobile && formik.errors.mobile
+                                className={`w-full px-4 py-3 border ${formik.touched.mobile && formik.errors.mobile
                                         ? 'border-red-400'
                                         : 'border-border'
-                                } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
+                                    } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
                             />
                             {formik.touched.mobile && formik.errors.mobile && (
                                 <p className="text-xs text-red-500 mt-1">{formik.errors.mobile}</p>
@@ -530,8 +553,69 @@ function CheckoutFormContent() {
                         </div>
 
                         {/* Delivery Section */}
-                        <div>
-                            <h2 className="text-base md:text-2xl font-bold text-primary  mb-6">Delivery</h2>
+                        <div className="space-y-6">
+                            <h2 className="text-base md:text-2xl font-bold text-primary">Delivery</h2>
+
+                            {/* Saved Addresses List */}
+                            {isAuthenticated && addresses.length > 0 && (
+                                <div className="space-y-3 mb-6">
+                                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-lightText mb-2">Select a saved address</p>
+                                    {addresses.map((addr) => (
+                                        <label
+                                            key={addr._id}
+                                            className={`flex items-start gap-4 p-4 border rounded cursor-pointer transition-all ${selectedAddressId === addr._id
+                                                    ? 'border-primary bg-primary/[0.02]'
+                                                    : 'border-border hover:border-primary'
+                                                }`}
+                                        >
+                                            <div className="pt-1">
+                                                <input
+                                                    type="radio"
+                                                    name="selectedAddress"
+                                                    value={addr._id}
+                                                    checked={selectedAddressId === addr._id}
+                                                    onChange={() => setSelectedAddressId(addr._id)}
+                                                    className="w-4 h-4 text-primary"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xs font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded">
+                                                        {addr.addressType || 'Other'}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-dark">
+                                                        {addr.firstName} {addr.lastName}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-lightText leading-relaxed">
+                                                    {addr.address}{addr.aptSuite ? `, ${addr.aptSuite}` : ''}, {addr.city}, {addr.state} {addr.zipcode}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    ))}
+
+                                    {/* Option to use a new address */}
+                                    <label
+                                        className={`flex items-center gap-4 p-4 border border-dashed rounded cursor-pointer transition-all ${!selectedAddressId
+                                                ? 'border-primary bg-primary/[0.02]'
+                                                : 'border-border hover:border-primary'
+                                            }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="selectedAddress"
+                                            value="new"
+                                            checked={!selectedAddressId}
+                                            onChange={() => {
+                                                setSelectedAddressId(null);
+                                                formik.resetForm();
+                                            }}
+                                            className="w-4 h-4 text-primary"
+                                        />
+                                        <span className="text-sm font-bold text-primary">+ Use a different address</span>
+                                    </label>
+                                </div>
+                            )}
                             <div className="space-y-4">
                                 <input
                                     type="text"
@@ -540,11 +624,10 @@ function CheckoutFormContent() {
                                     value={formik.values.country}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    className={`w-full px-4 py-3 border ${
-                                        formik.touched.country && formik.errors.country
+                                    className={`w-full px-4 py-3 border ${formik.touched.country && formik.errors.country
                                             ? 'border-red-400'
                                             : 'border-border'
-                                    } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
+                                        } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
                                 />
                                 {formik.touched.country && formik.errors.country && (
                                     <p className="text-xs text-red-500 mt-1">{formik.errors.country}</p>
@@ -559,11 +642,10 @@ function CheckoutFormContent() {
                                             value={formik.values.firstName}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
-                                            className={`w-full px-4 py-3 border ${
-                                                formik.touched.firstName && formik.errors.firstName
+                                            className={`w-full px-4 py-3 border ${formik.touched.firstName && formik.errors.firstName
                                                     ? 'border-red-400'
                                                     : 'border-border'
-                                            } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
+                                                } text-base focus:outline-none text-dark focus:border-primary transition-colors`}
                                         />
                                         {formik.touched.firstName && formik.errors.firstName && (
                                             <p className="text-xs text-red-500 mt-1">{formik.errors.firstName}</p>
@@ -577,11 +659,10 @@ function CheckoutFormContent() {
                                             value={formik.values.lastName}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
-                                            className={`w-full px-4 py-3 border ${
-                                                formik.touched.lastName && formik.errors.lastName
+                                            className={`w-full px-4 py-3 border ${formik.touched.lastName && formik.errors.lastName
                                                     ? 'border-red-400'
                                                     : 'border-border'
-                                            } text-base text-dark focus:outline-none  focus:border-primary transition-colors`}
+                                                } text-base text-dark focus:outline-none  focus:border-primary transition-colors`}
                                         />
                                         {formik.touched.lastName && formik.errors.lastName && (
                                             <p className="text-xs text-red-500 mt-1">{formik.errors.lastName}</p>
@@ -633,11 +714,10 @@ function CheckoutFormContent() {
                                     value={formik.values.address}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    className={`w-full px-4 py-3 border ${
-                                        formik.touched.address && formik.errors.address
+                                    className={`w-full px-4 py-3 border ${formik.touched.address && formik.errors.address
                                             ? 'border-red-400'
                                             : 'border-border'
-                                    } text-base text-dark  focus:outline-none focus:border-primary transition-colors`}
+                                        } text-base text-dark  focus:outline-none focus:border-primary transition-colors`}
                                 />
                                 {formik.touched.address && formik.errors.address && (
                                     <p className="text-xs text-red-500 mt-1">{formik.errors.address}</p>
@@ -661,11 +741,10 @@ function CheckoutFormContent() {
                                             value={formik.values.city}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
-                                            className={`w-full px-4 py-3 border ${
-                                                formik.touched.city && formik.errors.city
+                                            className={`w-full px-4 py-3 border ${formik.touched.city && formik.errors.city
                                                     ? 'border-red-400'
                                                     : 'border-border'
-                                            } text-base text-dark  focus:outline-none focus:border-primary transition-colors`}
+                                                } text-base text-dark  focus:outline-none focus:border-primary transition-colors`}
                                         />
                                         {formik.touched.city && formik.errors.city && (
                                             <p className="text-xs text-red-500 mt-1">{formik.errors.city}</p>
@@ -679,11 +758,10 @@ function CheckoutFormContent() {
                                             value={formik.values.state}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
-                                            className={`w-full px-4 py-3 border ${
-                                                formik.touched.state && formik.errors.state
+                                            className={`w-full px-4 py-3 border ${formik.touched.state && formik.errors.state
                                                     ? 'border-red-400'
                                                     : 'border-border'
-                                            } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
+                                                } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
                                         />
                                         {formik.touched.state && formik.errors.state && (
                                             <p className="text-xs text-red-500 mt-1">{formik.errors.state}</p>
@@ -698,11 +776,10 @@ function CheckoutFormContent() {
                                     value={formik.values.postCode}
                                     onChange={formik.handleChange}
                                     onBlur={formik.handleBlur}
-                                    className={`w-full px-4 py-3 border ${
-                                        formik.touched.postCode && formik.errors.postCode
+                                    className={`w-full px-4 py-3 border ${formik.touched.postCode && formik.errors.postCode
                                             ? 'border-red-400'
                                             : 'border-border'
-                                    } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
+                                        } text-base text-dark focus:outline-none focus:border-primary transition-colors`}
                                 />
                                 {formik.touched.postCode && formik.errors.postCode && (
                                     <p className="text-xs text-red-500 mt-1">{formik.errors.postCode}</p>
@@ -756,19 +833,19 @@ function CheckoutFormContent() {
                                                         const brand = card.brand || 'card';
                                                         const last4 = card.last4 || '****';
                                                         const displayNumber = card.displayNumber || `•••• •••• •••• ${last4}`;
-                                                        
+
                                                         // Format expiry date
                                                         let expiryDate = card.expiryDate;
                                                         if (!expiryDate && card.expiryMonth && card.expiryYear) {
                                                             expiryDate = `${String(card.expiryMonth).padStart(2, '0')}/${String(card.expiryYear).slice(-2)}`;
                                                         }
-                                                        
+
                                                         // Skip invalid cards (missing required data)
                                                         if (!card.last4 || !card.brand || !card.expiryMonth || !card.expiryYear) {
                                                             console.warn('Skipping invalid saved card:', card._id);
                                                             return null;
                                                         }
-                                                        
+
                                                         return (
                                                             <label
                                                                 key={card._id}
@@ -825,9 +902,9 @@ function CheckoutFormContent() {
                                                 </div>
                                             )}
 
-                            {/* New Card Form - Show if no saved cards OR "Add New Card" selected */}
+                                            {/* New Card Form - Show if no saved cards OR "Add New Card" selected */}
                                             {(cards.length === 0 || showAddNewCard) && (
-                                                <StripeCardInput 
+                                                <StripeCardInput
                                                     formik={formik}
                                                     showSaveCard={cards.length < 3}
                                                 />
