@@ -15,6 +15,7 @@ import newsletterReducer from "./slice/newsletter.slice.js";
 import paymentHistoryReducer from "./slice/payment.slice.js";
 import settingsReducer from "./slice/settings.slice.js";
 import sizeGuideReducer from "./slice/sizeGuide.slice.js";
+import inventoryReducer from "./slice/inventory.slice.js";
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -33,4 +34,5 @@ export const rootReducer = combineReducers({
     paymentHistory: paymentHistoryReducer,
     settings: settingsReducer,
     sizeGuide: sizeGuideReducer,
+    inventory: inventoryReducer,
 });

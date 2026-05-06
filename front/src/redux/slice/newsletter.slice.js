@@ -14,6 +14,19 @@ export const fetchAllSubscribers = createAsyncThunk(
     }
 );
 
+export const subscribeNewsletter = createAsyncThunk(
+    'newsletter/subscribe',
+    async (email, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`${BASE_URL}/newsletter/add`, { email });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { message: 'Failed to subscribe' });
+        }
+    }
+);
+
+
 export const deleteSubscriber = createAsyncThunk(
     'newsletter/deleteSubscriber',
     async (id, { rejectWithValue }) => {

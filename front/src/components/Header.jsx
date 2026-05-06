@@ -1124,7 +1124,14 @@ export default function Header() {
                         <div className="divide-y divide-border/40">
                             <div className="p-4 flex justify-between bg-mainBG/30">
                                 <button onClick={() => dispatch(markAllAsRead())} className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">Mark all as read</button>
-                                <button className="text-[10px] font-bold text-lightText/60 uppercase tracking-widest hover:underline">Clear all</button>
+                                <button 
+                                    onClick={() => {
+                                        notifications.forEach(n => dispatch(deleteNotification(n._id)));
+                                    }} 
+                                    className="text-[10px] font-bold text-lightText/60 uppercase tracking-widest hover:underline hover:text-red-500 transition-colors"
+                                >
+                                    Clear all
+                                </button>
                             </div>
                             {notifications.map((notification) => (
                                 <div
@@ -1176,7 +1183,14 @@ export default function Header() {
                     )}
                 </div>
 
-                <div className="p-8 border-t border-border bg-mainBG/20">
+                <div className="p-8 border-t border-border bg-mainBG/20 flex flex-col gap-3">
+                    <Link
+                        to="/notifications"
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="w-full py-4 bg-transparent border border-dark text-dark text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-dark hover:text-white transition-colors"
+                    >
+                        View All Notifications
+                    </Link>
                     <button
                         onClick={() => setIsNotificationsOpen(false)}
                         className="w-full py-4 bg-dark text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-primary transition-colors shadow-lg"

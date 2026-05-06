@@ -17,7 +17,8 @@ import {
   MdSupport,
   MdMail,
   MdHistory,
-  MdPayments
+  MdPayments,
+  MdInventory
 } from 'react-icons/md';
 
 const AdminSidebar = () => {
@@ -76,6 +77,12 @@ const AdminSidebar = () => {
       icon: <MdShoppingBag size={20} />,
       path: '/admin/product',
       activePatterns: ['/admin/product']
+    },
+    {
+      name: 'Inventory',
+      icon: <MdInventory size={20} />,
+      path: '/admin/inventory',
+      activePatterns: ['/admin/inventory']
     },
     {
       name: 'Lookbook',

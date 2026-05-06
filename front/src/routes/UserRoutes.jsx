@@ -26,6 +26,8 @@ import JournalDetail from '../pages/JournalDetail';
 import LookBook from '../pages/LookBook';
 import LookBookLPL from '../pages/LookBookLPL';
 import CheckoutForm from '../pages/CheckoutForm';
+import Unsubscribe from '../pages/Unsubscribe';
+import NotificationsPage from '../pages/NotificationsPage';
 
 const UserRoutes = () => {
     return (
@@ -50,6 +52,8 @@ const UserRoutes = () => {
             <Route path="/lookbook" element={<Layout><LookBook /></Layout>} />
             <Route path="/lookbook-lpl" element={<Layout><LookBookLPL /></Layout>} />
             <Route path="/checkout-form" element={<Layout><CheckoutForm /></Layout>} />
+            <Route path="/unsubscribe/:id" element={<Layout><Unsubscribe /></Layout>} />
+            <Route path="/notifications" element={<Layout><NotificationsPage /></Layout>} />
 
             {/* Collection routes — driven by header category slugs */}
             <Route path="/collection/:mainCategorySlug" element={<CollectionPage />} />

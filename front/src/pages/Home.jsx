@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMainCategories } from '../redux/slice/category.slice';
 import { fetchProducts } from '../redux/slice/product.slice';
+import { subscribeNewsletter } from '../redux/slice/newsletter.slice';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import toast from 'react-hot-toast';
 import WishlistButton from '../components/WishlistButton';
 import { HiOutlineArrowUpRight } from "react-icons/hi2";
 import bgImage from '../assets/images/BG.webp';
@@ -49,6 +53,28 @@ export default function Home() {
     const { products, loading } = useSelector((state) => state.product);
     const [activeTab, setActiveTab] = useState(null);
     const [selectedHouseProduct, setSelectedHouseProduct] = useState(1);
+
+    const formik = useFormik({
+        initialValues: {
+            email: ''
+        },
+        validationSchema: Yup.object({
+            email: Yup.string()
+                .email('Please enter a valid email address')
+                .required('Email is required')
+        }),
+        onSubmit: async (values, { setSubmitting, resetForm }) => {
+            try {
+                await dispatch(subscribeNewsletter(values.email)).unwrap();
+                toast.success('Successfully subscribed to the newsletter');
+                resetForm();
+            } catch (error) {
+                toast.error(error.message || 'Subscription failed');
+            } finally {
+                setSubmitting(false);
+            }
+        }
+    });
 
     const catImages = [
         { image: cat1, name: "Tops", slug: "tops" },
@@ -97,7 +123,7 @@ export default function Home() {
     };
 
     const filteredProducts = getProductsByCategory();
-    
+
     // Function to navigate to the collection page of the active tab
     const navigateToActiveCategory = () => {
         const activeCat = mainCategories.find(cat => cat._id === activeTab);
@@ -162,7 +188,7 @@ export default function Home() {
                             Discover the intersection of heritage and contemporary design. Crafted for those who define the moment.
                         </p>
 
-                        <button 
+                        <button
                             onClick={() => navigate('/lookbook')}
                             className="group relative inline-flex items-center space-x-3 bg-primary px-8 py-4 text-[10px] sm:text-lg font-semibold text-white transition-all hover:bg-secondary hover:scale-105 active:scale-95 text-nowrap"
                         >
@@ -223,8 +249,8 @@ export default function Home() {
                             path: "/collection/accessories"
                         }
                     ].map((collection, index) => (
-                        <div 
-                            key={index} 
+                        <div
+                            key={index}
                             onClick={() => navigate(collection.path)}
                             className="group relative aspect-[4/5] overflow-hidden cursor-pointer bg-lightText"
                         >
@@ -333,7 +359,7 @@ export default function Home() {
 
                             {/* CTA Button */}
                             <div className='text-center my-5 lg:text-left lg:mt-0'>
-                                <button 
+                                <button
                                     onClick={() => navigate('/craftsmanship')}
                                     className="group inline-flex items-center  gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300"
                                 >
@@ -360,7 +386,7 @@ export default function Home() {
                         <p className="text-sm md:text-lg  text-center  text-lightText leading-relaxed mb-8 ">
                             What is left after excess is removed - clarity, purpose, and considered design.
                         </p>
-                        <button 
+                        <button
                             onClick={navigateToActiveCategory}
                             className="group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300 mt-6"
                         >
@@ -451,7 +477,7 @@ export default function Home() {
                                 </p>
                             </div>
                             <div className='text-center lg:text-left'>
-                                <button 
+                                <button
                                     onClick={() => navigate('/philosophy')}
                                     className="custom-heading group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300"
                                 >
@@ -565,7 +591,7 @@ export default function Home() {
                         <p className="text-sm md:text-lg  text-center  text-lightText leading-relaxed mb-8 ">
                             A quiet introduction of new pieces - crafted with the same precision, now available in limited release.
                         </p>
-                        <button 
+                        <button
                             onClick={navigateToActiveCategory}
                             className="group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300 mt-6"
                         >
@@ -659,7 +685,7 @@ export default function Home() {
                                     <p className="text-sm md:text-lg text-border font-light mb-4 md:mb-8 leading-relaxed">
                                         Tailored silhouettes and refined essentials designed with clarity, strength, and quiet confidence.
                                     </p>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/collection/men')}
                                         className="group/btn inline-flex items-center gap-3 bg-white hover:bg-gray-100 text-dark px-4 md:px-6 py-2 md:py-3 text-xs md:text-lg font-semibold uppercase tracking-widest transition-all duration-300"
                                     >
@@ -689,7 +715,7 @@ export default function Home() {
                                     <p className="text-sm md:text-lg text-dark font-light mb-4 md:mb-8 leading-relaxed">
                                         Elevated pieces shaped through balance, movement, and a considered sense of modern femininity.
                                     </p>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/collection/women')}
                                         className="group/btn inline-flex items-center gap-3 bg-[#1a3026] hover:bg-[#254537] text-white px-4 md:px-6 py-2 md:py-3 text-xs md:text-lg font-semibold uppercase tracking-widest transition-all duration-300"
                                     >
@@ -717,7 +743,7 @@ export default function Home() {
                         <p className="text-sm md:text-lg  text-center  text-lightText leading-relaxed mb-8 ">
                             A considered selection of pieces shaped through precision, material, and enduring design each defined by quiet presence.
                         </p>
-                        <button 
+                        <button
                             onClick={navigateToActiveCategory}
                             className="group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300 mt-6"
                         >
@@ -824,10 +850,10 @@ export default function Home() {
                                     >
                                         <div className="flex items-center gap-6">
                                             <div className="w-16 h-16 md:w-20 md:h-20 bg-mainBG flex items-center justify-center overflow-hidden p-2">
-                                                <img 
-                                                    src={getProductImage(product)} 
-                                                    alt={product.name} 
-                                                    className="max-w-full max-h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/item:scale-110" 
+                                                <img
+                                                    src={getProductImage(product)}
+                                                    alt={product.name}
+                                                    className="max-w-full max-h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/item:scale-110"
                                                 />
                                             </div>
                                             <div>
@@ -927,7 +953,7 @@ export default function Home() {
                             </p>
                             <div className='text-center lg:text-left'>
 
-                                <button 
+                                <button
                                     onClick={() => navigate('/lookbook')}
                                     className="group inline-flex items-center gap-3 bg-primary hover:bg-[#254537] text-white  px-6 py-3.5 text-xs md:text-lg font-semibold uppercase tracking-[0.2em] transition-all duration-300 mb-16 lg:mb-20"
                                 >
@@ -986,7 +1012,7 @@ export default function Home() {
                         <p className="text-sm md:text-lg  text-center  text-lightText leading-relaxed mb-8 ">
                             A refined balance of structure and function crafted with precision and designed for everyday movement.
                         </p>
-                        <button 
+                        <button
                             onClick={navigateToActiveCategory}
                             className="group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300 mt-6"
                         >
@@ -1211,7 +1237,7 @@ export default function Home() {
                         <p className="text-sm md:text-lg  text-center  text-lightText leading-relaxed mb-8 ">
                             Pieces brought together through balance, proportion, and intent.
                         </p>
-                        <button 
+                        <button
                             onClick={navigateToActiveCategory}
                             className="group inline-flex items-center gap-2 bg-primary hover:bg-teal-800 text-white px-6 py-3.5 text-xs md:text-lg font-semibold tracking-wider uppercase transition-all duration-300 mt-6"
                         >
@@ -1280,12 +1306,12 @@ export default function Home() {
 
             {/* Shop by Category Grid */}
             <section className="bg-white py-16 lg:py-24">
-                <div className="mx-5">                
+                <div className="mx-5">
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 border-t gap-4 border-l border-border">
                         {catImages.map((item, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 onClick={() => item.slug && navigate(`/collection/shop/${item.slug}`)}
                                 className={`relative aspect-square group overflow-hidden bg-white  flex items-center justify-center transition-all duration-700
                                     ${!item.image ? 'hidden md:flex bg-mainBG/30' : 'cursor-pointer'}
@@ -1293,27 +1319,27 @@ export default function Home() {
                             >
                                 {item.image ? (
                                     <>
-                                        <img 
-                                            src={item.image} 
-                                            alt={item.name} 
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
                                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 scale-100 group-hover:scale-105"
                                         />
                                         {/* Subtle Darkening Overlay */}
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500"></div>
-                                        
+
                                         {/* Hover Label */}
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-10">
                                             <div className="px-5 py-2.5 flex items-center gap-2 shadow-sm">
                                                 <span className="text-[10px] md:text-2xl font-bold tracking-[0.2em] text-white uppercase">
                                                     {item.name}
-                                                </span>                                              
+                                                </span>
                                             </div>
-                                        </div>                                      
+                                        </div>
                                     </>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center p-6 text-center opacity-20">
-                                       
-                                        
+
+
                                     </div>
                                 )}
                             </div>
@@ -1338,21 +1364,34 @@ export default function Home() {
                                 <p className="text-sm md:text-lg text-center lg:text-left text-lightText font-light  leading-relaxed">
                                     A quieter way to stay connected where new releases, refined selections, and updates are shared with intention, not frequency.
                                 </p>
-                                
+
                                 <div className="pt-8 space-y-4">
                                     <p className="text-sm md:text-lg font-semibold text-mainText">
                                         Receive early access to new collections and considered updates.
                                     </p>
-                                    <div className="flex max-w-md">
-                                        <input 
-                                            type="email" 
-                                            placeholder="Enter email address" 
-                                            className="flex-1 border border-border px-4 py-3 text-xs md:text-lg focus:outline-none focus:border-primary bg-white/50"
-                                        />
-                                        <button className="bg-primary text-white px-8 py-3 text-xs md:text-lg font-bold  uppercase hover:bg-primary transition-colors">
-                                            ACCESS
-                                        </button>
-                                    </div>
+                                    <form onSubmit={formik.handleSubmit} className="flex flex-col gap-2 max-w-md">
+                                        <div className="flex w-full">
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                placeholder="Enter email address"
+                                                value={formik.values.email}
+                                                onChange={formik.handleChange}
+                                                onBlur={formik.handleBlur}
+                                                className={`flex-1 border px-4 py-3 text-xs md:text-lg focus:outline-none focus:border-primary bg-white/50 ${formik.touched.email && formik.errors.email ? 'border-red-500' : 'border-border'}`}
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={formik.isSubmitting}
+                                                className={`bg-primary text-white px-8 py-3 text-xs md:text-lg font-bold uppercase transition-colors ${formik.isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary/90'}`}
+                                            >
+                                                {formik.isSubmitting ? '...' : 'ACCESS'}
+                                            </button>
+                                        </div>
+                                        {formik.touched.email && formik.errors.email ? (
+                                            <div className="text-red-500 text-xs px-1">{formik.errors.email}</div>
+                                        ) : null}
+                                    </form>
                                 </div>
                             </div>
 
@@ -1366,9 +1405,9 @@ export default function Home() {
                         {/* Right Column */}
                         <div className="space-y-4 md:space-y-12">
                             <div className="aspect-[16/7] overflow-hidden grayscale-[0.1] contrast-[1.05]">
-                                <img 
-                                    src={newsletterImg} 
-                                    alt="Access Without Excess" 
+                                <img
+                                    src={newsletterImg}
+                                    alt="Access Without Excess"
                                     className="w-full h-full object-cover"
                                 />
                             </div>

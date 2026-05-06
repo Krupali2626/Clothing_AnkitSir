@@ -7,7 +7,6 @@ import { HiMinus, HiPlus } from 'react-icons/hi';
 import { IoClose } from 'react-icons/io5';
 import { updateCartItem, removeFromCart, fetchCart, applyCoupon, removeCoupon } from '../redux/slice/cart.slice';
 import { fetchRecentlyViewed } from '../redux/slice/product.slice';
-import { placeOrder } from '../redux/slice/order.slice';
 import toast from 'react-hot-toast';
 import EditCartItemModal from '../components/EditCartItemModal';
 
@@ -70,8 +69,6 @@ export default function CheckOut() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { isAuthenticated } = useSelector((state) => state.auth);
-    const { placeOrderLoading } = useSelector((state) => state.order);
-
     const { cartData, loading: cartLoading } = useSelector((state) => state.cart);
     const { recentlyViewed } = useSelector((state) => state.product);
     const [updatingId, setUpdatingId] = useState(null); // item._id being updated
@@ -149,18 +146,7 @@ export default function CheckOut() {
         }
     };
 
-    // ── Place order ───────────────────────────────────────────────────────────
-    const handleCheckout = async () => {
-        try {
-            const result = await dispatch(
-                placeOrder({ paymentMethod: 'Card' })
-            ).unwrap();
-            const orderId = result?.result?._id;
-            navigate(orderId ? `/orders/${orderId}` : '/orders');
-        } catch (error) {
-            toast.error(error?.message || 'Failed to place order');
-        }
-    };
+
 
     // ── Handle Edit Item ──────────────────────────────────────────────────────
     const handleEditItem = (item) => {
@@ -394,10 +380,9 @@ export default function CheckOut() {
                                 <div className="mt-16">
                                     <button
                                         onClick={() => navigate('/checkout-form')}
-                                        disabled={placeOrderLoading}
-                                        className="w-full h-[54px] bg-primary text-white text-[13px] font-bold uppercase tracking-[2px] hover:bg-primary/90 transition-all disabled:opacity-50"
+                                        className="w-full h-[54px] bg-primary text-white text-[13px] font-bold uppercase tracking-[2px] hover:bg-primary/90 transition-all shadow-md"
                                     >
-                                        {placeOrderLoading ? 'Processing...' : 'CHECKOUT'}
+                                        CHECKOUT
                                     </button>
                                 </div>
                             )}

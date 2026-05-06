@@ -152,7 +152,7 @@ import {
   deleteLookbook
 } from "../controller/lookbook.controller.js";
 import { getSettings, updateSettings } from "../controller/settings.controller.js";
-
+import { getLowStockAlerts, bulkUpdateStock } from "../controller/inventory.controller.js";
 
 const router = express.Router();
 
@@ -251,6 +251,10 @@ router.post("/cart/remove", UserAuth, removeFromCart);
 router.delete("/cart/clear", UserAuth, clearCart);
 router.post("/cart/coupon/apply", UserAuth, applyCoupon);
 router.delete("/cart/coupon/remove", UserAuth, removeCoupon);
+
+// --- Inventory Routes ---
+router.get("/inventory/low-stock", UserAuth, adminAuth, getLowStockAlerts);
+router.put("/inventory/bulk-update", UserAuth, adminAuth, bulkUpdateStock);
 
 // --- Order & Payment Routes ---
 router.post("/order/place", UserAuth, placeOrder);
