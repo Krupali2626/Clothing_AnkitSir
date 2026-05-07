@@ -22,6 +22,7 @@ const settingsSchema = new mongoose.Schema({
         paypalClientId: { type: String },
         isStripeEnabled: { type: Boolean, default: true },
         isPaypalEnabled: { type: Boolean, default: false },
+        maxSavedCards: { type: Number, default: 3, min: 1, max: 10 },
     },
     shipping: {
         flatRate: { type: Number, default: 25 },

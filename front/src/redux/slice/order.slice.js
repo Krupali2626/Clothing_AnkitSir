@@ -59,7 +59,7 @@ export const fetchOrderById = createAsyncThunk(
         try {
             const response = await axiosInstance.get(`/order/my`);
             // Filter from the full list since there's no single-order endpoint
-            const orders = response.data?.result || [];
+            const orders = response.data?.result.orders || [];
             const order = orders.find((o) => o._id === id);
             if (!order) throw new Error('Order not found');
             return order;
@@ -92,6 +92,34 @@ export const confirmPayment = createAsyncThunk(
                 paymentIntentId,
                 orderId,
                 saveCard,
+            });
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+// Create PayPal order
+export const createPayPalOrder = createAsyncThunk(
+    'order/createPayPalOrder',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/paypal/create-order');
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, rejectWithValue);
+        }
+    }
+);
+
+// Capture PayPal payment
+export const capturePayPalPayment = createAsyncThunk(
+    'order/capturePayPalPayment',
+    async ({ paypalOrderId }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/paypal/capture-payment', {
+                paypalOrderId,
             });
             return response.data;
         } catch (error) {
@@ -205,6 +233,36 @@ const orderSlice = createSlice({
                 state.confirmPaymentLoading = false;
                 state.confirmPaymentError = action.payload?.message || 'Failed to confirm payment';
                 toast.error(action.payload?.message || 'Failed to confirm payment');
+            })
+            // createPayPalOrder
+            .addCase(createPayPalOrder.pending, (state) => {
+                state.placeOrderLoading = true;
+                state.placeOrderError = null;
+            })
+            .addCase(createPayPalOrder.fulfilled, (state, action) => {
+                state.placeOrderLoading = false;
+                state.placeOrderError = null;
+            })
+            .addCase(createPayPalOrder.rejected, (state, action) => {
+                state.placeOrderLoading = false;
+                state.placeOrderError = action.payload?.message || 'Failed to create PayPal order';
+                toast.error(action.payload?.message || 'Failed to create PayPal order');
+            })
+            // capturePayPalPayment
+            .addCase(capturePayPalPayment.pending, (state) => {
+                state.confirmPaymentLoading = true;
+                state.confirmPaymentError = null;
+            })
+            .addCase(capturePayPalPayment.fulfilled, (state, action) => {
+                state.confirmPaymentLoading = false;
+                state.currentOrder = action.payload?.result || null;
+                state.confirmPaymentError = null;
+                toast.success('PayPal payment successful!');
+            })
+            .addCase(capturePayPalPayment.rejected, (state, action) => {
+                state.confirmPaymentLoading = false;
+                state.confirmPaymentError = action.payload?.message || 'Failed to capture PayPal payment';
+                toast.error(action.payload?.message || 'Failed to capture PayPal payment');
             });
     },
 });

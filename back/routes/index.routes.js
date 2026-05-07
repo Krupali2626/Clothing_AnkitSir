@@ -151,7 +151,8 @@ import {
   updateLookbook,
   deleteLookbook
 } from "../controller/lookbook.controller.js";
-import { getSettings, updateSettings } from "../controller/settings.controller.js";
+import { getSettings, updateSettings, getPaymentConfig } from "../controller/settings.controller.js";
+import { createPayPalOrderController, capturePayPalPaymentController } from "../controller/paypal.controller.js";
 import { getLowStockAlerts, bulkUpdateStock } from "../controller/inventory.controller.js";
 
 const router = express.Router();
@@ -265,6 +266,10 @@ router.get("/order/admin/user/:userId", UserAuth, adminAuth, getUserOrdersAdmin)
 router.put("/order/admin/status/:id", UserAuth, adminAuth, updateOrderStatusAdmin);
 router.get("/order/summary", UserAuth, orderSummaryController);
 
+// --- PayPal Routes ---
+router.post("/paypal/create-order", UserAuth, createPayPalOrderController);
+router.post("/paypal/capture-payment", UserAuth, capturePayPalPaymentController);
+
 router.post("/payment/confirm", UserAuth, confirmStripePaymentController);
 router.get("/payment/status/:orderId", UserAuth, getPaymentStatusController);
 router.get("/payment/my", UserAuth, myPaymentController);
@@ -336,6 +341,7 @@ router.delete("/lookbook/delete/:id", UserAuth, adminAuth, deleteLookbook);
 // --- Settings Routes ---
 router.get("/settings/get", UserAuth, adminAuth, getSettings);
 router.put("/settings/update", UserAuth, adminAuth, updateSettings);
+router.get("/settings/payment-config", getPaymentConfig); // Public endpoint
 
 
 //aws

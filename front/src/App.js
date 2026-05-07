@@ -3,9 +3,17 @@ import { Routes, Route } from 'react-router-dom';
 import UserRoutes from './routes/UserRoutes';
 import AdminRoutes from './routes/AdminRoutes';
 import { Toaster } from 'react-hot-toast';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+
+const paypalOptions = {
+  'client-id': process.env.REACT_APP_PAYPAL_CLIENT_ID,
+  currency: 'AUD',
+  intent: 'capture',
+};
+
 function App() {
   return (
-    <>
+    <PayPalScriptProvider options={paypalOptions}>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -29,7 +37,7 @@ function App() {
         {/* Everything else belongs to UserRoutes */}
         <Route path="/*" element={<UserRoutes />} />
       </Routes>
-    </>
+    </PayPalScriptProvider>
   );
 }
 

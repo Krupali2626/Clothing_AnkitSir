@@ -487,6 +487,15 @@ export const confirmStripePaymentController = async (req, res) => {
         console.log('👤 User found:', user._id);
         console.log('💳 Current saved cards count:', user.savedCards.length);
 
+        // Get max saved cards limit from settings
+        const Settings = (await import('../model/settings.model.js')).default;
+        let settings = await Settings.findOne();
+        if (!settings) {
+          settings = await Settings.create({});
+        }
+        const maxSavedCards = settings.payment?.maxSavedCards || 3;
+        console.log('⚙️ Max saved cards limit:', maxSavedCards);
+
         // Retrieve payment method details from Stripe
         const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
         console.log('💳 Payment method retrieved:', paymentMethod.id);
@@ -509,8 +518,8 @@ export const confirmStripePaymentController = async (req, res) => {
 
           if (existingCard) {
             console.log('ℹ️ Card already saved');
-          } else if (user.savedCards.length >= 3) {
-            console.log('ℹ️ Maximum cards limit reached (3)');
+          } else if (user.savedCards.length >= maxSavedCards) {
+            console.log(`ℹ️ Maximum cards limit reached (${maxSavedCards})`);
           } else {
             console.log('✅ Saving new card...');
 
@@ -686,6 +695,14 @@ export const saveStripePaymentMethodController = async (req, res) => {
       return sendNotFoundResponse(res, "User not found");
     }
 
+    // Get max saved cards limit from settings
+    const Settings = (await import('../model/settings.model.js')).default;
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    const maxSavedCards = settings.payment?.maxSavedCards || 3;
+
     // Retrieve payment method from Stripe
     const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
 
@@ -706,8 +723,8 @@ export const saveStripePaymentMethodController = async (req, res) => {
       return sendBadRequestResponse(res, "This card is already saved");
     }
 
-    if (user.savedCards.length >= 3) {
-      return sendBadRequestResponse(res, "Maximum cards limit reached (3)");
+    if (user.savedCards.length >= maxSavedCards) {
+      return sendBadRequestResponse(res, `Maximum cards limit reached (${maxSavedCards})`);
     }
 
     // Attach to customer if not already attached

@@ -41,6 +41,7 @@ const Settings = () => {
         stripeSecretKey: '',
         isPaypalEnabled: false,
         paypalClientId: '',
+        maxSavedCards: 3,
     });
 
     // Shipping Settings
@@ -360,6 +361,18 @@ const Settings = () => {
                                                         className="w-full px-6 py-4 border border-border rounded-none outline-none focus:border-primary focus:ring-8 focus:ring-primary/5 transition-all font-mono text-[13px] font-medium bg-mainBG/10 text-mainText"
                                                         placeholder="sk_test_..."
                                                     />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-black text-mainText uppercase tracking-widest ml-1 opacity-70">Maximum Saved Cards Per User</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="10"
+                                                        value={paymentSettings.maxSavedCards}
+                                                        onChange={(e) => setPaymentSettings({ ...paymentSettings, maxSavedCards: parseInt(e.target.value) || 3 })}
+                                                        className="w-full px-6 py-4 border border-border rounded-none outline-none focus:border-primary focus:ring-8 focus:ring-primary/5 transition-all text-sm font-black tracking-tight bg-mainBG/10"
+                                                    />
+                                                    <p className="text-[10px] text-lightText font-medium ml-1">Users can save between 1-10 payment cards. Default: 3</p>
                                                 </div>
                                             </div>
                                         )}

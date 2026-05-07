@@ -5,6 +5,7 @@ import { IoClose } from 'react-icons/io5'
 import PaymentSidebar from './PaymentCardSidebar'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchSavedCards, deleteSavedCard, selectCard } from '../../redux/slice/paymentCard.slice'
+import { fetchPaymentConfig } from '../../redux/slice/settings.slice'
 import { RiVisaLine, RiMastercardLine } from 'react-icons/ri'
 import { SiAmericanexpress } from 'react-icons/si'
 import { Elements } from '@stripe/react-stripe-js'
@@ -14,6 +15,10 @@ import Pagination from '../../components/Pagination'
 export default function PaymentsCard() {
     const dispatch = useDispatch();
     const { cards, selectedCardId, loading, error, actionLoading } = useSelector((state) => state.payment);
+    const { paymentConfig } = useSelector((state) => state.settings);
+
+    // Get max saved cards from settings
+    const maxSavedCards = paymentConfig?.maxSavedCards || 3;
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [removeModalOpen, setRemoveModalOpen] = useState(false);
@@ -24,6 +29,7 @@ export default function PaymentsCard() {
 
     useEffect(() => {
         dispatch(fetchSavedCards());
+        dispatch(fetchPaymentConfig()); // Fetch payment configuration
     }, [dispatch]);
 
     // Debug: Log cards data to see what we're receiving

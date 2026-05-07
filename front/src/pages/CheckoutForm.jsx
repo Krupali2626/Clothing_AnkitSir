@@ -3,16 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { placeOrder, confirmPayment } from '../redux/slice/order.slice';
+import { placeOrder, confirmPayment, createPayPalOrder, capturePayPalPayment } from '../redux/slice/order.slice';
 import { applyCoupon, removeCoupon } from '../redux/slice/cart.slice';
 import { fetchAddresses, addAddress, selectAddress } from '../redux/slice/address.slice';
 import { fetchRecentlyViewed } from '../redux/slice/product.slice';
 import { fetchSavedCards } from '../redux/slice/paymentCard.slice';
+import { fetchPaymentConfig } from '../redux/slice/settings.slice';
 import { IoClose } from 'react-icons/io5';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardNumberElement, CardCvcElement } from '@stripe/react-stripe-js';
+import { PayPalButtons } from '@paypal/react-paypal-js';
 import StripeCardInput from '../components/StripeCardInput';
 
 // All API calls now use Redux slices
@@ -115,8 +117,12 @@ function CheckoutFormContent() {
     const { addresses, selectedAddressId: storeSelectedAddressId, actionLoading: addressActionLoading } = useSelector((state) => state.address);
     const { cards, loading: cardsLoading } = useSelector((state) => state.payment);
     const { recentlyViewed } = useSelector((state) => state.product);
+    const { paymentConfig } = useSelector((state) => state.settings);
     const cartItems = cartData?.items || [];
     const isEmpty = !cartLoading && cartItems.length === 0;
+
+    // Get max saved cards from settings
+    const maxSavedCards = paymentConfig?.maxSavedCards || 3;
 
 
     const [isProcessing, setIsProcessing] = useState(false);
@@ -153,6 +159,12 @@ function CheckoutFormContent() {
         validationSchema: checkoutSchema,
         onSubmit: async (values) => {
             if (isProcessing) return; // Prevent double submission
+
+            // Skip form submission for PayPal - handled by PayPal button
+            if (values.paymentMethod === 'PayPal') {
+                toast.info('Please use the PayPal button to complete your payment');
+                return;
+            }
 
             setStripeError(null);
             setIsProcessing(true);
@@ -380,6 +392,7 @@ function CheckoutFormContent() {
             dispatch(fetchSavedCards());
             dispatch(fetchAddresses());
             dispatch(fetchRecentlyViewed());
+            dispatch(fetchPaymentConfig()); // Fetch payment configuration
         }
     }, [isAuthenticated, dispatch]);
 
@@ -883,7 +896,7 @@ function CheckoutFormContent() {
                                                     })}
 
                                                     {/* Add New Card Option */}
-                                                    {cards.length < 3 && (
+                                                    {cards.length < maxSavedCards && (
                                                         <label className="flex items-center gap-3 p-3 border border-dashed border-gray-400 rounded cursor-pointer hover:border-primary transition-colors">
                                                             <input
                                                                 type="radio"
@@ -906,7 +919,7 @@ function CheckoutFormContent() {
                                             {(cards.length === 0 || showAddNewCard) && (
                                                 <StripeCardInput
                                                     formik={formik}
-                                                    showSaveCard={cards.length < 3}
+                                                    showSaveCard={cards.length < maxSavedCards}
                                                 />
                                             )}
                                         </div>
@@ -931,13 +944,93 @@ function CheckoutFormContent() {
                                         <div className="space-y-4 mt-4 ">
                                             <div className="bg-gray-50 p-4 rounded">
                                                 <p className="text-sm text-gray-700 mb-3">
-                                                    You will be redirected to PayPal to complete your purchase securely.
+                                                    Click the PayPal button below to complete your purchase securely.
                                                 </p>
-                                                <div className="flex items-center gap-2">
-                                                    <svg className="w-20 h-8" viewBox="0 0 124 33" fill="none">
-                                                        <text x="0" y="20" className="text-2xl font-bold fill-[#003087]">PayPal</text>
-                                                    </svg>
-                                                </div>
+                                                
+                                                {/* PayPal Button */}
+                                                <PayPalButtons
+                                                    style={{
+                                                        layout: 'vertical',
+                                                        color: 'gold',
+                                                        shape: 'rect',
+                                                        label: 'paypal',
+                                                    }}
+                                                    createOrder={async () => {
+                                                        try {
+                                                            // Validate address before creating PayPal order
+                                                            if (!selectedAddressId && !formik.values.firstName) {
+                                                                toast.error('Please provide a shipping address');
+                                                                throw new Error('Address required');
+                                                            }
+
+                                                            // Create or select address
+                                                            let addressId = selectedAddressId;
+                                                            if (!addressId || formik.values.firstName) {
+                                                                const result = await dispatch(addAddress({
+                                                                    addressData: {
+                                                                        firstName: formik.values.firstName,
+                                                                        lastName: formik.values.lastName,
+                                                                        country: formik.values.country,
+                                                                        address: formik.values.address,
+                                                                        aptSuite: formik.values.apartment,
+                                                                        city: formik.values.city,
+                                                                        state: formik.values.state,
+                                                                        zipcode: formik.values.postCode,
+                                                                        addressType: formik.values.addressType,
+                                                                        phone: formik.values.mobile,
+                                                                    },
+                                                                    setAsDefault: false
+                                                                })).unwrap();
+
+                                                                const addresses = result?.address || [];
+                                                                if (addresses.length > 0) {
+                                                                    addressId = addresses[addresses.length - 1]._id;
+                                                                }
+                                                            }
+
+                                                            if (addressId) {
+                                                                await dispatch(selectAddress(addressId)).unwrap();
+                                                            }
+
+                                                            // Create PayPal order
+                                                            const response = await dispatch(createPayPalOrder()).unwrap();
+                                                            return response.result.paypalOrderId;
+                                                        } catch (error) {
+                                                            console.error('PayPal createOrder error:', error);
+                                                            toast.error(error?.message || 'Failed to create PayPal order');
+                                                            throw error;
+                                                        }
+                                                    }}
+                                                    onApprove={async (data) => {
+                                                        try {
+                                                            setIsProcessing(true);
+                                                            
+                                                            // Capture PayPal payment
+                                                            const response = await dispatch(capturePayPalPayment({
+                                                                paypalOrderId: data.orderID
+                                                            })).unwrap();
+
+                                                            toast.success('PayPal payment successful!');
+                                                            
+                                                            const orderId = response?.result?._id;
+                                                            navigate(orderId ? `/orders/${orderId}` : '/orders');
+                                                        } catch (error) {
+                                                            console.error('PayPal capture error:', error);
+                                                            toast.error(error?.message || 'Failed to capture PayPal payment');
+                                                            setIsProcessing(false);
+                                                        }
+                                                    }}
+                                                    onError={(err) => {
+                                                        console.error('PayPal error:', err);
+                                                        toast.error('PayPal payment failed. Please try again.');
+                                                        setIsProcessing(false);
+                                                    }}
+                                                    onCancel={() => {
+                                                        toast.info('PayPal payment cancelled');
+                                                        setIsProcessing(false);
+                                                    }}
+                                                    disabled={isProcessing}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -1011,17 +1104,19 @@ function CheckoutFormContent() {
                             </div>
                         </div>
 
-                        {/* Pay Now Button */}
-                        <div className="mt-8">
-                            <button
-                                type="button"
-                                onClick={formik.handleSubmit}
-                                disabled={isProcessing}
-                                className="w-full h-14 bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isProcessing ? 'Processing...' : 'PAY NOW'}
-                            </button>
-                        </div>
+                        {/* Pay Now Button - Only show for non-PayPal payment methods */}
+                        {formik.values.paymentMethod !== 'PayPal' && (
+                            <div className="mt-8">
+                                <button
+                                    type="button"
+                                    onClick={formik.handleSubmit}
+                                    disabled={isProcessing}
+                                    className="w-full h-14 bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isProcessing ? 'Processing...' : 'PAY NOW'}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Side - Order Summary */}

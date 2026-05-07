@@ -30,7 +30,7 @@ export const placeOrder = async (req, res) => {
             savedCardId
         } = req.body;
 
-        if (!paymentMethod || !["Card", "Zip Pay", "After Pay"].includes(paymentMethod)) {
+        if (!paymentMethod || !["Card", "PayPal", "Zip Pay", "After Pay"].includes(paymentMethod)) {
             await session.abortTransaction();
             return sendBadRequestResponse(res, "Invalid or missing payment method.");
         }

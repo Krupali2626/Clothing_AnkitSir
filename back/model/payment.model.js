@@ -15,6 +15,18 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  paypalOrderId: {
+    type: String,
+    default: null
+  },
+  paypalCaptureId: {
+    type: String,
+    default: null
+  },
+  paypalPayerEmail: {
+    type: String,
+    default: null
+  },
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
@@ -27,7 +39,7 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["Card", "Zip Pay", "After Pay"],
+    enum: ["Card", "PayPal", "Zip Pay", "After Pay"],
     required: true,
   },
   paymentStatus: {

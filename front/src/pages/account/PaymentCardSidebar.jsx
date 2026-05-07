@@ -27,9 +27,13 @@ export default function PaymentCardSidebar({ isOpen, onClose }) {
     const stripe = useStripe();
     const elements = useElements();
     
-    const { actionLoading } = useSelector((state) => state.payment);
+    const { actionLoading, cards } = useSelector((state) => state.payment);
+    const { paymentConfig } = useSelector((state) => state.settings);
     const [cardHolderName, setCardHolderName] = useState('');
     const [isDefault, setIsDefault] = useState(false);
+
+    // Get max saved cards from settings
+    const maxSavedCards = paymentConfig?.maxSavedCards || 3;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,6 +45,12 @@ export default function PaymentCardSidebar({ isOpen, onClose }) {
 
         if (!cardHolderName.trim()) {
             toast.error('Please enter card holder name');
+            return;
+        }
+
+        // Check card limit
+        if (cards.length >= maxSavedCards) {
+            toast.error(`Maximum cards limit reached (${maxSavedCards})`);
             return;
         }
 

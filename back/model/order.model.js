@@ -36,7 +36,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["Card", "Zip Pay", "After Pay"],
+    enum: ["Card", "PayPal", "Zip Pay", "After Pay"],
     required: true
   },
   appliedCoupon: {
@@ -63,6 +63,9 @@ const orderSchema = new mongoose.Schema({
     default: "Awaiting Payment",
   },
   stripePaymentIntentId: { type: String, default: null },
+  paypalOrderId: { type: String, default: null },
+  paypalCaptureId: { type: String, default: null },
+  paypalPayerEmail: { type: String, default: null },
   clientSecret: { type: String, default: null },
   cancelledAt: { type: Date, default: null },
   cancellationReason: { type: String, default: null },
