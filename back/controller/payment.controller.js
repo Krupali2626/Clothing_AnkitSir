@@ -430,10 +430,10 @@ export const confirmStripePaymentController = async (req, res) => {
     await session.startTransaction();
 
     const userId = req.user.id || req.user._id;
-    const { paymentIntentId, orderId, testMode } = req.body;
+    const { paymentIntentId, testMode } = req.body;
 
-    if (!paymentIntentId || !orderId) {
-      return sendBadRequestResponse(res, "Payment Intent ID and Order ID are required");
+    if (!paymentIntentId) {
+      return sendBadRequestResponse(res, "Payment Intent ID is required");
     }
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -452,7 +452,7 @@ export const confirmStripePaymentController = async (req, res) => {
       return sendNotFoundResponse(res, "Payment record not found");
     }
 
-    const order = await orderModel.findById(orderId).session(session);
+    const order = await orderModel.findById(payment.orderId).session(session);
 
     if (!order) {
       return sendNotFoundResponse(res, "Order not found");

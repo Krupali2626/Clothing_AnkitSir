@@ -21,7 +21,6 @@ export const placeOrder = async (req, res) => {
         const userId = req.user.id || req.user._id;
         const {
             paymentMethod,
-            shippingAddress,
             cardNumber,
             cardHolderName,
             expiryDate,
@@ -46,16 +45,40 @@ export const placeOrder = async (req, res) => {
         }
 
         const user = await User.findById(userId).session(session);
-        if (!user || user.address.length === 0) {
-            await session.abortTransaction();
-            return sendBadRequestResponse(res, "Please add a shipping address before placing order.");
-        }
+        
+        // Get shipping address - either from saved addresses or from request body
+        let shippingAddress;
+        const { temporaryAddress } = req.body;
+        
+        if (temporaryAddress) {
+            // Use temporary address from request (not saved to user account)
+            shippingAddress = {
+                firstName: temporaryAddress.firstName,
+                lastName: temporaryAddress.lastName,
+                country: temporaryAddress.country,
+                address: temporaryAddress.address,
+                aptSuite: temporaryAddress.apartment || temporaryAddress.aptSuite,
+                city: temporaryAddress.city,
+                state: temporaryAddress.state,
+                zipcode: temporaryAddress.postCode || temporaryAddress.zipcode,
+                addressType: temporaryAddress.addressType || 'Home',
+                phone: temporaryAddress.mobile || temporaryAddress.phone,
+            };
+        } else {
+            // Use saved address
+            if (!user || user.address.length === 0) {
+                await session.abortTransaction();
+                return sendBadRequestResponse(res, "Please add a shipping address before placing order.");
+            }
 
-        const activeAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
+            const activeAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
 
-        if (!activeAddress) {
-            await session.abortTransaction();
-            return sendBadRequestResponse(res, "Please select a shipping address before placing order.");
+            if (!activeAddress) {
+                await session.abortTransaction();
+                return sendBadRequestResponse(res, "Please select a shipping address before placing order.");
+            }
+            
+            shippingAddress = activeAddress;
         }
 
         let billingAmount = 0;
@@ -178,6 +201,11 @@ export const placeOrder = async (req, res) => {
                         discount: discountAmount.toString(),
                     }
                 };
+                
+                // Store temporary address in metadata if provided
+                if (temporaryAddress) {
+                    paymentIntentData.metadata.temporaryAddress = JSON.stringify(shippingAddress);
+                }
 
                 // If user wants to save card for future use, add setup_future_usage
                 if (saveCardInfo && !usesSavedCard) {
@@ -280,7 +308,23 @@ export const confirmStripePayment = async (req, res) => {
         }
 
         const user = await User.findById(userId).session(session);
-        const activeAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
+        
+        // Get shipping address - check if temporary address was stored in payment intent metadata
+        let shippingAddress;
+        const temporaryAddressData = paymentIntent.metadata?.temporaryAddress;
+        
+        if (temporaryAddressData) {
+            // Parse temporary address from metadata
+            try {
+                shippingAddress = JSON.parse(temporaryAddressData);
+            } catch (e) {
+                console.error('Error parsing temporary address:', e);
+                shippingAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
+            }
+        } else {
+            // Use saved address
+            shippingAddress = user.address.find(addr => addr._id.toString() === user.selectedAddress?.toString()) || user.address[0];
+        }
 
         let billingAmount = 0;
         const orderProducts = [];
@@ -335,7 +379,7 @@ export const confirmStripePayment = async (req, res) => {
             shippingCost,
             paymentStatus: "Paid",
             paymentMethod: paymentIntent.metadata.methodSelected || "Card",
-            shippingAddress: activeAddress,
+            shippingAddress: shippingAddress,
             orderStatus: "Pending",
             appliedCoupon: cart.appliedCoupon || {},
             stripePaymentIntentId: paymentIntentId,

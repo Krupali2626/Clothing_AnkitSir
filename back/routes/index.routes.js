@@ -270,7 +270,7 @@ router.get("/order/summary", UserAuth, orderSummaryController);
 router.post("/paypal/create-order", UserAuth, createPayPalOrderController);
 router.post("/paypal/capture-payment", UserAuth, capturePayPalPaymentController);
 
-router.post("/payment/confirm", UserAuth, confirmStripePaymentController);
+router.post("/payment/confirm", UserAuth, confirmStripePayment);
 router.get("/payment/status/:orderId", UserAuth, getPaymentStatusController);
 router.get("/payment/my", UserAuth, myPaymentController);
 router.get("/payment/invoice/:orderId", UserAuth, downloadInvoiceController);

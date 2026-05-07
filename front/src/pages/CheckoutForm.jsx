@@ -176,58 +176,83 @@ function CheckoutFormContent() {
             }
 
             try {
-                // Step 1: Use existing address or create new one
+                // Step 1: Prepare address data
                 let addressId = selectedAddressId;
+                let temporaryAddress = null;
 
-                // If no address is selected or user filled in new address details, create new address
+                // If user entered new address details
                 if (!addressId || values.firstName) {
-                    try {
-                        const result = await dispatch(addAddress({
-                            addressData: {
-                                firstName: values.firstName,
-                                lastName: values.lastName,
-                                country: values.country,
-                                address: values.address,
-                                aptSuite: values.apartment,
-                                city: values.city,
-                                state: values.state,
-                                zipcode: values.postCode,
-                                addressType: values.addressType,
-                                phone: values.mobile,
-                            },
-                            setAsDefault: false
-                        })).unwrap();
+                    // Check if user wants to save the address
+                    if (values.saveInfo) {
+                        // Save address to user account
+                        try {
+                            const result = await dispatch(addAddress({
+                                addressData: {
+                                    firstName: values.firstName,
+                                    lastName: values.lastName,
+                                    country: values.country,
+                                    address: values.address,
+                                    aptSuite: values.apartment,
+                                    city: values.city,
+                                    state: values.state,
+                                    zipcode: values.postCode,
+                                    addressType: values.addressType,
+                                    phone: values.mobile,
+                                },
+                                setAsDefault: false
+                            })).unwrap();
 
-                        console.log('Address response:', result);
+                            console.log('Address saved:', result);
 
-                        // Get the newly created address ID from the returned address array
-                        const addresses = result?.address || [];
-                        if (addresses.length > 0) {
-                            addressId = addresses[addresses.length - 1]._id;
+                            // Get the newly created address ID
+                            const addresses = result?.address || [];
+                            if (addresses.length > 0) {
+                                addressId = addresses[addresses.length - 1]._id;
+                            }
+
+                            // Select the saved address
+                            if (addressId) {
+                                await dispatch(selectAddress(addressId)).unwrap();
+                                console.log('Address selected:', addressId);
+                            }
+                        } catch (addressError) {
+                            console.error('Error saving address:', addressError);
+                            toast.error(addressError?.message || 'Failed to save shipping address');
+                            setIsProcessing(false);
+                            return;
                         }
-
-                        console.log('New address ID:', addressId);
-                    } catch (addressError) {
-                        console.error('Error saving address:', addressError);
-                        toast.error(addressError?.message || 'Failed to save shipping address');
-                        setIsProcessing(false);
-                        return;
+                    } else {
+                        // Use temporary address (not saved to account)
+                        temporaryAddress = {
+                            firstName: values.firstName,
+                            lastName: values.lastName,
+                            country: values.country,
+                            address: values.address,
+                            apartment: values.apartment,
+                            city: values.city,
+                            state: values.state,
+                            postCode: values.postCode,
+                            addressType: values.addressType,
+                            mobile: values.mobile,
+                        };
+                        console.log('Using temporary address:', temporaryAddress);
                     }
-                }
-
-                // Step 2: Select the address
-                if (addressId) {
+                } else if (addressId) {
+                    // Using saved address - select it
                     try {
                         await dispatch(selectAddress(addressId)).unwrap();
-                        console.log('Address selected:', addressId);
+                        console.log('Saved address selected:', addressId);
                     } catch (selectError) {
                         console.error('Error selecting address:', selectError);
                         toast.error('Failed to select shipping address');
                         setIsProcessing(false);
                         return;
                     }
-                } else {
-                    toast.error('No address available. Please add a shipping address.');
+                }
+
+                // Validate we have an address (either saved or temporary)
+                if (!addressId && !temporaryAddress) {
+                    toast.error('Please provide a shipping address');
                     setIsProcessing(false);
                     return;
                 }
@@ -237,6 +262,11 @@ function CheckoutFormContent() {
                     paymentMethod: values.paymentMethod,
                     saveCardInfo: values.saveCard && showAddNewCard, // Pass saveCard flag to backend
                 };
+
+                // Add temporary address if using one
+                if (temporaryAddress) {
+                    orderPayload.temporaryAddress = temporaryAddress;
+                }
 
                 // If using saved card
                 if (selectedSavedCard && !showAddNewCard) {
