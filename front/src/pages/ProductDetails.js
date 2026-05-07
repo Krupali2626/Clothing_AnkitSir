@@ -104,6 +104,7 @@ const ProductDetails = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showMiniBar, setShowMiniBar] = useState(false);
+    const [showDots, setShowDots] = useState(true);
     const [addingToCart, setAddingToCart] = useState(false);
     const mainSectionRef = useRef(null);
 
@@ -136,7 +137,7 @@ const ProductDetails = () => {
         if (variants && variants.length > 0) {
             const defaultV = variants.find(v => v.isDefault) || variants[0];
             setSelectedVariant(defaultV);
-            
+
             // Auto-select size if there are no options (One Size)
             if (!defaultV.options || defaultV.options.length === 0) {
                 setSelectedSize('One Size');
@@ -154,7 +155,7 @@ const ProductDetails = () => {
         status: opt.stock <= 0 ? 'Sold Out - Notify Me' : opt.stock <= 5 ? 'Low Stock' : null
     })) || [];
     const hasOptions = sizeOptions.length > 0;
-    
+
     let isSoldOut = false;
     if (selectedVariant) {
         if (hasOptions) {
@@ -214,7 +215,7 @@ const ProductDetails = () => {
             const sizeOption = selectedVariant.options.find(opt => opt.size === (selectedSize.size || selectedSize));
             if (sizeOption) return sizeOption.price;
         }
-        
+
         // Prioritize finalPrice, then variant price, then options price, then base price
         const priceToUse = selectedVariant?.finalPrice ?? selectedVariant?.price;
         if (priceToUse !== undefined && priceToUse !== null) {
@@ -229,14 +230,14 @@ const ProductDetails = () => {
 
     const handleSelectVariant = (variant) => {
         setSelectedVariant(variant);
-        
+
         // Handle size selection for new variant
         if (!variant.options || variant.options.length === 0) {
             setSelectedSize('One Size');
         } else {
             setSelectedSize(null);
         }
-        
+
         setColorSidebarOpen(false);
     };
 
@@ -299,6 +300,7 @@ const ProductDetails = () => {
             if (mainSectionRef.current) {
                 const rect = mainSectionRef.current.getBoundingClientRect();
                 setShowMiniBar(rect.bottom < 100);
+                setShowDots(rect.bottom > 0);
             }
         };
 
@@ -375,28 +377,30 @@ const ProductDetails = () => {
             {/* Main Product Section */}
             <div ref={mainSectionRef} className="w-full grid grid-cols-1 lg:grid-cols-2 items-start">
                 {/* Left Column: Scrollable Images */}
-                <div className="relative flex flex-col gap-0 w-full">
-                    {productImages.map((image, index) => (
-                        <div
-                            key={image.id}
-                            ref={el => imageRefs.current[index] = el}
-                            data-index={index}
-                            onClick={() => {
-                                setCurrentImageIndex(index);
-                                setImageModalOpen(true);
-                            }}
-                            className="w-full h-[70vh] md:h-[85vh] lg:h-screen bg-white flex items-center justify-center cursor-pointer transition-all duration-500"
-                        >
-                            <img
-                                src={image?.src}
-                                alt={image?.alt}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                    ))}
+                <div className="relative w-full overflow-hidden">
+                    <div className="flex flex-row lg:flex-col gap-0 w-full overflow-x-auto lg:overflow-x-visible scrollbar-hide snap-x snap-mandatory">
+                        {productImages.map((image, index) => (
+                            <div
+                                key={image.id}
+                                ref={el => imageRefs.current[index] = el}
+                                data-index={index}
+                                onClick={() => {
+                                    setCurrentImageIndex(index);
+                                    setImageModalOpen(true);
+                                }}
+                                className="w-full flex-shrink-0 snap-center h-[50vh] md:h-[85vh] lg:h-screen bg-[#F8F9FA] flex items-center justify-center cursor-pointer transition-all duration-500"
+                            >
+                                <img
+                                    src={image?.src}
+                                    alt={image?.alt}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ))}
+                    </div>
 
-                    {/* Vertical Indicators */}
-                    <div className="hidden lg:flex fixed left-10 bottom-10 z-30 flex-col gap-3">
+                    {/* Desktop Vertical Indicators */}
+                    <div className={`hidden lg:flex fixed left-10 bottom-10 z-30 flex-col gap-3 transition-opacity duration-300 ${!showDots ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         {productImages.map((_, index) => (
                             <button
                                 key={index}
@@ -410,10 +414,30 @@ const ProductDetails = () => {
                             </button>
                         ))}
                     </div>
+
+                    {/* Mobile/Tablet Horizontal Indicators */}
+                    <div className="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full gap-1">
+                        {productImages.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    scrollToImage(index);
+                                }}
+                                className="p-2 outline-none group"
+                                aria-label={`Go to image ${index + 1}`}
+                            >
+                                <div className={`h-1.5 rounded-full transition-all duration-500 ${index === currentImageIndex
+                                        ? 'bg-dark w-4'
+                                        : 'bg-dark/30 w-1.5 group-hover:bg-dark/50'
+                                    }`} />
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Right Column: Content Area */}
-                <div className="product-details-container lg:sticky lg:top-0 h-auto lg:h-screen flex items-center justify-center p-6 md:p-10 lg:p-18">
+                <div className="product-details-container lg:sticky lg:top-0 h-auto lg:h-screen flex items-center justify-center p-6 md:p-10 lg:p-18 bg-[#F8F9FA]">
                     <div className="max-w-xl w-full flex flex-col">
                         {/* Top Navigation Row */}
                         <div className="flex items-center justify-between mb-8 lg:mb-12">
@@ -554,7 +578,6 @@ const ProductDetails = () => {
                                         key={product._id}
                                         onClick={() => {
                                             navigate(`/product/${product.slug}`);
-                                            window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                         className={`group cursor-pointer p-6 lg:p-8 ${index < wearItWith.length - 1 ? 'border-r border-[#E9ECEF]' : ''} ${index < 2 ? 'lg:border-r lg:border-[#E9ECEF]' : ''}`}
                                     >
@@ -616,7 +639,6 @@ const ProductDetails = () => {
                                         onClick={() => {
                                             if (product.slug) {
                                                 navigate(`/product/${product.slug}`);
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }
                                         }}
                                         className={`group cursor-pointer p-4 md:p-6 lg:p-8 border-b border-r border-gray-100 transition-colors hover:bg-[#FDFDFD] ${borderClasses}`}

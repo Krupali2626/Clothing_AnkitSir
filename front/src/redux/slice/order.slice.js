@@ -188,6 +188,7 @@ const orderSlice = createSlice({
             .addCase(fetchOrderById.rejected, (state, action) => {
                 state.detailLoading = false;
                 state.detailError = action.payload?.message || 'Failed to fetch order';
+                toast.error(action.payload?.message || 'Failed to fetch order');
             })
             // cancelOrder
             .addCase(cancelOrder.pending, (state) => {

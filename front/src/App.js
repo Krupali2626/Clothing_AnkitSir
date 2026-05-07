@@ -14,6 +14,7 @@ const paypalOptions = {
 function App() {
   return (
     <PayPalScriptProvider options={paypalOptions}>
+      <ScrollToTop />
       <Toaster
         position="top-right"
         toastOptions={{

@@ -175,14 +175,14 @@ const Journal = () => {
                     </div>
 
                     {/* Category Filter Bar */}
-                    <div className="border-y border-gray-100 py-6 mb-12 flex justify-center overflow-x-auto scrollbar-hide bg-white/95 backdrop-blur-md z-10">
-                        <div className="flex items-center gap-8 md:gap-12 whitespace-nowrap px-4">
+                    <div className="border-y border-gray-100 py-6 mb-12 overflow-x-auto scrollbar-hide bg-white/95 backdrop-blur-md z-10 sticky top-[70px]">
+                        <div className="flex items-center justify-start md:justify-center gap-8 md:gap-12 whitespace-nowrap px-6 min-w-max">
                             {CATEGORIES.map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
                                     className={`text-sm md:text-base transition-all duration-300 ${activeCategory === cat
-                                        ? "text-[#14372F] font-bold"
+                                        ? "text-[#14372F] font-bold scale-110"
                                         : "text-[#ADB5BD] font-medium hover:text-[#14372F]"
                                         }`}
                                 >

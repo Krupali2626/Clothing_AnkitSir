@@ -154,7 +154,7 @@ export const placeOrder = async (req, res) => {
         if (["Card", "Zip Pay", "After Pay"].includes(paymentMethod)) {
             try {
                 const amountInCents = Math.round(totalAmount * 100);
-                
+
                 // Create Stripe customer if doesn't exist
                 if (!user.stripeCustomerId) {
                     const customer = await stripe.customers.create({
@@ -165,7 +165,7 @@ export const placeOrder = async (req, res) => {
                     user.stripeCustomerId = customer.id;
                     await user.save({ session });
                 }
-                
+
                 const paymentIntentData = {
                     amount: amountInCents,
                     currency: "aud",
@@ -178,13 +178,13 @@ export const placeOrder = async (req, res) => {
                         discount: discountAmount.toString(),
                     }
                 };
-                
+
                 // If user wants to save card for future use, add setup_future_usage
                 if (saveCardInfo && !usesSavedCard) {
                     paymentIntentData.setup_future_usage = 'off_session';
                     console.log('🔐 Payment Intent configured to save card for future use');
                 }
-                
+
                 // If using saved card, attach payment method
                 if (usesSavedCard && savedCardPaymentMethodId) {
                     paymentIntentData.payment_method = savedCardPaymentMethodId;
@@ -193,9 +193,9 @@ export const placeOrder = async (req, res) => {
                 } else {
                     paymentIntentData.automatic_payment_methods = { enabled: true };
                 }
-                
+
                 const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
-                
+
                 clientSecret = paymentIntent.client_secret;
                 stripePaymentIntentId = paymentIntent.id;
             } catch (stripeError) {
@@ -205,7 +205,7 @@ export const placeOrder = async (req, res) => {
             }
         }
         await session.commitTransaction();
- 
+
         return sendSuccessResponse(res, "Payment intent initialized.", {
             totalAmount,
             clientSecret,
@@ -266,7 +266,7 @@ export const confirmStripePayment = async (req, res) => {
         const userId = req.user.id || req.user._id;
 
         // --- Now Create the Order because payment is successful ---
-        
+
         // 1. Get current cart to build the order
         const cart = await Cart.findOne({ userId })
             .populate("items.productId")
@@ -388,7 +388,7 @@ export const confirmStripePayment = async (req, res) => {
         await session.commitTransaction();
 
         // --- Non-blocking actions after commit ---
-        
+
         // Send Confirmation Email
         if (user && user.email) {
             sendOrderConfirmationEmail(user, savedOrder);
@@ -403,10 +403,10 @@ export const confirmStripePayment = async (req, res) => {
             metadata: { orderId: savedOrder._id }
         });
 
-        return sendSuccessResponse(res, "Order created and payment confirmed successfully", { 
+        return sendSuccessResponse(res, "Order created and payment confirmed successfully", {
             orderId: savedOrder.orderId,
             _id: savedOrder._id,
-            paymentStatus: "Paid" 
+            paymentStatus: "Paid"
         });
 
     } catch (err) {
@@ -628,7 +628,7 @@ export const cancelOrder = async (req, res) => {
         const { reason } = req.body;
 
         const order = await Order.findById(id).session(session);
-        
+
         if (!order) {
             await session.abortTransaction();
             return sendNotFoundResponse(res, "Order not found");

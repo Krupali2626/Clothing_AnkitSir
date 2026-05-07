@@ -11,7 +11,7 @@ import WishlistButton from '../components/WishlistButton';
 // ── Skeleton card ─────────────────────────────────────────────────
 const SkeletonCard = () => (
     <div className="flex flex-col bg-white animate-pulse">
-        <div className="h-[450px] bg-gray-100 w-full" />
+        <div className="h-[240px] md:h-[450px] bg-gray-100 w-full" />
         <div className="px-4 py-4 flex flex-col gap-2">
             <div className="h-4 bg-gray-100 rounded w-3/4 mx-auto" />
             <div className="h-4 bg-gray-100 rounded w-1/3 mx-auto" />
@@ -49,56 +49,44 @@ const ProductCard = ({ product, index = 0 }) => {
                 to={`/product/${product.slug}`}
                 className="group flex flex-col bg-white hover:bg-mainBG transition-all duration-700 hover:border-border h-full"
             >
-            <div className="relative overflow-hidden bg-white h-[450px]">
-                {/* Image 1 (Initial) */}
-                <div className={`w-full h-full transition-all  group-hover:bg-mainBG duration-1000 ${image2 && image1 !== image2 ? 'group-hover:opacity-0' : ''}`}>
-                    {image1 ? (
-                        <img
-                            src={image1}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-lightText bg-[#F8F9FA]">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
-                        </div>
+                <div className="relative overflow-hidden bg-white h-[240px] md:h-[450px]">
+                    {/* Image 1 (Initial) */}
+                    <div className={`w-full h-full transition-all  group-hover:bg-mainBG duration-1000`}>
+                        {image1 ? (
+                            <img
+                                src={image1}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-lightText bg-[#F8F9FA]">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Badge (NEW etc.) - Hidden initially */}
+                    {product?.badge && (
+                        <span className="absolute top-5 left-5 text-[10px] font-bold tracking-[0.25em] uppercase text-[#6C757D] opacity-0 group-hover:opacity-100 transition-all duration-500">
+                            {product?.badge}
+                        </span>
                     )}
+
+                    {/* Wishlist Icon - Hidden initially */}
+                    <WishlistButton productId={product._id} />
                 </div>
 
-                {/* Image 2 (Hover) */}
-                {image2 && image1 !== image2 && (
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
-                        <img
-                            src={image2}
-                            alt={product.name}
-                            className="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-1000"
-                        />
-                    </div>
-                )}
-
-                {/* Badge (NEW etc.) - Hidden initially */}
-                {product.badge && (
-                    <span className="absolute top-5 left-5 text-[10px] font-bold tracking-[0.25em] uppercase text-[#6C757D] opacity-0 group-hover:opacity-100 transition-all duration-500">
-                        {product.badge}
-                    </span>
-                )}
-
-                {/* Wishlist Icon - Hidden initially */}
-                <WishlistButton productId={product._id} />
-            </div>
-
-            <div className="px-5 py-4 flex flex-col gap-1 flex-shrink-0 bg-transparent transition-colors duration-700">
-                <p className="font-medium text-[15px] leading-[22px] text-dark text-center tracking-tight truncate px-2">{product.name}</p>
-                {price && (
-                    <p className="font-medium text-[14px] leading-[20px] text-[#495057] text-center opacity-90">{price}</p>
-                )}
-            </div>
+                <div className="px-2 md:px-5 py-2 md:py-4 flex flex-col gap-1 flex-shrink-0 bg-transparent transition-colors duration-700">
+                    <p className="font-medium text-[12px] md:text-[15px] leading-tight md:leading-[22px] text-dark text-center tracking-tight truncate px-1 md:px-2">{product?.name}</p>
+                    {price && (
+                        <p className="font-medium text-[11px] md:text-[14px] leading-tight md:leading-[20px] text-[#495057] text-center opacity-90">{price}</p>
+                    )}
+                </div>
             </Link>
         </motion.div>
     );
 };
 
-// Pagination component removed as requested.
 
 // ── Filter Section Component ──────────────────────────────────────
 const FilterSection = ({ title, children, defaultOpen = false }) => {
@@ -112,10 +100,10 @@ const FilterSection = ({ title, children, defaultOpen = false }) => {
                 <span className="text-[12px] font-extrabold uppercase tracking-[0.3em] text-[#1B1B1B]">{title}</span>
                 <span className="text-[#1B1B1B] transition-transform duration-300">
                     {open ? (
-                        <svg width="12" height="2" viewBox="0 0 12 2" fill="none"><path d="M0 1H12" stroke="currentColor" strokeWidth="1.2"/></svg>
+                        <svg width="12" height="2" viewBox="0 0 12 2" fill="none"><path d="M0 1H12" stroke="currentColor" strokeWidth="1.2" /></svg>
                     ) : (
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M0 6H12M6 0V12" stroke="currentColor" strokeWidth="1.2"/>
+                            <path d="M0 6H12M6 0V12" stroke="currentColor" strokeWidth="1.2" />
                         </svg>
                     )}
                 </span>
@@ -182,7 +170,7 @@ const FilterSidebar = ({ open, onClose, filterOptions, activeFilters, onApply, o
                     </svg>
                 )}
             </div>
-            <span className={`text-[14px] leading-tight transition-colors ${isActive ? 'text-primary font-bold' : 'text-[#495057] group-hover:text-primary'}`}>
+            <span className={`text-[13px] leading-tight transition-colors ${isActive ? 'text-primary font-bold' : 'text-[#495057] group-hover:text-primary'}`}>
                 {item.label || item.name}
             </span>
             {item.count !== undefined && <sup className="text-[10px] text-[#ADB5BD] ml-0.5 font-medium">{item.count}</sup>}
@@ -261,12 +249,12 @@ const FilterSidebar = ({ open, onClose, filterOptions, activeFilters, onApply, o
                     {filterOptions?.categories?.length > 0 && (
                         <FilterSection title="Category" defaultOpen={false}>
                             <div className="grid grid-cols-1 gap-y-4">
-                                {(showAllCategories ? filterOptions.categories : filterOptions.categories.slice(0, 6)).map(cat => 
+                                {(showAllCategories ? filterOptions.categories : filterOptions.categories.slice(0, 6)).map(cat =>
                                     renderItem('categories', cat, stagedFilters.categories?.includes(cat.name))
                                 )}
                             </div>
                             {filterOptions.categories.length > 6 && (
-                                <button 
+                                <button
                                     onClick={() => setShowAllCategories(!showAllCategories)}
                                     className="mt-6 text-[14px] text-[#A6AEB6] hover:text-primary underline underline-offset-8 decoration-1 decoration-[#A6AEB6]/40 block text-left"
                                 >
@@ -431,7 +419,7 @@ export default function CollectionPage() {
                         <span className="font-semibold text-[18px] leading-[22px] text-primary whitespace-nowrap flex-shrink-0">
                             {pageTitle}
                         </span>
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
@@ -457,53 +445,44 @@ export default function CollectionPage() {
                 </div>
 
                 {/* ── Row 2: sub-category tabs + count + FILTERS + SORT ── */}
-                <div className="border-b border-border">
-                    <div className="flex items-center h-[52px] px-8 gap-4 justify-between">
+                <div className="border-b border-border bg-white sticky top-[70px] z-40">
+                    <div className="flex items-center h-[48px] md:h-[52px] px-4 md:px-8 gap-2 md:gap-4 justify-between">
                         {/* Left: product count */}
-                        <span className="text-[13px] font-extrabold uppercase tracking-widest text-primary whitespace-nowrap flex-shrink-0">
-                            {pagination ? `${pagination.total} Products` : ''}
+                        <span className="text-[11px] md:text-[13px] font-extrabold uppercase tracking-widest text-primary whitespace-nowrap flex-shrink-0">
+                            {pagination?.total} <span className="hidden sm:inline">Products</span>
                         </span>
 
-                        {/* Center: sub-category scrollable tabs */}
-                        {/* <div className="flex-1 flex items-center gap-6 overflow-x-auto scrollbar-hide min-w-0 justify-center">
-                            {filteredSubCategories.map(sub => (
-                                <Link
-                                    key={sub._id}
-                                    to={`/collection/${mainCategorySlug}/${categorySlug}/${sub.slug}`}
-                                    className={`text-[13px] font-extrabold uppercase tracking-wide whitespace-nowrap transition-colors flex-shrink-0 ${subCategorySlug === sub.slug ? 'text-primary' : 'text-lightText hover:text-[#343A40]'}`}
-                                >
-                                    {sub.subCategoryName}
-                                </Link>
-                            ))}
-                        </div> */}
-
                         {/* Right: FILTERS + SORT BY */}
-                        <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
                             {/* FILTERS button */}
                             <button
                                 onClick={() => setFilterOpen(true)}
-                                className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+                                className="flex items-center gap-1.5 text-[11px] md:text-[13px] font-extrabold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
                             >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="md:w-4 md:h-4"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
                                 Filters
                                 {activeFilterCount > 0 && (
-                                    <span className="text-lightText">{activeFilterCount}</span>
+                                    <span className="ml-1 px-1.5 py-0.5 bg-primary text-white text-[9px] rounded-full">{activeFilterCount}</span>
                                 )}
                             </button>
 
                             <div className="w-px h-4 bg-border" />
 
                             {/* SORT BY */}
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[13px] font-extrabold uppercase tracking-widest text-lightText whitespace-nowrap">Sort by :</span>
-                                <select
-                                    value={sort}
-                                    onChange={e => setSort(e.target.value)}
-                                    className="text-[13px] font-extrabold text-primary bg-transparent border-none outline-none cursor-pointer uppercase tracking-widest"
-                                >
-                                    {sortOptions.map(o => (
-                                        <option key={o.value} value={o.value}>{o.label}</option>
-                                    ))}
-                                </select>
+                            <div className="flex items-center gap-1.5 relative group">
+                                <span className="hidden md:inline text-[13px] font-extrabold uppercase tracking-widest text-lightText whitespace-nowrap">Sort by :</span>
+                                <div className="relative flex items-center">
+                                    <select
+                                        value={sort}
+                                        onChange={e => setSort(e.target.value)}
+                                        className="text-[11px] md:text-[13px] font-extrabold text-primary bg-transparent border-none outline-none cursor-pointer uppercase tracking-widest appearance-none pr-4 md:pr-5"
+                                    >
+                                        {sortOptions.map(o => (
+                                            <option key={o.value} value={o.value} className="bg-white text-dark py-2 uppercase">{o.label}</option>
+                                        ))}
+                                    </select>
+                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="absolute right-0 pointer-events-none text-primary group-hover:translate-y-0.5 transition-transform"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -540,7 +519,7 @@ export default function CollectionPage() {
 
                         {/* Progress and Load More Section */}
                         {pagination && pagination.page < pagination.totalPages && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 1, delay: 0.5 }}
@@ -555,7 +534,7 @@ export default function CollectionPage() {
                                     className="px-10 py-4 bg-gray-100 hover:bg-gray-200 text-dark text-[12px] font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 relative overflow-hidden group"
                                 >
                                     <span className="relative z-10">{loading ? 'LOADING...' : `SHOW 20 MORE`}</span>
-                                    <motion.div 
+                                    <motion.div
                                         className="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"
                                     />
                                 </button>
@@ -601,73 +580,73 @@ function CollectionGrid({ products }) {
     return (
         <div className="w-full overflow-hidden bg-white">
             <AnimatePresence mode="popLayout">
-            {rows.map((row, idx) => {
-                if (row.isFeatureRow && row.products.length >= 3) {
-                    const [large, ...smalls] = row.products;
+                {rows.map((row, idx) => {
+                    if (row.isFeatureRow && row.products.length >= 3) {
+                        const [large, ...smalls] = row.products;
+                        return (
+                            <div key={idx} className="flex flex-col md:flex-row border-b border-[#E9ECEF]">
+                                {/* Large card — left side (full width on mobile, half on desktop) */}
+                                <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#E9ECEF]">
+                                    <Link
+                                        to={`/product/${large.slug}`}
+                                        className="group flex flex-col h-full bg-white hover:shadow-lg transition-shadow duration-300"
+                                    >
+                                        <div className="relative overflow-hidden bg-[#F8F9FA] h-[240px] md:h-full">
+                                            {large.variants?.[0]?.images?.[0] ? (
+                                                <img
+                                                    src={large.variants[0].images[0]}
+                                                    alt={large.name}
+                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 flex items-center justify-center text-[#ADB5BD]">
+                                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                                                </div>
+                                            )}
+                                            {large.badge && (
+                                                <span className="absolute top-3 left-3 bg-[#1B1B1B] text-white text-[10px] font-bold tracking-widest uppercase px-2 py-1">
+                                                    {large.badge}
+                                                </span>
+                                            )}
+                                            {/* Wishlist Icon for large card */}
+                                            <WishlistButton productId={large._id} />
+                                        </div>
+                                        <div className="px-4 py-[14px] flex-shrink-0">
+                                            <p className="font-semibold text-[15px] leading-[22px] text-[#1B1B1B] text-center truncate">{large.name}</p>
+                                        </div>
+                                    </Link>
+                                </div>
+                                {/* Right side: 2×2 grid (full width on mobile, half on desktop) */}
+                                <div className="w-full md:w-1/2 grid grid-cols-2 bg-white">
+                                    {smalls.slice(0, 4).map((product, si) => (
+                                        <div key={product._id} className={`border-[#E9ECEF] ${si % 2 === 0 ? 'border-r' : ''} ${si < 2 ? 'border-b' : ''}`}>
+                                            <ProductCard product={product} index={si} />
+                                        </div>
+                                    ))}
+                                    {smalls.length < 4 && Array.from({ length: 4 - smalls.length }).map((_, ei) => (
+                                        <div key={`fe-${ei}`} className="h-[240px] md:h-[450px]" />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    }
+
                     return (
-                        <div key={idx} className="flex flex-col md:flex-row border-b border-[#E9ECEF]">
-                            {/* Large card — left side (full width on mobile, half on desktop) */}
-                            <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#E9ECEF]">
-                                <Link
-                                    to={`/product/${large.slug}`}
-                                    className="group flex flex-col h-full bg-white hover:shadow-lg transition-shadow duration-300"
-                                >
-                                    <div className="relative overflow-hidden bg-[#F8F9FA] h-[450px] md:h-full">
-                                        {large.variants?.[0]?.images?.[0] ? (
-                                            <img
-                                                src={large.variants[0].images[0]}
-                                                alt={large.name}
-                                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                            />
-                                        ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center text-[#ADB5BD]">
-                                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
-                                            </div>
-                                        )}
-                                        {large.badge && (
-                                            <span className="absolute top-3 left-3 bg-[#1B1B1B] text-white text-[10px] font-bold tracking-widest uppercase px-2 py-1">
-                                                {large.badge}
-                                            </span>
-                                        )}
-                                        {/* Wishlist Icon for large card */}
-                                        <WishlistButton productId={large._id} />
-                                    </div>
-                                    <div className="px-4 py-[14px] flex-shrink-0">
-                                        <p className="font-semibold text-[15px] leading-[22px] text-[#1B1B1B] text-center truncate">{large.name}</p>
-                                    </div>
-                                </Link>
-                            </div>
-                            {/* Right side: 2×2 grid (full width on mobile, half on desktop) */}
-                            <div className="w-full md:w-1/2 grid grid-cols-2 bg-white">
-                                {smalls.slice(0, 4).map((product, si) => (
-                                    <div key={product._id} className={`border-[#E9ECEF] ${si % 2 === 0 ? 'border-r' : ''} ${si < 2 ? 'border-b' : ''}`}>
-                                        <ProductCard product={product} index={si} />
-                                    </div>
-                                ))}
-                                {smalls.length < 4 && Array.from({ length: 4 - smalls.length }).map((_, ei) => (
-                                    <div key={`fe-${ei}`} className="    h-[450px]" />
-                                ))}
-                            </div>
+                        <div key={idx} className="grid grid-cols-2 md:grid-cols-4 border-b border-border bg-white">
+                            {row.products.map((product, pi) => (
+                                <div key={product._id} className={`border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
+                                    <ProductCard product={product} index={pi} />
+                                </div>
+                            ))}
+                            {row.products.length < 4 && Array.from({ length: 4 - row.products.length }).map((_, ei) => {
+                                const pi = row.products.length + ei;
+                                return (
+                                    <div key={`re-${ei}`} className={`h-[240px] md:h-[450px] border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
+                                );
+                            })}
                         </div>
                     );
-                }
-
-                return (
-                    <div key={idx} className="grid grid-cols-2 md:grid-cols-4 border-b border-border bg-white">
-                                {row.products.map((product, pi) => (
-                                    <div key={product._id} className={`border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
-                                        <ProductCard product={product} index={pi} />
-                                    </div>
-                                ))}
-                        {row.products.length < 4 && Array.from({ length: 4 - row.products.length }).map((_, ei) => {
-                            const pi = row.products.length + ei;
-                            return (
-                                <div key={`re-${ei}`} className={`h-[450px] border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
-                            );
-                        })}
-                    </div>
-                );
-            })}
+                })}
             </AnimatePresence>
         </div>
     );
@@ -680,7 +659,7 @@ function NewFormsSection({ products }) {
 
     return (
         <section className="flex flex-col items-center bg-white overflow-hidden">
-            <div className="w-full flex flex-col items-center gap-4 py-24 px-8 text-center border-t border-border">
+            <div className="w-full flex flex-col items-center gap-4 py-12 md:py-24 px-6 md:px-8 text-center">
                 <p className="text-[12px] font-bold uppercase tracking-[0.3em] text-dark">
                     THE ARCHIVE OF YOUR SEARCH
                 </p>
@@ -691,7 +670,7 @@ function NewFormsSection({ products }) {
                     Don't let a favorite piece slip away. Re-access your latest searches and pick up your exploration exactly where you left off.
                 </p>
             </div>
-            <div className="w-full grid grid-cols-2 md:grid-cols-4 border-t border-border">
+            <div className="w-full grid grid-cols-2 md:grid-cols-4 border-t border-border pb-8">
                 {featured.map((product, pi) => (
                     <div key={product._id} className={`border-border border-b border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
                         <ProductCard product={product} index={pi} />
@@ -700,7 +679,7 @@ function NewFormsSection({ products }) {
                 {featured.length < 4 && Array.from({ length: 4 - featured.length }).map((_, ei) => {
                     const pi = featured.length + ei;
                     return (
-                        <div key={`nf-${ei}`} className={`bg-[#1B1B1B] h-[450px] border-border border-b border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
+                        <div key={`nf-${ei}`} className={`bg-[#1B1B1B] h-[240px] md:h-[450px] border-border border-b border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
                     );
                 })}
             </div>

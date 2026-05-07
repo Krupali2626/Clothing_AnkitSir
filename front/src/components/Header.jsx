@@ -406,7 +406,7 @@ export default function Header() {
                             <div ref={navRef} className="flex items-center w-1/4 lg:w-auto lg:flex-1">
                                 <button
                                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className={`lg:hidden p-2 -ml-2 hover:opacity-70 transition-all z-[70] relative ${isHomePage ? (isScrolled || hoveredCategory || isMenuOpen ? 'text-dark' : 'text-white') : 'text-dark'}`}
+                                    className={`lg:hidden p-2 -ml-2 hover:opacity-70 transition-all z-[70] relative ${isHomePage ? (isScrolled || hoveredCategory || isMenuOpen ? 'text-dark' : 'text-black') : 'text-dark'}`}
                                     aria-label="Toggle Menu"
                                 >
                                     {isMenuOpen ? (
@@ -553,7 +553,7 @@ export default function Header() {
 
                 {/* Mobile Navigation Menu Overflow */}
                 <div
-                    className={`fixed inset-x-0 bottom-0 top-[60px] md:top-[95px] bg-dark lg:hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[40] ${isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'
+                    className={`fixed inset-x-0 bottom-0 top-[60px] md:top-[95px] bg-white lg:hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[40] ${isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'
                         }`}
                 >
                     <div className="flex flex-col h-full overflow-hidden border-none outline-none">
@@ -564,7 +564,7 @@ export default function Header() {
                                 {mainCategories && mainCategories.map((category, index) => (
                                     <div
                                         key={category._id}
-                                        className={`flex items-center justify-between text-[clamp(1.1rem,4vw,1.5rem)] font-semibold tracking-[0.1em] text-white hover:text-white/70 uppercase transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
+                                        className={`flex items-center justify-between text-[clamp(1.1rem,4vw,1.5rem)] font-semibold tracking-[0.1em] text-black hover:text-black/70 uppercase transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
                                             }`}
                                         style={{ transitionDelay: `${index * 50}ms` }}
                                     >
@@ -590,7 +590,7 @@ export default function Header() {
                             <div className={`transition-all h-full duration-500  flex-col space-y-4 absolute inset-y-0 left-0 w-full px-6 py-8 flex ${menuStack.length === 1 && menuStack[0].type === 'main' ? 'translate-x-0 opacity-100 ' : 'translate-x-full hidden opacity-0 pointer-events-none'
                                 }`}>
                                 {menuStack.length > 0 && (
-                                    <button onClick={handleMenuBack} className="flex items-center gap-2 text-white/50 mb-6 uppercase text-xs font-bold tracking-widest outline-none">
+                                    <button onClick={handleMenuBack} className="flex items-center gap-2 text-black/50 mb-6 uppercase text-xs font-bold tracking-widest outline-none">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                         Back to {menuStack[0].type === 'main' ? 'Menu' : menuStack[0].name}
                                     </button>
@@ -598,7 +598,7 @@ export default function Header() {
                                 {menuStack.length > 0 && getCategoriesForMainCategory(menuStack[0].id).map((category, index) => (
                                     <div
                                         key={category._id}
-                                        className="flex items-center justify-between text-[clamp(1rem,3.5vw,1.25rem)] font-medium tracking-[0.05em] text-white/90 hover:text-white uppercase"
+                                        className="flex items-center justify-between text-[clamp(1rem,3.5vw,1.25rem)] font-medium tracking-[0.05em] text-black/90 hover:text-black uppercase"
                                     >
                                         <span
                                             className="cursor-pointer flex-1 py-1"
@@ -622,7 +622,7 @@ export default function Header() {
                             <div className={`transition-all h-full duration-500 flex  flex-col space-y-4 absolute inset-y-0 left-0 w-full px-6 py-8 ${menuStack.length === 2 && menuStack[1].type === 'category' ? 'translate-x-0 opacity-100' : 'translate-x-[200%] hidden opacity-0 pointer-events-none'
                                 }`}>
                                 {menuStack.length > 1 && (
-                                    <button onClick={handleMenuBack} className="flex items-center gap-2 text-white/50 mb-6 uppercase text-xs font-bold tracking-widest outline-none">
+                                    <button onClick={handleMenuBack} className="flex items-center gap-2 text-black/50 mb-6 uppercase text-xs font-bold tracking-widest outline-none">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                         Back to {menuStack[0].name}
                                     </button>
@@ -635,7 +635,7 @@ export default function Header() {
                                             key={subCat._id}
                                             to={`/collection/${mainSlug}/${catSlug}/${subCat.slug}`}
                                             onClick={() => resetMobileMenu()}
-                                            className="flex items-center justify-between text-[clamp(0.875rem,3vw,1.1rem)] font-normal text-white/80 hover:text-white uppercase"
+                                            className="flex items-center justify-between text-[clamp(0.875rem,3vw,1.1rem)] font-normal text-black/90 hover:text-black uppercase"
                                         >
                                             {subCat.subCategoryName}
                                         </Link>
@@ -645,14 +645,14 @@ export default function Header() {
                         </div>
 
                         {/* Mobile Menu Footer */}
-                        <div className={`px-10 pb-12 pt-6 flex flex-col mt-10 border-t-2 border-white/10 space-y-6 bg-dark transition-all duration-500 delay-100 border-none outline-none ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                        <div className={`px-10 pb-12 pt-6 flex flex-col mt-10 border-t-2 border-white/10 space-y-6 bg-white transition-all duration-500 delay-100 border-none outline-none ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                             }`}>
                             {/* Horizontal Line as per design */}
                             <div className="w-full h-px bg-white/10" />
-                            <Link to="/account" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Account</Link>
-                            <Link to="/wishlist" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Wishlist</Link>
-                            <Link to="/support" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Customer Care</Link>
-                            <Link to="/journal" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-white uppercase transition-colors">Journal</Link>
+                            <Link to="/account" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-black uppercase transition-colors">Account</Link>
+                            <Link to="/wishlist" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-black uppercase transition-colors">Wishlist</Link>
+                            <Link to="/support" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-black uppercase transition-colors">Customer Care</Link>
+                            <Link to="/journal" onClick={() => resetMobileMenu()} className="text-[13px] font-semibold tracking-[0.1em] text-[#ADB5BD] hover:text-black uppercase transition-colors">Journal</Link>
                         </div>
                     </div>
                 </div>
@@ -1196,8 +1196,7 @@ export default function Header() {
                         className="w-full py-4 bg-dark text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-primary transition-colors shadow-lg"
                     >
                         Close Panel
-                    </button>
-                </div>
+                    </button>                </div>
             </div>
 
             {/* Notification Backdrop */}

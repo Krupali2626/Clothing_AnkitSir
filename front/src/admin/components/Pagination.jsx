@@ -1,12 +1,12 @@
 import React from 'react';
 import { MdChevronLeft, MdChevronRight, MdFirstPage, MdLastPage } from 'react-icons/md';
 
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  totalItems, 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalItems,
   itemsPerPage,
-  onPageChange 
+  onPageChange
 }) => {
   if (totalPages <= 1) return null;
 
@@ -17,40 +17,40 @@ const Pagination = ({
   const getPageNumbers = () => {
     const pages = [];
     const maxPagesToShow = 5;
-    
+
     if (totalPages <= maxPagesToShow) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
       pages.push(1);
-      
+
       let startPage = Math.max(2, currentPage - 1);
       let endPage = Math.min(totalPages - 1, currentPage + 1);
-      
+
       if (currentPage <= 3) {
         endPage = 4;
       }
-      
+
       if (currentPage >= totalPages - 2) {
         startPage = totalPages - 3;
       }
-      
+
       if (startPage > 2) {
         pages.push('...');
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
-      
+
       if (endPage < totalPages - 1) {
         pages.push('...');
       }
-      
+
       pages.push(totalPages);
     }
-    
+
     return pages;
   };
 
@@ -60,8 +60,8 @@ const Pagination = ({
     <div className="px-8 py-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-6 bg-background rounded-none">
       {/* Info */}
       <div className="text-[11px] font-black uppercase tracking-widest text-lightText">
-        Displaying <span className="text-mainText">{startItem}</span> – <span className="text-mainText">{endItem}</span> 
-        <span className="mx-2 opacity-30">|</span> 
+        Displaying <span className="text-mainText">{startItem}</span> – <span className="text-mainText">{endItem}</span>
+        <span className="mx-2 opacity-30">|</span>
         Total <span className="text-primary font-black">{totalItems}</span> Records
       </div>
 
@@ -98,11 +98,10 @@ const Pagination = ({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-10 h-10 rounded-none text-xs font-black transition-all flex items-center justify-center shadow-sm active:scale-90 ${
-                  currentPage === page
+                className={`w-10 h-10 rounded-none text-xs font-black transition-all flex items-center justify-center shadow-sm active:scale-90 ${currentPage === page
                     ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-110 z-10'
                     : 'bg-white border border-border text-mainText hover:border-primary hover:text-primary'
-                }`}
+                  }`}
               >
                 {page}
               </button>

@@ -46,9 +46,9 @@ function OrderCard({ order }) {
         : '—';
 
     return (
-        <div className="bg-white flex flex-col">
+        <div className="bg-white flex flex-col border border-border rounded-sm mx-1 sm375:mx-0">
             {/* ── Header ── */}
-            <div className="flex flex-col sm375:flex-row items-start justify-between px-5 pt-5 pb-3 sm375:gap-0 gap-1">
+            <div className="flex flex-col sm375:flex-row items-start justify-between px-6 sm375:px-5 pt-5 pb-3 sm375:gap-0 gap-1">
                 <div>
                     <p className="text-base font-semibold text-mainText uppercase">#{order.orderId}</p>
                     <p className="text-sm font-medium text-lightText mt-0.5">Placed on {formattedDate}</p>
@@ -57,7 +57,7 @@ function OrderCard({ order }) {
             </div>
 
             {/* ── Product row ── */}
-            <div className="flex items-center gap-4 px-5 py-3">
+            <div className="flex items-center gap-4 px-6 sm375:px-5 py-3">
                 {/* Thumbnail */}
                 <div className="w-[72px] h-[72px] shrink-0 bg-mainBG border border-border overflow-hidden rounded-sm">
                     {productImage ? (
@@ -89,7 +89,7 @@ function OrderCard({ order }) {
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex items-center justify-between mx-5 py-3 border-t border-border">
+            <div className="flex items-center justify-between px-6 sm375:px-5 py-3 border-t border-border">
                 <div className="flex items-center gap-3">
                     <span className="text-mainText text-xs md:text-base font-medium">
                         {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
