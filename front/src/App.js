@@ -4,6 +4,7 @@ import UserRoutes from './routes/UserRoutes';
 import AdminRoutes from './routes/AdminRoutes';
 import { Toaster } from 'react-hot-toast';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import ScrollToTop from './components/ScrollToTop';
 
 const paypalOptions = {
   'client-id': process.env.REACT_APP_PAYPAL_CLIENT_ID,
