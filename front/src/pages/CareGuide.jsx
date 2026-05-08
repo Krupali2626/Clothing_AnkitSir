@@ -93,7 +93,7 @@ export default function CareGuide() {
 
     return (
         <div className="bg-mainBG min-h-screen pt-12 pb-12 px-6 md:px-10 font-urbanist">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1500px] mx-auto">
 
                 {/* Header */}
                 <div className="mb-4 md:mb-10">

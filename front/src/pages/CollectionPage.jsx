@@ -11,7 +11,7 @@ import WishlistButton from '../components/WishlistButton';
 // ── Skeleton card ─────────────────────────────────────────────────
 const SkeletonCard = () => (
     <div className="flex flex-col bg-white animate-pulse">
-        <div className="h-[240px] md:h-[450px] bg-gray-100 w-full" />
+        <div className="h-[280px] sm:h-[340px] md:h-[260px] lg:h-[400px] xl:h-[450px] bg-gray-100 w-full" />
         <div className="px-4 py-4 flex flex-col gap-2">
             <div className="h-4 bg-gray-100 rounded w-3/4 mx-auto" />
             <div className="h-4 bg-gray-100 rounded w-1/3 mx-auto" />
@@ -70,7 +70,7 @@ const ProductCard = ({ product, index = 0 }) => {
                 to={`/product/${product.slug}`}
                 className="group flex flex-col bg-white hover:bg-mainBG transition-all duration-700 hover:border-border h-full"
             >
-                <div className="relative overflow-hidden bg-white h-[240px] md:h-[450px]">
+                <div className="relative overflow-hidden bg-white h-[280px] sm:h-[340px] md:h-[260px] lg:h-[400px] xl:h-[450px]">
                     {/* Image 1 (Initial) */}
                     <div className={`w-full h-full transition-all  group-hover:bg-mainBG duration-1000`}>
                         {image1 ? (
@@ -104,10 +104,10 @@ const ProductCard = ({ product, index = 0 }) => {
                     <WishlistButton productId={product._id} />
                 </div>
 
-                <div className="px-2 md:px-5 py-2 md:py-4 flex flex-col gap-1 flex-shrink-0 bg-transparent transition-colors duration-700">
-                    <p className="font-medium text-[12px] md:text-[15px] leading-tight md:leading-[22px] text-dark text-center tracking-tight truncate px-1 md:px-2">{product?.name}</p>
+                <div className="px-2 md:px-2 lg:px-5 py-2 md:py-2 lg:py-4 flex flex-col gap-1 flex-shrink-0 bg-transparent transition-colors duration-700">
+                    <p className="font-medium text-[12px] md:text-[13px] lg:text-[15px] leading-tight md:leading-tight lg:leading-[22px] text-dark text-center tracking-tight truncate px-1 md:px-1.5">{product?.name}</p>
                     {price && (
-                        <p className="font-medium text-[11px] md:text-[14px] leading-tight md:leading-[20px] text-[#495057] text-center opacity-90">{price}</p>
+                        <p className="font-medium text-[11px] md:text-[12px] lg:text-[14px] leading-tight md:leading-tight lg:leading-[20px] text-[#495057] text-center opacity-90">{price}</p>
                     )}
                 </div>
             </Link>
@@ -676,7 +676,7 @@ function CollectionGrid({ products }) {
                                         </div>
                                     ))}
                                     {smalls.length < 4 && Array.from({ length: 4 - smalls.length }).map((_, ei) => (
-                                        <div key={`fe-${ei}`} className="h-[240px] md:h-[450px]" />
+                                        <div key={`fe-${ei}`} className="h-[280px] sm:h-[340px] md:h-[260px] lg:h-[400px] xl:h-[450px]" />
                                     ))}
                                 </div>
                             </div>
@@ -686,14 +686,14 @@ function CollectionGrid({ products }) {
                     return (
                         <div key={idx} className="grid grid-cols-2 md:grid-cols-4 border-b border-border bg-white">
                             {row.products.map((product, pi) => (
-                                <div key={product._id} className={`border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
+                                <div key={product._id} className={`border-border border-r ${pi % 2 === 1 ? 'max-md:border-r-0' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`}>
                                     <ProductCard product={product} index={pi} />
                                 </div>
                             ))}
                             {row.products.length < 4 && Array.from({ length: 4 - row.products.length }).map((_, ei) => {
                                 const pi = row.products.length + ei;
                                 return (
-                                    <div key={`re-${ei}`} className={`h-[240px] md:h-[450px] border-border border-r last:border-r-0 ${pi % 2 === 1 ? 'md:border-r' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
+                                    <div key={`re-${ei}`} className={`h-[280px] sm:h-[340px] md:h-[260px] lg:h-[400px] xl:h-[450px] border-border border-r ${pi % 2 === 1 ? 'max-md:border-r-0' : ''} ${pi % 4 === 3 ? 'md:border-r-0' : ''}`} />
                                 );
                             })}
                         </div>

@@ -296,7 +296,7 @@ export default function CheckOut() {
                                                         e.stopPropagation();
                                                         handleRemove(item);
                                                     }}
-                                                    className="absolute top-0 right-0 md:top-2 md:right-0 bg-white/80 hover:bg-red-50 text-lightText hover:text-red-500 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                                                    className="absolute top-0 -right-2 md:top-2 md:right-0 bg-white/80 hover:bg-red-50 text-lightText hover:text-red-500 p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 z-10"
                                                     title="Remove from cart"
                                                 >
                                                     <IoClose size={18} />
@@ -315,56 +315,58 @@ export default function CheckOut() {
                                                 </div>
 
                                                 {/* Details & Controls */}
-                                                <div className="flex-1 flex items-center justify-between">
-                                                    <div className="flex flex-col items-start gap-2">
+                                                <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-4">
+                                                    <div className="flex flex-col items-start gap-1 sm:gap-2">
                                                         <h3
-                                                            className="text-base font-medium text-dark capitalize tracking-wide cursor-pointer hover:text-gold transition-colors"
+                                                            className="text-sm sm:text-base font-semibold text-dark capitalize tracking-wide cursor-pointer hover:text-gold transition-colors leading-snug"
                                                             onClick={() => navigate(`/product/${item?.productId?.slug}`)}
                                                         >
                                                             {item?.productId?.name}
                                                         </h3>
 
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-lightText font-medium tracking-wider">Color:</span>
-                                                            <span className="text-xs text-primary flex items-center gap-2 font-medium tracking-wide">
-                                                                <div className="inline-block h-3 w-3" style={{ backgroundColor: variant?.colorCode }}></div>
-                                                                {variant?.color || 'Default'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-lightText font-medium tracking-wider">Size:</span>
-                                                            <span className="text-xs text-primary font-medium tracking-wide">
-                                                                {item?.selectedSize || 'M'}
-                                                            </span>
+                                                        <div className="flex flex-col gap-1 mt-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] sm:text-xs text-lightText font-medium tracking-wider uppercase">Color:</span>
+                                                                <span className="text-[10px] sm:text-xs text-primary flex items-center gap-1.5 font-bold tracking-wide uppercase">
+                                                                    <div className="inline-block h-2 w-2 sm:h-3 sm:w-3" style={{ backgroundColor: variant?.colorCode }}></div>
+                                                                    {variant?.color || 'Default'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] sm:text-xs text-lightText font-medium tracking-wider uppercase">Size:</span>
+                                                                <span className="text-[10px] sm:text-xs text-primary font-bold tracking-wide uppercase">
+                                                                    {item?.selectedSize || 'M'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <button
                                                             onClick={() => handleEditItem(item)}
-                                                            className="text-xs font-semibold text-gold underline cursor-pointer mt-1 block tracking-wider hover:text-gold/80 transition-colors"
+                                                            className="text-[10px] sm:text-xs font-bold text-gold underline cursor-pointer mt-2 block tracking-widest hover:text-gold/80 transition-colors uppercase"
                                                         >
-                                                            Change
+                                                            Edit Item
                                                         </button>
                                                     </div>
 
-                                                    <div className="flex items-center gap-8">
+                                                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-8 border-t sm:border-t-0 border-border/10 pt-4 sm:pt-0">
                                                         <div className="flex items-center gap-4 bg-mainBG px-3 py-1.5 rounded-sm text-dark text-xs">
                                                             <button
                                                                 onClick={() => handleQty(item, -1)}
-                                                                className=" hover:scale-110 transition-transform"
+                                                                className=" hover:scale-110 transition-transform p-1"
                                                             >
                                                                 <HiMinus size={12} />
                                                             </button>
-                                                            <span className="font-medium w-4 text-center">
+                                                            <span className="font-bold w-4 text-center">
                                                                 {item.quantity}
                                                             </span>
                                                             <button
                                                                 onClick={() => handleQty(item, 1)}
-                                                                className=" hover:scale-110 transition-transform"
+                                                                className=" hover:scale-110 transition-transform p-1"
                                                             >
                                                                 <HiPlus size={12} />
                                                             </button>
                                                         </div>
 
-                                                        <span className="text-sm font-extrabold text-dark">
+                                                        <span className="text-sm sm:text-base font-black text-dark">
                                                             ${fmt(itemPrice * item.quantity)}
                                                         </span>
                                                     </div>
@@ -392,10 +394,10 @@ export default function CheckOut() {
                     {/* ══════════════════════════════════════════════════════════
                     RIGHT — Order Summary (Light Gray Background)
                 ══════════════════════════════════════════════════════════ */}
-                    <div className="w-full lg:w-[480px] xl:w-[40%] bg-[#F9F9F7] border-l border-border/20">
-                        <div className="max-w-[420px] px-8 py-10 md:py-14">
-                            <h2 className="text-[24px] font-bold text-primary mb-10 tracking-tight uppercase">
-                                Order Summery
+                    <div className="w-full lg:w-[480px] xl:w-[40%] bg-[#F9F9F7] border-t lg:border-t-0 lg:border-l border-border/20">
+                        <div className="max-w-[420px] mx-auto lg:ml-10 lg:mr-auto px-6 sm:px-8 py-10 md:py-14">
+                            <h2 className="text-xl sm:text-2xl font-bold text-primary mb-10 tracking-tight uppercase">
+                                Order Summary
                             </h2>
 
                             <form onSubmit={couponFormik.handleSubmit} noValidate>
@@ -411,12 +413,12 @@ export default function CheckOut() {
                                         className={`flex-1 border border-r-0 ${couponFormik.touched.code && couponFormik.errors.code
                                             ? 'border-red-400'
                                             : 'border-[#D8D8D8]'
-                                            } px-4 py-3 text-sm text-primary placeholder:text-lightText/40 outline-none focus:border-primary/50 transition-colors disabled:bg-transparent disabled:cursor-not-allowed bg-white`}
+                                            } px-3 sm:px-4 py-3 text-sm text-primary placeholder:text-lightText/60 outline-none focus:border-primary/50 transition-colors disabled:bg-transparent disabled:cursor-not-allowed bg-white`}
                                     />
                                     <button
                                         type="submit"
                                         disabled={couponFormik.isSubmitting || hasCoupon || !couponFormik.values.code.trim()}
-                                        className="bg-primary text-white text-[12px] font-bold uppercase tracking-widest px-8 py-3 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                        className="bg-primary text-white text-[11px] sm:text-[12px] font-bold uppercase tracking-widest px-5 sm:px-8 py-3 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[80px] sm:min-w-[120px]"
                                     >
                                         {couponFormik.isSubmitting ? '...' : 'Apply'}
                                     </button>
@@ -484,8 +486,8 @@ export default function CheckOut() {
                                 </div>
 
                                 <div className="pt-8 flex justify-between items-end border-t border-border/40 mt-6">
-                                    <span className="text-[18px] font-bold text-primary uppercase tracking-tight">Total</span>
-                                    <span className="text-[40px] font-bold text-primary leading-none tracking-tighter">
+                                    <span className="text-base sm:text-lg font-bold text-primary uppercase tracking-tight">Total</span>
+                                    <span className="text-3xl sm:text-4xl md:text-[40px] font-bold text-primary leading-none tracking-tighter">
                                         ${fmt(total)}
                                     </span>
                                 </div>

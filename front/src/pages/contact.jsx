@@ -41,7 +41,7 @@ export default function Contact() {
 
     return (
         <div className="bg-mainBG min-h-screen pt-12 pb-12 md:pb-24 px-6 md:px-10 font-urbanist">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1500px] mx-auto">
 
                 {/* Header */}
                 <div className="mb-8 md:mb-12">
