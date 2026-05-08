@@ -1,4 +1,3 @@
-import React from 'react';
 import { MdChevronLeft, MdChevronRight, MdFirstPage, MdLastPage } from 'react-icons/md';
 
 const Pagination = ({
@@ -57,48 +56,50 @@ const Pagination = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="px-8 py-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-6 bg-background rounded-none">
+    <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 md:gap-6 bg-background rounded-none">
       {/* Info */}
-      <div className="text-[11px] font-black uppercase tracking-widest text-lightText">
-        Displaying <span className="text-mainText">{startItem}</span> – <span className="text-mainText">{endItem}</span>
-        <span className="mx-2 opacity-30">|</span>
+      <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-widest text-lightText text-center sm:text-left">
+        <span className="hidden sm:inline">
+          Displaying <span className="text-mainText">{startItem}</span> – <span className="text-mainText">{endItem}</span>
+          <span className="mx-1.5 sm:mx-2 opacity-30">|</span>
+        </span>
         Total <span className="text-primary font-black">{totalItems}</span> Records
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center gap-1.5">
-        {/* First Page */}
+      <div className="flex items-center gap-1 sm:gap-1.5">
+        {/* First Page - Hidden on mobile */}
         <button
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          className="p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
+          className="hidden md:flex p-2 sm:p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
           title="First Page"
         >
-          <MdFirstPage size={20} />
+          <MdFirstPage size={18} className="sm:w-5 sm:h-5" />
         </button>
 
         {/* Previous Page */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
+          className="p-2 sm:p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
           title="Previous Page"
         >
-          <MdChevronLeft size={20} />
+          <MdChevronLeft size={18} className="sm:w-5 sm:h-5" />
         </button>
 
-        {/* Page Numbers */}
-        <div className="hidden sm:flex items-center gap-1.5 mx-2">
+        {/* Page Numbers - Desktop only */}
+        <div className="hidden md:flex items-center gap-1 lg:gap-1.5 mx-1 lg:mx-2">
           {pageNumbers.map((page, index) => (
             page === '...' ? (
-              <span key={`ellipsis-${index}`} className="w-10 text-center text-lightText/40 font-black">
+              <span key={`ellipsis-${index}`} className="w-8 lg:w-10 text-center text-lightText/40 font-black text-xs">
                 ···
               </span>
             ) : (
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`w-10 h-10 rounded-none text-xs font-black transition-all flex items-center justify-center shadow-sm active:scale-90 ${currentPage === page
+                className={`w-8 h-8 lg:w-10 lg:h-10 rounded-none text-[11px] lg:text-xs font-black transition-all flex items-center justify-center shadow-sm active:scale-90 ${currentPage === page
                     ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-110 z-10'
                     : 'bg-white border border-border text-mainText hover:border-primary hover:text-primary'
                   }`}
@@ -109,10 +110,10 @@ const Pagination = ({
           ))}
         </div>
 
-        {/* Mobile: Current Page Display */}
-        <div className="sm:hidden px-6 py-2.5 bg-mainBG border border-border rounded-none shadow-inner">
-          <span className="text-xs font-black text-mainText tracking-widest uppercase">
-            {currentPage} <span className="opacity-30 mx-1">/</span> {totalPages}
+        {/* Mobile & Tablet: Current Page Display */}
+        <div className="md:hidden px-4 sm:px-6 py-2 sm:py-2.5 bg-mainBG border border-border rounded-none shadow-inner">
+          <span className="text-[11px] sm:text-xs font-black text-mainText tracking-wider sm:tracking-widest uppercase">
+            {currentPage} <span className="opacity-30 mx-0.5 sm:mx-1">/</span> {totalPages}
           </span>
         </div>
 
@@ -120,20 +121,20 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
+          className="p-2 sm:p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
           title="Next Page"
         >
-          <MdChevronRight size={20} />
+          <MdChevronRight size={18} className="sm:w-5 sm:h-5" />
         </button>
 
-        {/* Last Page */}
+        {/* Last Page - Hidden on mobile */}
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
+          className="hidden md:flex p-2 sm:p-2.5 rounded-none border border-border bg-white text-mainText hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-mainText transition-all shadow-sm active:scale-95"
           title="Last Page"
         >
-          <MdLastPage size={20} />
+          <MdLastPage size={18} className="sm:w-5 sm:h-5" />
         </button>
       </div>
     </div>

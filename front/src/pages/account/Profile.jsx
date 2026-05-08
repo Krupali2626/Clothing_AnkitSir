@@ -452,7 +452,7 @@ export default function Profile() {
             </div>
 
             {/* ── Security & Sessions ── */}
-            <div className="md:mt-12 mt-8">
+            {/* <div className="md:mt-12 mt-8">
                 <div className="flex items-center justify-between mb-5">
                     <p className="text-xs sm:text-sm lg:text-base font-semibold tracking-normal text-mainText uppercase">
                         Security & Sessions
@@ -518,7 +518,8 @@ export default function Profile() {
                         Sign Out All Devices
                     </button>
                 </div>
-            </div>            {/* ── Email Verify OTP Modal ── */}
+            </div>       */}
+                  {/* ── Email Verify OTP Modal ── */}
             {verifyModal && (
                 <>
                     <div className="fixed inset-0 bg-black/40 z-[100]" onClick={closeModal} />

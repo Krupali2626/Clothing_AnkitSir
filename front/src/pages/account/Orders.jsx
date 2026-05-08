@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
@@ -17,7 +17,7 @@ const STATUS_STYLES = {
 function StatusBadge({ status }) {
     const cls = STATUS_STYLES[status] || 'text-gray-500';
     return (
-        <span className={`text-base font-bold ${cls}`}>{status}</span>
+        <span className={`text-sm sm:text-base font-bold ${cls}`}>{status}</span>
     );
 }
 
@@ -46,20 +46,26 @@ function OrderCard({ order }) {
         : '—';
 
     return (
-        <div className="bg-white flex flex-col border border-border rounded-sm mx-1 sm375:mx-0">
+        <div className="bg-white flex flex-col border border-border rounded-sm overflow-hidden">
             {/* ── Header ── */}
-            <div className="flex flex-col sm375:flex-row items-start justify-between px-6 sm375:px-5 pt-5 pb-3 sm375:gap-0 gap-1">
-                <div>
-                    <p className="text-base font-semibold text-mainText uppercase">#{order.orderId}</p>
-                    <p className="text-sm font-medium text-lightText mt-0.5">Placed on {formattedDate}</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-5 lg:px-6 pt-3 sm:pt-4 md:pt-5 pb-2 sm:pb-3 gap-1.5 sm:gap-2">
+                <div className="w-full sm:w-auto min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm md:text-base font-semibold text-mainText uppercase truncate">
+                        #{order.orderId}
+                    </p>
+                    <p className="text-[10px] sm:text-xs md:text-sm font-medium text-lightText mt-0.5">
+                        Placed on {formattedDate}
+                    </p>
                 </div>
-                <StatusBadge status={order.orderStatus} />
+                <div className="self-start sm:self-auto shrink-0">
+                    <StatusBadge status={order.orderStatus} />
+                </div>
             </div>
 
             {/* ── Product row ── */}
-            <div className="flex items-center gap-4 px-6 sm375:px-5 py-3">
+            <div className="flex items-start sm:items-center gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-5 lg:px-6 py-2 sm:py-3">
                 {/* Thumbnail */}
-                <div className="w-[72px] h-[72px] shrink-0 bg-mainBG border border-border overflow-hidden rounded-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-[72px] md:h-[72px] shrink-0 bg-mainBG border border-border overflow-hidden rounded-sm">
                     {productImage ? (
                         <img
                             src={productImage}
@@ -67,7 +73,7 @@ function OrderCard({ order }) {
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-lightText text-[10px]">
+                        <div className="w-full h-full flex items-center justify-center text-lightText text-[9px] sm:text-[10px]">
                             No img
                         </div>
                     )}
@@ -75,33 +81,37 @@ function OrderCard({ order }) {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm md:text-base font-medium text-dark leading-snug line-clamp-2">
+                    <p className="text-[11px] sm:text-xs md:text-sm lg:text-base font-medium text-dark leading-snug line-clamp-2 mb-0.5 sm:mb-1">
                         {productName}
                     </p>
-                    <div className="mt-1 space-y-0.5 text-xs md:text-sm font-medium text-lightText">
-                        <div className="flex gap-3 items-center">
-                            {productColor && <p>Color: {productColor}</p>}
-                            {productSize && <p>Size: {productSize}</p>}
-                        </div>
+                    <div className="space-y-0.5 text-[10px] sm:text-[11px] md:text-xs lg:text-sm font-medium text-lightText">
+                        {(productColor || productSize) && (
+                            <div className="flex flex-wrap gap-x-1.5 sm:gap-x-2 md:gap-x-3 gap-y-0.5 items-center">
+                                {productColor && <p className="whitespace-nowrap">Color: {productColor}</p>}
+                                {productSize && <p className="whitespace-nowrap">Size: {productSize}</p>}
+                            </div>
+                        )}
                         {productPrice && <p>Price: {productPrice}</p>}
                     </div>
                 </div>
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex items-center justify-between px-6 sm375:px-5 py-3 border-t border-border">
-                <div className="flex items-center gap-3">
-                    <span className="text-mainText text-xs md:text-base font-medium">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 md:px-5 lg:px-6 py-2 sm:py-3 border-t border-border gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+                    <span className="text-mainText text-[10px] sm:text-xs md:text-sm lg:text-base font-medium whitespace-nowrap">
                         {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                     </span>
-                    <div className='border-l border-border h-3 w-px'></div>
-                    <span className="text-mainText text-xs md:text-base font-medium">${order.totalAmount?.toFixed(2)}</span>
+                    <div className='border-l border-border h-2.5 sm:h-3 w-px'></div>
+                    <span className="text-mainText text-[10px] sm:text-xs md:text-sm lg:text-base font-medium whitespace-nowrap">
+                        ${order.totalAmount?.toFixed(2)}
+                    </span>
                 </div>
                 <Link
                     to={`/orders/${order._id}`}
-                    className="flex items-center gap-1 text-xs md:text-sm font-medium text-dark hover:text-primary transition-colors"
+                    className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs md:text-sm font-medium text-dark hover:text-primary transition-colors whitespace-nowrap"
                 >
-                    View Details <HiChevronRight className="text-xs md:text-base" />
+                    View Details <HiChevronRight className="text-xs sm:text-sm md:text-base" />
                 </Link>
             </div>
         </div>
@@ -128,17 +138,17 @@ export default function Orders() {
             <div className="flex flex-col min-h-[calc(100vh-10rem)] md:min-h-[calc(100vh-17rem)]">
 
                 {/* Page title */}
-                <div className="flex justify-between items-center md:mb-8 mb-4">
-                    <h1 className="text-2xl md:text-[28px] font-semibold text-primary">Orders</h1>
+                <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
+                    <h1 className="text-xl sm:text-2xl md:text-[28px] font-semibold text-primary">Orders</h1>
                 </div>
 
                 {/* Loading skeletons */}
                 {loading && (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                         {[1, 2, 3, 4].map((n) => (
                             <div
                                 key={n}
-                                className="bg-white border border-border rounded-sm p-5 animate-pulse h-44"
+                                className="bg-white border border-border rounded-sm p-4 sm:p-5 animate-pulse h-40 sm:h-44"
                             />
                         ))}
                     </div>
@@ -146,23 +156,23 @@ export default function Orders() {
 
                 {/* Error */}
                 {!loading && error && (
-                    <div className="flex-1 flex items-center justify-center text-red-500 text-sm">
+                    <div className="flex-1 flex items-center justify-center text-red-500 text-xs sm:text-sm px-4 text-center">
                         {error}
                     </div>
                 )}
 
                 {/* Empty state */}
                 {!loading && !error && orders.length === 0 && (
-                    <div className="flex flex-col items-center justify-center flex-1 min-h-[60vh] gap-3 text-center">
-                        <p className="text-xl font-semibold text-dark">No orders yet</p>
-                        <p className="text-sm text-lightText">
+                    <div className="flex flex-col items-center justify-center flex-1 min-h-[50vh] sm:min-h-[60vh] gap-2 sm:gap-3 text-center px-4">
+                        <p className="text-lg sm:text-xl font-semibold text-dark">No orders yet</p>
+                        <p className="text-xs sm:text-sm text-lightText max-w-sm">
                             Start exploring and place your first order
                         </p>
                         <Link
                             to="/"
-                            className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold px-6 py-3 hover:bg-primary/90 transition-colors"
+                            className="mt-2 inline-flex items-center gap-2 bg-primary text-white text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 sm:py-3 hover:bg-primary/90 transition-colors"
                         >
-                            EXPLORE ALL <HiArrowRight />
+                            EXPLORE ALL <HiArrowRight className="text-sm sm:text-base" />
                         </Link>
                     </div>
                 )}
@@ -170,7 +180,7 @@ export default function Orders() {
                 {/* Orders grid */}
                 {!loading && !error && orders.length > 0 && (
                     <>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {orders.map((order) => (
                                 <OrderCard key={order._id} order={order} />
                             ))}
@@ -178,7 +188,7 @@ export default function Orders() {
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className="mt-8">
+                            <div className="mt-6 sm:mt-8">
                                 <Pagination
                                     currentPage={currentPage}
                                     totalPages={totalPages}
