@@ -433,7 +433,7 @@ export default function CheckOut() {
 
                             {!hasCoupon && (
                                 <p className="text-[11px] text-lightText font-medium mt-2 mb-6">
-                                    Use code SALE20 for 20% off your order
+                                    Use code SALE20 for 20% off your order (minimum 100$)
                                 </p>
                             )}
 
