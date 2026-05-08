@@ -134,7 +134,7 @@ function CheckoutFormContent() {
 
     const subtotal = cartData?.subtotal || 0;
     const discount = cartData?.discount || 0;
-    const shipping = cartData?.shipping || 0;
+    const shipping = cartData?.shipping || 25;
     const total = cartData?.total || 0;
     const appliedCoupon = cartData?.appliedCoupon;
     const hasCoupon = !!appliedCoupon?.code;

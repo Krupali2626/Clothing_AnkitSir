@@ -24,7 +24,7 @@ const fetchCartAndCalculateTotals = async (userId, res, message = "Cart fetched 
         items: [],
         subtotal: 0,
         discount: 0,
-        shipping: 0,
+        shipping: 25,
         total: 0,
         appliedCoupon: null
       });

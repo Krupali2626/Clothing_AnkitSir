@@ -509,6 +509,53 @@ const ProductDetails = () => {
                             )}
                         </div>
 
+                        {/* Low Stock Warning */}
+                        {(() => {
+                            let stockCount = null;
+                            
+                            if (selectedVariant) {
+                                if (hasOptions && selectedSize && selectedSize !== 'One Size') {
+                                    // Get stock for selected size
+                                    const selectedSizeData = sizeOptions.find(s => s.size === selectedSize || s.size === selectedSize.size);
+                                    if (selectedSizeData && selectedSizeData.stock > 0 && selectedSizeData.stock <= 5) {
+                                        stockCount = selectedSizeData.stock;
+                                    }
+                                } else if (!hasOptions) {
+                                    // No size options, check variant stock
+                                    if (selectedVariant.stock > 0 && selectedVariant.stock <= 5) {
+                                        stockCount = selectedVariant.stock;
+                                    }
+                                }
+                            }
+
+                            if (stockCount !== null) {
+                                return (
+                                    <div className="w-full text-center mb-4 lg:mb-6">
+                                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFF3CD] border border-[#FFE69C] rounded-sm">
+                                            <svg 
+                                                width="16" 
+                                                height="16" 
+                                                viewBox="0 0 24 24" 
+                                                fill="none" 
+                                                stroke="#856404" 
+                                                strokeWidth="2" 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                            </svg>
+                                            <span className="text-[13px] lg:text-[14px] font-semibold text-[#856404]">
+                                                Only {stockCount} left in stock!
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
+
                         {/* Add to Cart CTA */}
                         <button
                             onClick={handleAddToCartClick}

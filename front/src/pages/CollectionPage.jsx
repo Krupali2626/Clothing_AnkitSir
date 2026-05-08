@@ -36,7 +36,28 @@ const ProductCard = ({ product, index = 0 }) => {
         return defaultVariant.price ? `$${defaultVariant.price}` : null;
     };
 
+    // Check for low stock
+    const getLowStockInfo = () => {
+        if (!defaultVariant) return null;
+        
+        // Check if variant has size options
+        if (defaultVariant.options?.length > 0) {
+            // Find the lowest stock across all sizes
+            const lowestStock = Math.min(...defaultVariant.options.map(opt => opt.stock || 0));
+            if (lowestStock > 0 && lowestStock <= 5) {
+                return lowestStock;
+            }
+        } else {
+            // No size options, check variant stock directly
+            if (defaultVariant.stock > 0 && defaultVariant.stock <= 5) {
+                return defaultVariant.stock;
+            }
+        }
+        return null;
+    };
+
     const price = getPrice();
+    const lowStockCount = getLowStockInfo();
 
     return (
         <motion.div
@@ -69,6 +90,13 @@ const ProductCard = ({ product, index = 0 }) => {
                     {product?.badge && (
                         <span className="absolute top-5 left-5 text-[10px] font-bold tracking-[0.25em] uppercase text-[#6C757D] opacity-0 group-hover:opacity-100 transition-all duration-500">
                             {product?.badge}
+                        </span>
+                    )}
+
+                    {/* Low Stock Badge - Always visible */}
+                    {lowStockCount !== null && (
+                        <span className="absolute top-5 right-5 bg-[#FFF3CD] border border-[#FFE69C] text-[#856404] text-[9px] md:text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-sm shadow-sm">
+                            Only {lowStockCount} left
                         </span>
                     )}
 
@@ -608,6 +636,30 @@ function CollectionGrid({ products }) {
                                                     {large.badge}
                                                 </span>
                                             )}
+                                            {/* Low Stock Badge for large card */}
+                                            {(() => {
+                                                const defaultVariant = large.variants?.find(v => v.isDefault) || large.variants?.[0];
+                                                if (!defaultVariant) return null;
+                                                
+                                                let lowStockCount = null;
+                                                if (defaultVariant.options?.length > 0) {
+                                                    const lowestStock = Math.min(...defaultVariant.options.map(opt => opt.stock || 0));
+                                                    if (lowestStock > 0 && lowestStock <= 5) {
+                                                        lowStockCount = lowestStock;
+                                                    }
+                                                } else if (defaultVariant.stock > 0 && defaultVariant.stock <= 5) {
+                                                    lowStockCount = defaultVariant.stock;
+                                                }
+                                                
+                                                if (lowStockCount !== null) {
+                                                    return (
+                                                        <span className="absolute top-3 right-3 bg-[#FFF3CD] border border-[#FFE69C] text-[#856404] text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-sm shadow-sm">
+                                                            Only {lowStockCount} left
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                             {/* Wishlist Icon for large card */}
                                             <WishlistButton productId={large._id} />
                                         </div>
