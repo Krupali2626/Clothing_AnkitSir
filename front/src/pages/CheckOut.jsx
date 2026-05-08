@@ -288,7 +288,7 @@ export default function CheckOut() {
                                         return (
                                             <div
                                                 key={item._id}
-                                                className={`flex flex-col md:flex-row gap-6 transition-opacity group relative pr-10 ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}
+                                                className={`flex gap-4 sm:gap-8 transition-opacity group relative pr-6 sm:pr-10 ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}
                                             >
                                                 {/* Remove Button Icon - Far Right */}
                                                 <button
@@ -296,7 +296,7 @@ export default function CheckOut() {
                                                         e.stopPropagation();
                                                         handleRemove(item);
                                                     }}
-                                                    className="absolute top-0 -right-2 md:top-2 md:right-0 bg-white/80 hover:bg-red-50 text-lightText hover:text-red-500 p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 z-10"
+                                                    className="absolute -top-1 -right-1 sm:top-2 sm:right-0 bg-white/80 hover:bg-red-50 text-lightText hover:text-red-500 p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 z-10"
                                                     title="Remove from cart"
                                                 >
                                                     <IoClose size={18} />
@@ -304,7 +304,7 @@ export default function CheckOut() {
 
                                                 {/* Product image */}
                                                 <div
-                                                    className="w-[130px] h-[130px] bg-[#F9F9F7] flex-shrink-0 overflow-hidden cursor-pointer relative"
+                                                    className="w-[100px] h-[130px] sm:w-[130px] sm:h-[150px] bg-[#F9F9F7] flex-shrink-0 overflow-hidden cursor-pointer relative"
                                                 >
                                                     <img
                                                         src={variant?.images?.[0] || '/images/product.png'}
@@ -315,20 +315,20 @@ export default function CheckOut() {
                                                 </div>
 
                                                 {/* Details & Controls */}
-                                                <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-4">
-                                                    <div className="flex flex-col items-start gap-1 sm:gap-2">
+                                                <div className="flex-1 flex flex-col justify-between py-1">
+                                                    <div className="flex flex-col items-start gap-1">
                                                         <h3
-                                                            className="text-sm sm:text-base font-semibold text-dark capitalize tracking-wide cursor-pointer hover:text-gold transition-colors leading-snug"
+                                                            className="text-[13px] sm:text-base font-semibold text-dark capitalize tracking-wide cursor-pointer hover:text-gold transition-colors leading-snug pr-4"
                                                             onClick={() => navigate(`/product/${item?.productId?.slug}`)}
                                                         >
                                                             {item?.productId?.name}
                                                         </h3>
 
-                                                        <div className="flex flex-col gap-1 mt-1">
+                                                        <div className="flex flex-col gap-0.5 mt-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-[10px] sm:text-xs text-lightText font-medium tracking-wider uppercase">Color:</span>
                                                                 <span className="text-[10px] sm:text-xs text-primary flex items-center gap-1.5 font-bold tracking-wide uppercase">
-                                                                    <div className="inline-block h-2 w-2 sm:h-3 sm:w-3" style={{ backgroundColor: variant?.colorCode }}></div>
+                                                                    <div className="inline-block h-2 w-2" style={{ backgroundColor: variant?.colorCode }}></div>
                                                                     {variant?.color || 'Default'}
                                                                 </span>
                                                             </div>
@@ -341,19 +341,19 @@ export default function CheckOut() {
                                                         </div>
                                                         <button
                                                             onClick={() => handleEditItem(item)}
-                                                            className="text-[10px] sm:text-xs font-bold text-gold underline cursor-pointer mt-2 block tracking-widest hover:text-gold/80 transition-colors uppercase"
+                                                            className="text-[10px] sm:text-[11px] font-bold text-gold underline cursor-pointer mt-2 block tracking-widest hover:text-gold/80 transition-colors uppercase"
                                                         >
                                                             Edit Item
                                                         </button>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-8 border-t sm:border-t-0 border-border/10 pt-4 sm:pt-0">
-                                                        <div className="flex items-center gap-4 bg-mainBG px-3 py-1.5 rounded-sm text-dark text-xs">
+                                                    <div className="flex items-center justify-between w-full mt-4 pt-3 border-t border-border/5">
+                                                        <div className="flex items-center gap-3 bg-mainBG px-2 py-1 rounded-sm text-dark text-[11px] sm:text-xs">
                                                             <button
                                                                 onClick={() => handleQty(item, -1)}
                                                                 className=" hover:scale-110 transition-transform p-1"
                                                             >
-                                                                <HiMinus size={12} />
+                                                                <HiMinus size={10} />
                                                             </button>
                                                             <span className="font-bold w-4 text-center">
                                                                 {item.quantity}
@@ -362,7 +362,7 @@ export default function CheckOut() {
                                                                 onClick={() => handleQty(item, 1)}
                                                                 className=" hover:scale-110 transition-transform p-1"
                                                             >
-                                                                <HiPlus size={12} />
+                                                                <HiPlus size={10} />
                                                             </button>
                                                         </div>
 
